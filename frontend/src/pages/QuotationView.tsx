@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Printer, ShoppingBag } from "lucide-react";
 import QRCode from "qrcode";
+import html2pdf from "html2pdf.js";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -49,6 +50,111 @@ export default function QuotationView() {
       ),
   });
 
+  const handleDownloadPDF = async () => {
+    const element = document.querySelector(".quotation-document") as HTMLElement | null;
+
+    if (!element) {
+      toast.error("Dokumen quotation tidak ditemukan");
+      return;
+    }
+
+    try {
+      toast.loading("Membuat PDF...", { id: "quotation-pdf" });
+
+      const clone = element.cloneNode(true) as HTMLElement;
+
+      clone.style.width = "794px";
+      clone.style.maxWidth = "794px";
+      clone.style.margin = "0";
+      clone.style.background = "#ffffff";
+      clone.style.color = "#111111";
+      clone.style.boxSizing = "border-box";
+
+      const wrapper = document.createElement("div");
+
+      wrapper.style.position = "fixed";
+      wrapper.style.left = "-100000px";
+      wrapper.style.top = "0";
+      wrapper.style.width = "794px";
+      wrapper.style.background = "#ffffff";
+      wrapper.style.zIndex = "-1";
+
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      const images = Array.from(clone.querySelectorAll("img"));
+
+      await Promise.all(
+        images.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) {
+                resolve();
+                return;
+              }
+
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            }),
+        ),
+      );
+
+      const quotationNumber =
+        data?.quotation_number?.replace(/[^a-zA-Z0-9-_]/g, "_") ||
+        "quotation";
+
+      const options = {
+        margin: [10, 10, 10, 10] as [number, number, number, number],
+        filename: `${quotationNumber}.pdf`,
+        image: {
+          type: "jpeg" as const,
+          quality: 0.98,
+        },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#ffffff",
+          logging: false,
+        },
+        jsPDF: {
+          unit: "mm" as const,
+          format: "a4" as const,
+          orientation: "portrait" as const,
+          compress: true,
+        },
+        pagebreak: {
+          mode: ["css", "legacy"] as ("css" | "legacy" | "avoid-all")[],
+          avoid: [
+            ".quotation-items tr",
+            ".quotation-signature",
+            ".quotation-terms",
+            ".quotation-totals",
+            ".quotation-footer",
+            ".quotation-qr",
+          ],
+        },
+      };
+
+      await html2pdf()
+        .set(options)
+        .from(clone)
+        .save();
+
+      wrapper.remove();
+
+      toast.success("PDF quotation berhasil dibuat", {
+        id: "quotation-pdf",
+      });
+    } catch (error) {
+      console.error("PDF generation error:", error);
+
+      toast.error("Gagal membuat PDF quotation", {
+        id: "quotation-pdf",
+      });
+    }
+  };
+
   const terms = data?.notes
     ? data.notes.split("\n").filter(Boolean)
     : [
@@ -96,7 +202,7 @@ export default function QuotationView() {
           <ArrowLeft className="mr-2 h-4 w-4" /> Kembali
         </Link>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.print()} data-testid="btn-print-quotation">
+          <Button variant="outline" onClick={handleDownloadPDF} data-testid="btn-print-quotation">
             <Printer className="mr-2 h-4 w-4" /> Cetak / Simpan PDF
           </Button>
           <Button
