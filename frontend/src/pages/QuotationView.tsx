@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Printer, ShoppingBag } from "lucide-react";
-import { useState } from "react";
+import QRCode from "qrcode";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -21,6 +22,7 @@ export default function QuotationView() {
   const [convertOpen, setConvertOpen] = useState(false);
   const [poNumber, setPoNumber] = useState("");
   const [poDate, setPoDate] = useState(new Date().toISOString().slice(0, 10));
+  const [qrCode, setQrCode] = useState<string>("");
 
   const { data, isLoading, isError } = useQuery<QuotationDetail>({
     queryKey: ["quotation", quotationId],
@@ -55,6 +57,33 @@ export default function QuotationView() {
         ...DEFAULT_TERMS.slice(1, 2),
         `Validitas: s/d ${formatDate(data?.validity_date)}`,
       ];
+
+  useEffect(() => {
+    if (!data) return;
+
+    // QR Code menjadi identitas/verifikasi digital quotation.
+    // Saat URL aplikasi berubah, QR otomatis mengikuti domain yang sedang digunakan.
+    const verificationUrl =
+      `${window.location.origin}/quotations/${encodeURIComponent(data.quotation_id)}`;
+
+    const verificationData = [
+      `DIGITAL QUOTATION`,
+      `Quotation No: ${data.quotation_number}`,
+      `Date: ${data.quotation_date ?? "-"}`,
+      `Customer: ${data.customer_company || data.customer_name || "-"}`,
+      `Total: ${data.grand_total}`,
+      `Issued by: ${COMPANY.name}`,
+      `Verify: ${verificationUrl}`,
+    ].join("\n");
+
+    QRCode.toDataURL(verificationData, {
+      width: 180,
+      margin: 1,
+      errorCorrectionLevel: "M",
+    })
+      .then(setQrCode)
+      .catch(() => setQrCode(""));
+  }, [data]);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -94,11 +123,11 @@ export default function QuotationView() {
         </Card>
       ) : data ? (
         <Card
-          className="print-area border-2 border-neutral-900 bg-white p-0 text-neutral-900"
+          className="print-area quotation-document border-2 border-neutral-900 bg-white p-0 text-neutral-900"
           data-testid="quotation-document"
         >
           {/* Letterhead */}
-          <div className="flex items-center gap-4 border-b-2 border-neutral-900 px-8 py-5">
+          <div className="quotation-header flex items-center gap-4 border-b-2 border-neutral-900 px-8 py-5">
             <img
               src={COMPANY.logo}
               alt="Logo Wellracom"
@@ -199,7 +228,7 @@ export default function QuotationView() {
           </div>
 
           {/* Totals */}
-          <div className="flex justify-end px-8 pt-4">
+          <div className="quotation-totals flex justify-end px-8 pt-4">
             <table className="w-full max-w-xs border border-neutral-900 text-xs">
               <tbody>
                 <tr className="border-b border-neutral-300">
@@ -232,7 +261,7 @@ export default function QuotationView() {
           </div>
 
           {/* Terms + signature */}
-          <div className="grid gap-8 px-8 py-6 sm:grid-cols-2">
+          <div className="quotation-signature grid gap-8 px-8 py-6 sm:grid-cols-2">
             <div>
               <p className="mb-2 text-[11px] font-bold tracking-widest">TERMS AND CONDITIONS:</p>
               <ol className="list-inside list-decimal space-y-1 text-xs text-neutral-700">
@@ -272,11 +301,37 @@ export default function QuotationView() {
                   </p>
                 </div>
               )}
+
+              {/* Digital document verification */}
+              {qrCode && (
+                <div
+                  className="quotation-qr mt-4 flex items-center justify-end gap-3"
+                  data-testid="quotation-qr-block"
+                >
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold tracking-widest text-neutral-800">
+                      DIGITAL DOCUMENT
+                    </p>
+                    <p className="text-[9px] text-neutral-500">
+                      Scan untuk informasi dokumen
+                    </p>
+                    <p className="mt-1 text-[9px] font-mono text-neutral-600">
+                      {data.quotation_number}
+                    </p>
+                  </div>
+                  <img
+                    src={qrCode}
+                    alt="QR Code verifikasi quotation"
+                    className="h-20 w-20"
+                    data-testid="quotation-qr-code"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           {/* Office footer */}
-          <div className="grid gap-4 border-t border-neutral-900 bg-neutral-50 px-8 py-4 text-[10px] text-neutral-600 sm:grid-cols-2">
+          <div className="quotation-footer grid gap-4 border-t border-neutral-900 bg-neutral-50 px-8 py-4 text-[10px] text-neutral-600 sm:grid-cols-2">
             {COMPANY.offices.map((o) => (
               <div key={o.city}>
                 <p className="font-bold tracking-widest text-neutral-800">{o.city.toUpperCase()} OFFICE</p>

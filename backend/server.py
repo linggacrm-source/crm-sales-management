@@ -94,7 +94,18 @@ logging.basicConfig(
 app.include_router(api_router)
 
 # Serve the React production build from the same Railway service.
+# API routes stay under /api; all other unknown paths fall back to index.html
+# so React Router can handle direct URLs such as /quotations/QTN-0022.
 FRONTEND_DIST = Path("/app/frontend/dist")
 
 if FRONTEND_DIST.exists():
-    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def frontend_fallback(full_path: str):
+        requested_file = FRONTEND_DIST / full_path
+
+        if requested_file.is_file():
+            return FileResponse(requested_file)
+
+        return FileResponse(FRONTEND_DIST / "index.html")

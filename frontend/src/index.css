@@ -152,3 +152,165 @@
   .print-area { box-shadow: none !important; border: none !important; }
   body { background: #fff !important; }
 }
+
+
+
+/* =========================================================
+   QUOTATION PRINT / PDF
+   ========================================================= */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 10mm 12mm 10mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-area {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /*
+   * Jangan pernah memotong elemen penting.
+   */
+  .print-area table,
+  .print-area tr,
+  .print-area td,
+  .print-area th,
+  .print-area img,
+  .quotation-terms,
+  .quotation-signature,
+  .quotation-footer,
+  .quotation-totals {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /*
+   * Header quotation tidak boleh terpisah.
+   */
+  .quotation-header {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /*
+   * Baris item boleh berpindah ke halaman berikutnya,
+   * tetapi satu baris tidak boleh terpotong.
+   */
+  .quotation-items tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /*
+   * Jangan memaksa seluruh quotation menjadi satu halaman.
+   * Jika konten melebihi tinggi A4, browser akan otomatis
+   * melanjutkan ke halaman berikutnya.
+   */
+  .quotation-document {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  /*
+   * Footer/signature hanya pindah utuh jika tidak cukup ruang.
+   */
+  .quotation-signature {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .quotation-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /*
+   * Hindari margin/padding berlebihan saat print.
+   */
+  .quotation-print-section {
+    break-inside: avoid;
+  }
+}
+
+/* =========================================================
+   QUOTATION SCREEN
+   ========================================================= */
+
+.quotation-document {
+  background: white;
+}
+
+.quotation-items {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.quotation-items th,
+.quotation-items td {
+  vertical-align: top;
+}
+
+.quotation-items td {
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.quotation-signature,
+.quotation-terms,
+.quotation-totals,
+.quotation-footer {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+
+/* =========================================================
+   DIGITAL QUOTATION VERIFICATION QR
+   ========================================================= */
+
+.quotation-qr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.quotation-qr img {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+@media print {
+  .quotation-qr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .quotation-qr img {
+    width: 80px !important;
+    height: 80px !important;
+  }
+}

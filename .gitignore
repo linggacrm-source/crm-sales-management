@@ -91,3 +91,6 @@ android-sdk/
 !.env.example
 **/.env
 **/.env.*
+
+# Local MongoDB backups
+mongodb-backup/
