@@ -287,18 +287,27 @@ async def download_quotation_pdf(
 
     company_name = "PT. WELLRACOM INDUSTRI KOMPUTINDO"
 
-    logo_path = "/app/frontend/public/wellracom-logo.png"
+    logo_path = "/app/frontend/public/logo well.jpg"
 
     logo = Image(
         logo_path,
-        width=42 * mm,
-        height=16 * mm,
+        width=22 * mm,
+        height=22 * mm,
         kind="proportional",
     )
 
-    header_left = [
-        logo,
-        Spacer(1, 2 * mm),
+    company_header = [
+        Paragraph(
+            f"<b>{company_name}</b>",
+            ParagraphStyle(
+                "CompanyHeader",
+                parent=normal,
+                fontName="Helvetica-Bold",
+                fontSize=11,
+                leading=13,
+                spaceAfter=1,
+            ),
+        ),
         Paragraph(
             "Industrial Computing • Automation • Communication",
             small,
@@ -309,6 +318,23 @@ async def download_quotation_pdf(
             small,
         ),
     ]
+
+    header_left = Table(
+        [[logo, company_header]],
+        colWidths=[25 * mm, 80 * mm],
+    )
+
+    header_left.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
 
     header_right = [
         Paragraph("QUOTATION", title),
