@@ -432,19 +432,34 @@ async def download_quotation_pdf(
     # ITEMS
     # ============================================================
 
-    item_rows = [
-        [
-            Paragraph("<b>No.</b>", item_header),
-            Paragraph("<b>Description</b>", item_header),
-            Paragraph("<b>Qty</b>", item_header),
-            Paragraph("<b>Unit</b>", item_header),
-            Paragraph("<b>Unit Price</b>", item_header),
-            Paragraph("<b>Discount</b>", item_header),
-            Paragraph("<b>Subtotal</b>", item_header),
-        ]
+    items = doc.get("items") or []
+
+    # Tampilkan kolom Discount hanya jika ada item yang memiliki discount
+    has_discount = any(
+        float(item.get("discount") or 0) > 0
+        for item in items
+    )
+
+    item_header_row = [
+        Paragraph("<b>No.</b>", item_header),
+        Paragraph("<b>Description</b>", item_header),
+        Paragraph("<b>Qty</b>", item_header),
+        Paragraph("<b>Unit</b>", item_header),
+        Paragraph("<b>Unit Price</b>", item_header),
     ]
 
-    for idx, item in enumerate(doc.get("items") or [], start=1):
+    if has_discount:
+        item_header_row.append(
+            Paragraph("<b>Discount</b>", item_header)
+        )
+
+    item_header_row.append(
+        Paragraph("<b>Subtotal</b>", item_header)
+    )
+
+    item_rows = [item_header_row]
+
+    for idx, item in enumerate(items, start=1):
         description = str(item.get("description") or "-")
         qty = item.get("qty") or 0
         unit = str(item.get("unit") or "Unit")
@@ -455,21 +470,27 @@ async def download_quotation_pdf(
         def money(value):
             return f"Rp {value:,.0f}".replace(",", ".")
 
-        item_rows.append(
-            [
-                Paragraph(str(idx), center),
-                Paragraph(description, normal),
-                Paragraph(f"{qty:g}", center),
-                Paragraph(unit, center),
-                Paragraph(money(unit_price), right),
-                Paragraph(money(discount), right),
-                Paragraph(money(subtotal), right),
-            ]
+        row = [
+            Paragraph(str(idx), center),
+            Paragraph(description, normal),
+            Paragraph(f"{qty:g}", center),
+            Paragraph(unit, center),
+            Paragraph(money(unit_price), right),
+        ]
+
+        if has_discount:
+            row.append(
+                Paragraph(money(discount), right)
+            )
+
+        row.append(
+            Paragraph(money(subtotal), right)
         )
 
-    item_table = Table(
-        item_rows,
-        colWidths=[
+        item_rows.append(row)
+
+    if has_discount:
+        item_col_widths = [
             9 * mm,
             65 * mm,
             14 * mm,
@@ -477,7 +498,20 @@ async def download_quotation_pdf(
             27 * mm,
             22 * mm,
             25 * mm,
-        ],
+        ]
+    else:
+        item_col_widths = [
+            9 * mm,
+            75 * mm,
+            14 * mm,
+            18 * mm,
+            32 * mm,
+            32 * mm,
+        ]
+
+    item_table = Table(
+        item_rows,
+        colWidths=item_col_widths,
         repeatRows=1,
     )
 
@@ -527,14 +561,28 @@ async def download_quotation_pdf(
     totals_table.setStyle(
         TableStyle(
             [
+                # Border semua sisi dan antar kolom/baris
+                ("BOX", (0, 0), (-1, -1), 0.8, colors.black),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.black),
+
+                # Alignment
+                ("ALIGN", (0, 0), (0, -1), "LEFT"),
                 ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-                ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+
+                # Font
                 ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
                 ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 8.5),
-                ("LINEABOVE", (0, -1), (-1, -1), 1, colors.black),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+
+                # Grand Total sedikit lebih tegas
+                ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#F3F4F6")),
+
+                # Padding
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
             ]
         )
     )
