@@ -92,6 +92,8 @@ export default function Quotations() {
   const [salesId, setSalesId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [convertFor, setConvertFor] = useState<QuotationRow | null>(null);
+  const [convertPoNumber, setConvertPoNumber] = useState("");
 
   const debounced = useDebounced(search);
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
@@ -187,15 +189,20 @@ export default function Quotations() {
   });
 
   const convert = useMutation({
-    mutationFn: (id: string) => apiPost<{ po_id: string; po_number: string }>(`/quotations/${id}/convert-to-po`),
+    mutationFn: (args: { id: string; po_number: string }) =>
+      apiPost<{ po_id: string; po_number: string }>(`/quotations/${args.id}/convert-to-po`, {
+        po_number: args.po_number,
+      }),
     onSuccess: (res) => {
-      toast.success(`Berhasil menjadi PO ${res.po_number}`);
+      toast.success(`PO customer ${res.po_number} tercatat`);
+      setConvertFor(null);
+      setConvertPoNumber("");
       invalidate();
       navigate(`/purchase-orders/${res.po_id}`);
     },
     onError: (e) =>
       toast.error(
-        (e instanceof ApiError ? (e.body as { detail?: string })?.detail : null) ?? "Gagal konversi ke PO",
+        (e instanceof ApiError ? (e.body as { detail?: string })?.detail : null) ?? "Gagal mencatat PO customer",
       ),
   });
 
@@ -378,9 +385,12 @@ export default function Quotations() {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      title="Konversi ke PO"
-                      disabled={q.status === "Converted" || convert.isPending}
-                      onClick={() => convert.mutate(q.quotation_id)}
+                      title="Catat PO customer"
+                      disabled={q.status === "Converted"}
+                      onClick={() => {
+                        setConvertFor(q);
+                        setConvertPoNumber("");
+                      }}
                       data-testid={`btn-convert-quotation-${q.quotation_id}`}
                     >
                       <ShoppingBag className="h-4 w-4 text-primary" />
@@ -540,15 +550,16 @@ export default function Quotations() {
                         </option>
                       ))}
                     </select>
-                    <Input
+                    <Textarea
                       value={it.description}
                       onChange={(e) => {
                         const items = [...form.items];
                         items[idx] = { ...it, description: e.target.value };
                         setForm({ ...form, items });
                       }}
-                      placeholder="Deskripsi item"
-                      className="mt-1.5"
+                      rows={5}
+                      placeholder={"Deskripsi / spesifikasi item — tekan ENTER untuk baris baru:\nIndustrial PC Axiomtek\nIntel Core i5\nRAM 16GB"}
+                      className="mt-1.5 font-mono text-xs whitespace-pre-wrap"
                       data-testid={`input-item-description-${idx}`}
                     />
                   </div>
@@ -671,6 +682,43 @@ export default function Quotations() {
               data-testid="btn-save-quotation"
             >
               {save.isPending ? "Menyimpan..." : "Simpan Quotation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={convertFor !== null} onOpenChange={(o) => !o && setConvertFor(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Catat PO Customer</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Quotation <span className="font-mono font-semibold">{convertFor?.quotation_number}</span> —{" "}
+            {convertFor?.customer_name}. Masukkan nomor PO yang tertera pada dokumen PO customer.
+          </p>
+          <div>
+            <Label htmlFor="list-conv-po">Nomor PO Customer</Label>
+            <Input
+              id="list-conv-po"
+              value={convertPoNumber}
+              onChange={(e) => setConvertPoNumber(e.target.value)}
+              placeholder="mis. 450/PO/ESIC/2026"
+              className="mt-1.5"
+              data-testid="input-list-convert-po-number"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConvertFor(null)} data-testid="btn-cancel-list-convert">
+              Batal
+            </Button>
+            <Button
+              onClick={() =>
+                convertFor &&
+                convert.mutate({ id: convertFor.quotation_id, po_number: convertPoNumber.trim() })
+              }
+              disabled={!convertPoNumber.trim() || convert.isPending}
+              data-testid="btn-submit-list-convert"
+            >
+              {convert.isPending ? "Menyimpan..." : "Simpan"}
             </Button>
           </DialogFooter>
         </DialogContent>

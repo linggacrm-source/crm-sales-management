@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -92,15 +93,23 @@ def _soon_date() -> str:
 async def monitoring_summary(user: dict = Depends(current_user)):
     scope = await scope_filter(user)
     today = today_iso()
-    return MonitoringSummary(
-        total=await db.order_monitoring.count_documents(scope),
-        indent=await db.order_monitoring.count_documents({**scope, "status": "Indent"}),
-        ready_stock=await db.order_monitoring.count_documents({**scope, "status": "Ready Stock"}),
-        delivery=await db.order_monitoring.count_documents({**scope, "status": "Delivery"}),
-        completed=await db.order_monitoring.count_documents({**scope, "status": "Completed"}),
-        overdue=await db.order_monitoring.count_documents(
+    total, indent, ready, delivery, completed, overdue = await asyncio.gather(
+        db.order_monitoring.count_documents(scope),
+        db.order_monitoring.count_documents({**scope, "status": "Indent"}),
+        db.order_monitoring.count_documents({**scope, "status": "Ready Stock"}),
+        db.order_monitoring.count_documents({**scope, "status": "Delivery"}),
+        db.order_monitoring.count_documents({**scope, "status": "Completed"}),
+        db.order_monitoring.count_documents(
             {**scope, "status": {"$nin": ["Completed", "Cancelled"]}, "eta": {"$lt": today, "$ne": None}}
         ),
+    )
+    return MonitoringSummary(
+        total=total,
+        indent=indent,
+        ready_stock=ready,
+        delivery=delivery,
+        completed=completed,
+        overdue=overdue,
     )
 
 

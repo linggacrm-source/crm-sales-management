@@ -29,6 +29,8 @@ class MeResponse(BaseModel):
     phone: str | None = None
     status: str
     must_change_password: bool = False
+    signature_image: str | None = None
+    signature_title: str | None = None
 
 
 @router.post("/login", response_model=MeResponse)

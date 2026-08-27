@@ -1,5 +1,6 @@
 """Server-side pagination / search / sort helpers — every list endpoint goes through here."""
 
+import asyncio
 import re
 from typing import Any, Optional
 
@@ -33,9 +34,11 @@ async def paginate(
     projection: dict[str, Any],
     sort: list[tuple[str, int]],
 ) -> dict:
-    """Count + one page of documents. Projection keeps the API response small."""
+    """Count + one page of documents, run concurrently. Projection keeps the response small."""
     page, page_size = clamp_page(page, page_size)
-    total = await collection.count_documents(query)
     cursor = collection.find(query, projection).sort(sort).skip((page - 1) * page_size).limit(page_size)
-    data = await cursor.to_list(page_size)
+    total, data = await asyncio.gather(
+        collection.count_documents(query),
+        cursor.to_list(page_size),
+    )
     return {"data": data, "total": total, "page": page, "page_size": page_size}

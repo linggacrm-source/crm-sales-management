@@ -28,15 +28,16 @@ from routers import (  # noqa: E402
 logger = logging.getLogger(__name__)
 
 # Indexes on every field the list/filter/sort endpoints touch — created once at startup.
+# Compound (sales_id, <sort/filter>) indexes serve the role-scoped queries every list runs.
 INDEXES: dict[str, list] = {
     "users": [[("user_id", 1)], [("email", 1)], [("role", 1)], [("manager_id", 1)], [("status", 1)], [("created_date", -1)]],
-    "customers": [[("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("industry", 1)], [("customer_name", 1)], [("created_date", -1)]],
+    "customers": [[("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("industry", 1)], [("customer_name", 1)], [("created_date", -1)], [("sales_id", 1), ("created_date", -1)], [("sales_id", 1), ("status", 1)]],
     "products": [[("product_id", 1)], [("product_code", 1)], [("category", 1)], [("status", 1)], [("product_name", 1)]],
-    "opportunities": [[("opportunity_id", 1)], [("customer_id", 1)], [("sales_id", 1)], [("stage", 1)], [("value", -1)], [("created_date", -1)]],
-    "quotations": [[("quotation_id", 1)], [("quotation_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("created_date", -1)]],
-    "purchase_orders": [[("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("quotation_id", 1)], [("status", 1)], [("created_date", -1)]],
-    "order_monitoring": [[("monitoring_id", 1)], [("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("eta", 1)], [("created_date", -1)]],
-    "activities": [[("activity_id", 1)], [("sales_id", 1)], [("customer_id", 1)], [("status", 1)], [("activity_date", -1)], [("next_followup", 1)]],
+    "opportunities": [[("opportunity_id", 1)], [("customer_id", 1)], [("sales_id", 1)], [("stage", 1)], [("value", -1)], [("created_date", -1)], [("sales_id", 1), ("stage", 1)], [("sales_id", 1), ("created_date", -1)], [("customer_id", 1), ("created_date", -1)]],
+    "quotations": [[("quotation_id", 1)], [("quotation_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("created_date", -1)], [("sales_id", 1), ("created_date", -1)], [("sales_id", 1), ("status", 1)], [("customer_id", 1), ("created_date", -1)]],
+    "purchase_orders": [[("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("quotation_id", 1)], [("status", 1)], [("created_date", -1)], [("customer_id", 1), ("po_number", 1)], [("sales_id", 1), ("created_date", -1)], [("sales_id", 1), ("status", 1)]],
+    "order_monitoring": [[("monitoring_id", 1)], [("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("eta", 1)], [("created_date", -1)], [("sales_id", 1), ("eta", 1)], [("sales_id", 1), ("status", 1)], [("status", 1), ("eta", 1)]],
+    "activities": [[("activity_id", 1)], [("sales_id", 1)], [("customer_id", 1)], [("status", 1)], [("activity_date", -1)], [("next_followup", 1)], [("sales_id", 1), ("activity_date", -1)], [("sales_id", 1), ("status", 1)], [("customer_id", 1), ("created_date", -1)]],
     "audit_logs": [[("timestamp", -1)], [("module", 1)], [("user_id", 1)]],
 }
 

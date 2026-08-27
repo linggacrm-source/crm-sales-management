@@ -30,6 +30,9 @@ LIST_PROJECTION = {
     "phone": 1,
     "status": 1,
     "last_login": 1,
+    "signature_title": 1,
+    # computed server-side so the big base64 image never travels with the list
+    "has_signature": {"$toBool": {"$ifNull": ["$signature_image", False]}},
 }
 SORTABLE = ["name", "email", "role", "status", "created_date", "last_login"]
 
@@ -63,6 +66,15 @@ class UserRow(BaseModel):
     phone: Optional[str] = None
     status: str
     last_login: Optional[datetime] = None
+    signature_title: Optional[str] = None
+    has_signature: bool = False
+
+
+class SignatureIn(BaseModel):
+    """Signature image as a data URL (image/png or image/jpeg), stored on the user profile."""
+
+    signature_image: Optional[str] = None
+    signature_title: Optional[str] = None
 
 
 class UserListResponse(BaseModel):
@@ -108,7 +120,7 @@ async def list_users(
     manager_id: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
-    user: dict = Depends(require_roles(SUPER_ADMIN, SALES_MANAGER)),
+    user: dict = Depends(require_roles(SUPER_ADMIN)),
 ):
     query: dict = {}
     query.update(search_clause(search, ["name", "email", "user_id"]))
@@ -118,13 +130,29 @@ async def list_users(
         query["status"] = status
     if manager_id:
         query["manager_id"] = manager_id
-    if user["role"] == SALES_MANAGER:
-        ids = await visible_sales_ids(user)
-        query["user_id"] = {"$in": ids or []}
     result = await paginate(
         db.users, query, page, page_size, LIST_PROJECTION, sort_spec(sort_by, sort_dir, SORTABLE, "created_date")
     )
     return UserListResponse(**result)
+
+
+@router.put("/me/signature", response_model=UserRow)
+async def save_my_signature(payload: SignatureIn, user: dict = Depends(current_user)):
+    """Each user stores their own signature; it is stamped onto quotations they own."""
+    if payload.signature_image and not payload.signature_image.startswith("data:image/"):
+        raise HTTPException(status_code=400, detail="Format tanda tangan harus berupa gambar")
+    if payload.signature_image and len(payload.signature_image) > 400_000:
+        raise HTTPException(status_code=400, detail="Ukuran gambar tanda tangan maksimal ±300KB")
+    updates = payload.model_dump(exclude_unset=True)
+    updates["updated_date"] = datetime.now(timezone.utc)
+    await db.users.update_one({"user_id": user["user_id"]}, {"$set": updates})
+    await write_audit(user, "UPDATE", "User", user["user_id"], "signature", "updated")
+    fresh = await db.users.find_one({"user_id": user["user_id"]}, {"_id": 0, "password_hash": 0})
+    assert fresh is not None
+    return UserRow(
+        **{k: v for k, v in fresh.items() if k in UserRow.model_fields and k != "has_signature"},
+        has_signature=bool(fresh.get("signature_image")),
+    )
 
 
 @router.post("", response_model=UserRow)

@@ -31,6 +31,7 @@ type ItemForm = { product_id: string; description: string; qty: string; unit: st
 
 type FormState = {
   po_id?: string;
+  po_number: string;
   customer_id: string;
   quotation_id: string;
   sales_id: string;
@@ -45,6 +46,7 @@ type FormState = {
 
 const EMPTY_ITEM: ItemForm = { product_id: "", description: "", qty: "1", unit: "Unit", unit_price: "0" };
 const EMPTY: FormState = {
+  po_number: "",
   customer_id: "",
   quotation_id: "",
   sales_id: "",
@@ -106,6 +108,7 @@ export default function PurchaseOrders() {
   const save = useMutation({
     mutationFn: (f: FormState) => {
       const body = {
+        po_number: f.po_number.trim(),
         customer_id: f.customer_id,
         quotation_id: f.quotation_id || undefined,
         sales_id: f.sales_id || undefined,
@@ -159,6 +162,7 @@ export default function PurchaseOrders() {
     const d = await apiGet<PODetail>(`/purchase-orders/${id}`);
     setForm({
       po_id: d.po_id,
+      po_number: d.po_number,
       customer_id: d.customer_id,
       quotation_id: d.quotation_id ?? "",
       sales_id: d.sales_id ?? "",
@@ -184,7 +188,10 @@ export default function PurchaseOrders() {
 
   return (
     <div>
-      <PageHeader title="Purchase Orders" subtitle="Terhubung ke quotation, customer, dan sales lewat ID yang sama">
+      <PageHeader
+        title="Purchase Order Customer"
+        subtitle="PO yang DITERIMA dari customer — nomor PO diambil dari dokumen customer, bukan dibuat sistem"
+      >
         <Button
           variant="outline"
           onClick={() => exportCsv("purchase-orders.csv", rows as unknown as Record<string, unknown>[])}
@@ -199,7 +206,7 @@ export default function PurchaseOrders() {
           }}
           data-testid="btn-add-po"
         >
-          <Plus className="mr-2 h-4 w-4" /> Buat PO
+          <Plus className="mr-2 h-4 w-4" /> Input PO Customer
         </Button>
       </PageHeader>
 
@@ -241,7 +248,7 @@ export default function PurchaseOrders() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nomor PO</TableHead>
+              <TableHead>No PO Customer</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead>Customer</TableHead>
               <TableHead>Quotation</TableHead>
@@ -324,9 +331,27 @@ export default function PurchaseOrders() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{form.po_id ? "Edit Purchase Order" : "Buat Purchase Order"}</DialogTitle>
+            <DialogTitle>
+              {form.po_id ? "Edit PO Customer" : "Input Purchase Order dari Customer"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Label htmlFor="po-number">
+                No PO Customer <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="po-number"
+                value={form.po_number}
+                onChange={(e) => setForm({ ...form, po_number: e.target.value })}
+                placeholder="Tulis persis seperti pada dokumen PO customer, mis. PO/ELSI/2026/0088"
+                className="mt-1.5 font-mono"
+                data-testid="input-po-number"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Nomor ini berasal dari customer — sistem tidak membuat nomor PO sendiri.
+              </p>
+            </div>
             <div>
               <Label htmlFor="po-cust">Customer</Label>
               <select
@@ -544,10 +569,10 @@ export default function PurchaseOrders() {
             </Button>
             <Button
               onClick={() => save.mutate(form)}
-              disabled={!form.customer_id || save.isPending}
+              disabled={!form.customer_id || !form.po_number.trim() || save.isPending}
               data-testid="btn-save-po"
             >
-              {save.isPending ? "Menyimpan..." : "Simpan PO"}
+              {save.isPending ? "Menyimpan..." : "Simpan PO Customer"}
             </Button>
           </DialogFooter>
         </DialogContent>

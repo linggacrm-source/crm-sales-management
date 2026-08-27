@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from lib.auth import SALES, current_user, scope_filter, write_audit
 from lib.dates import today_iso
 from lib.db import db
-from lib.ids import next_code, next_yearly_code
+from lib.ids import next_code
 from lib.query import paginate, search_clause, sort_spec
 
 router = APIRouter(prefix="/purchase-orders", tags=["purchase-orders"])
@@ -44,6 +44,9 @@ class POItem(POItemIn):
 
 
 class POIn(BaseModel):
+    """A purchase order RECEIVED FROM the customer — po_number is the customer's own number."""
+
+    po_number: str
     customer_id: str
     quotation_id: Optional[str] = None
     sales_id: Optional[str] = None
@@ -51,7 +54,7 @@ class POIn(BaseModel):
     delivery_address: Optional[str] = None
     payment_term: Optional[str] = None
     notes: Optional[str] = None
-    status: str = "Draft"
+    status: str = "Received"
     document_name: Optional[str] = None
     items: list[POItemIn] = []
 
@@ -140,11 +143,26 @@ async def get_po(po_id: str, user: dict = Depends(current_user)):
     return PODetail(**doc)
 
 
+async def _assert_po_number_free(customer_id: str, po_number: str, exclude_po_id: str | None = None) -> None:
+    """The customer's PO number must be unique within that customer."""
+    query: dict = {"customer_id": customer_id, "po_number": po_number}
+    if exclude_po_id:
+        query["po_id"] = {"$ne": exclude_po_id}
+    if await db.purchase_orders.find_one(query, {"_id": 1}):
+        raise HTTPException(
+            status_code=400, detail=f"Nomor PO '{po_number}' sudah terdaftar untuk customer ini"
+        )
+
+
 @router.post("", response_model=PODetail)
 async def create_po(payload: POIn, user: dict = Depends(current_user)):
     cust = await db.customers.find_one({"customer_id": payload.customer_id}, {"_id": 0, "customer_name": 1})
     if not cust:
         raise HTTPException(status_code=400, detail="Customer tidak ditemukan")
+    po_number = payload.po_number.strip()
+    if not po_number:
+        raise HTTPException(status_code=400, detail="Nomor PO customer wajib diisi")
+    await _assert_po_number_free(payload.customer_id, po_number)
     sales_id = user["user_id"] if user["role"] == SALES else (payload.sales_id or user["user_id"])
     sales = await db.users.find_one({"user_id": sales_id}, {"_id": 0, "name": 1})
     quotation_number = None
@@ -157,7 +175,7 @@ async def create_po(payload: POIn, user: dict = Depends(current_user)):
     doc.update(
         {
             "po_id": await next_code("POR"),
-            "po_number": await next_yearly_code("PO"),
+            "po_number": po_number,
             "po_date": payload.po_date or today_iso(),
             "customer_name": cust["customer_name"],
             "quotation_number": quotation_number,
@@ -180,16 +198,24 @@ async def update_po(po_id: str, payload: POIn, user: dict = Depends(current_user
     existing = await db.purchase_orders.find_one({"po_id": po_id, **scope}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Purchase Order tidak ditemukan")
+    po_number = payload.po_number.strip()
+    if not po_number:
+        raise HTTPException(status_code=400, detail="Nomor PO customer wajib diisi")
+    await _assert_po_number_free(payload.customer_id, po_number, exclude_po_id=po_id)
     items, total = _build_items(payload.items)
     updates = payload.model_dump()
-    updates.update({"items": items, "po_value": total, "updated_date": datetime.now(timezone.utc)})
+    updates.update(
+        {"po_number": po_number, "items": items, "po_value": total, "updated_date": datetime.now(timezone.utc)}
+    )
     if user["role"] == SALES:
         updates.pop("sales_id", None)
     cust = await db.customers.find_one({"customer_id": payload.customer_id}, {"_id": 0, "customer_name": 1})
     updates["customer_name"] = cust["customer_name"] if cust else existing.get("customer_name")
+    if payload.quotation_id:
+        qt = await db.quotations.find_one({"quotation_id": payload.quotation_id}, {"_id": 0, "quotation_number": 1})
+        updates["quotation_number"] = qt["quotation_number"] if qt else None
     await db.purchase_orders.update_one({"po_id": po_id}, {"$set": updates})
-    await write_audit(user, "UPDATE", "PO", existing.get("po_number", po_id),
-                      existing.get("po_value"), total)
+    await write_audit(user, "UPDATE", "PO", existing.get("po_number", po_id), existing.get("po_value"), total)
     return PODetail(**{**existing, **updates})
 
 

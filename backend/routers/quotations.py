@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from lib.auth import SALES, current_user, scope_filter, write_audit
 from lib.dates import today_iso
 from lib.db import db
-from lib.ids import next_code, next_yearly_code
+from lib.ids import next_code, next_quotation_number, sales_initial
 from lib.query import paginate, search_clause, sort_spec
 
 router = APIRouter(prefix="/quotations", tags=["quotations"])
@@ -86,6 +86,14 @@ class QuotationDetail(QuotationRow):
     tax_percent: float = 11
     tax: float = 0
     items: list[QuotationItem] = []
+    # customer contact snapshot + signature, resolved for the printable document
+    customer_company: Optional[str] = None
+    customer_pic_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    signature_image: Optional[str] = None
+    signature_name: Optional[str] = None
+    signature_title: Optional[str] = None
 
 
 class QuotationListResponse(BaseModel):
@@ -98,6 +106,13 @@ class QuotationListResponse(BaseModel):
 class ConvertResponse(BaseModel):
     po_id: str
     po_number: str
+
+
+class ConvertRequest(BaseModel):
+    """The customer's own PO number/date — this CRM records the PO it receives."""
+
+    po_number: str
+    po_date: Optional[str] = None
 
 
 def _compute(items: list[QuotationItemIn], discount: float, tax_percent: float) -> dict:
@@ -150,7 +165,30 @@ async def get_quotation(quotation_id: str, user: dict = Depends(current_user)):
     doc = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    return QuotationDetail(**doc)
+    return QuotationDetail(**await _decorate(doc))
+
+
+async def _decorate(doc: dict) -> dict:
+    """Attach the customer contact block and the sales user's saved digital signature."""
+    cust = await db.customers.find_one(
+        {"customer_id": doc.get("customer_id")},
+        {"_id": 0, "company": 1, "pic_name": 1, "email": 1, "phone": 1},
+    )
+    signer = await db.users.find_one(
+        {"user_id": doc.get("sales_id")},
+        {"_id": 0, "name": 1, "role": 1, "signature_image": 1, "signature_title": 1},
+    )
+    return {
+        **doc,
+        "customer_company": (cust or {}).get("company"),
+        "customer_pic_name": (cust or {}).get("pic_name"),
+        "customer_email": (cust or {}).get("email"),
+        "customer_phone": (cust or {}).get("phone"),
+        "signature_image": (signer or {}).get("signature_image"),
+        "signature_name": (signer or {}).get("name"),
+        "signature_title": (signer or {}).get("signature_title") or (signer or {}).get("role"),
+    }
+
 
 
 @router.post("", response_model=QuotationDetail)
@@ -167,7 +205,7 @@ async def create_quotation(payload: QuotationIn, user: dict = Depends(current_us
     doc.update(
         {
             "quotation_id": await next_code("QTN"),
-            "quotation_number": await next_yearly_code("QT"),
+            "quotation_number": await next_quotation_number(sales["name"] if sales else None),
             "quotation_date": payload.quotation_date or today_iso(),
             "sales_id": sales_id,
             "sales_name": sales["name"] if sales else None,
@@ -178,7 +216,7 @@ async def create_quotation(payload: QuotationIn, user: dict = Depends(current_us
     )
     await db.quotations.insert_one(dict(doc))
     await write_audit(user, "CREATE", "Quotation", doc["quotation_number"], None, doc["grand_total"])
-    return QuotationDetail(**doc)
+    return QuotationDetail(**await _decorate(doc))
 
 
 @router.put("/{quotation_id}", response_model=QuotationDetail)
@@ -197,7 +235,7 @@ async def update_quotation(quotation_id: str, payload: QuotationIn, user: dict =
     await db.quotations.update_one({"quotation_id": quotation_id}, {"$set": updates})
     await write_audit(user, "UPDATE", "Quotation", existing.get("quotation_number", quotation_id),
                       existing.get("grand_total"), updates.get("grand_total"))
-    return QuotationDetail(**{**existing, **updates})
+    return QuotationDetail(**await _decorate({**existing, **updates}))
 
 
 @router.patch("/{quotation_id}/status", response_model=QuotationDetail)
@@ -212,7 +250,7 @@ async def change_status(quotation_id: str, payload: StatusChange, user: dict = D
     await db.quotations.update_one({"quotation_id": quotation_id}, {"$set": updates})
     await write_audit(user, "UPDATE", "Quotation", existing.get("quotation_number", quotation_id),
                       f"Status: {existing.get('status')}", f"Status: {payload.status}")
-    return QuotationDetail(**{**existing, **updates})
+    return QuotationDetail(**await _decorate({**existing, **updates}))
 
 
 @router.post("/{quotation_id}/duplicate", response_model=QuotationDetail)
@@ -225,7 +263,7 @@ async def duplicate_quotation(quotation_id: str, user: dict = Depends(current_us
     doc = {
         **src,
         "quotation_id": await next_code("QTN"),
-        "quotation_number": await next_yearly_code("QT"),
+        "quotation_number": await next_quotation_number(src.get("sales_name")),
         "status": "Draft",
         "quotation_date": today_iso(),
         "created_date": now,
@@ -233,18 +271,31 @@ async def duplicate_quotation(quotation_id: str, user: dict = Depends(current_us
     }
     await db.quotations.insert_one(dict(doc))
     await write_audit(user, "DUPLICATE", "Quotation", doc["quotation_number"], quotation_id, doc["quotation_id"])
-    return QuotationDetail(**doc)
+    return QuotationDetail(**await _decorate(doc))
 
 
 @router.post("/{quotation_id}/convert-to-po", response_model=ConvertResponse)
-async def convert_to_po(quotation_id: str, user: dict = Depends(current_user)):
-    """Reuses the quotation's customer_id and sales_id — never creates new master records."""
+async def convert_to_po(quotation_id: str, payload: ConvertRequest, user: dict = Depends(current_user)):
+    """Records the customer's PO against this quotation.
+
+    Reuses the quotation's customer_id / sales_id / product_ids — never creates new master records.
+    The PO number is the number printed on the CUSTOMER's own purchase order document.
+    """
     scope = await scope_filter(user)
     qt = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
     if not qt:
         raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
     if qt.get("status") == "Converted":
         raise HTTPException(status_code=400, detail="Quotation ini sudah dikonversi menjadi PO")
+    po_number = (payload.po_number or "").strip()
+    if not po_number:
+        raise HTTPException(status_code=400, detail="Nomor PO customer wajib diisi")
+    if await db.purchase_orders.find_one(
+        {"customer_id": qt["customer_id"], "po_number": po_number}, {"_id": 1}
+    ):
+        raise HTTPException(
+            status_code=400, detail=f"Nomor PO '{po_number}' sudah terdaftar untuk customer ini"
+        )
     now = datetime.now(timezone.utc)
     po_items = [
         {
@@ -260,8 +311,8 @@ async def convert_to_po(quotation_id: str, user: dict = Depends(current_user)):
     ]
     po = {
         "po_id": await next_code("POR"),
-        "po_number": await next_yearly_code("PO"),
-        "po_date": today_iso(),
+        "po_number": po_number,
+        "po_date": payload.po_date or today_iso(),
         "customer_id": qt["customer_id"],
         "customer_name": qt.get("customer_name"),
         "quotation_id": qt["quotation_id"],
@@ -271,7 +322,7 @@ async def convert_to_po(quotation_id: str, user: dict = Depends(current_user)):
         "po_value": qt.get("grand_total", 0),
         "delivery_address": None,
         "payment_term": qt.get("payment_term"),
-        "notes": f"Dikonversi dari {qt.get('quotation_number')}",
+        "notes": f"PO customer atas quotation {qt.get('quotation_number')}",
         "status": "Received",
         "items": po_items,
         "document_name": None,

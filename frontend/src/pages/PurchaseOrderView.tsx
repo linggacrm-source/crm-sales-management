@@ -50,8 +50,8 @@ export default function PurchaseOrderView() {
       </Link>
 
       <PageHeader
-        title={isLoading ? "Memuat PO..." : (data?.po_number ?? poId)}
-        subtitle={isError ? "PO belum dapat dimuat." : `Customer: ${data?.customer_name ?? "-"}`}
+        title={isLoading ? "Memuat PO..." : `PO Customer ${data?.po_number ?? poId}`}
+        subtitle={isError ? "PO belum dapat dimuat." : `Diterima dari: ${data?.customer_name ?? "-"}`}
       >
         {data && <StatusBadge value={data.status} testId="po-status-badge" />}
         <Button variant="outline" onClick={() => window.print()} data-testid="btn-print-po">
@@ -74,8 +74,8 @@ export default function PurchaseOrderView() {
       <Card className="print-area p-6" data-testid="po-document">
         <div className="grid gap-4 border-b border-border pb-5 sm:grid-cols-4">
           {[
-            ["Nomor PO", data?.po_number ?? "-"],
-            ["Tanggal", formatDate(data?.po_date)],
+            ["No PO Customer", data?.po_number ?? "-"],
+            ["Tanggal PO", formatDate(data?.po_date)],
             ["Quotation", data?.quotation_number ?? "-"],
             ["Sales", data?.sales_name ?? "-"],
             ["Payment Term", data?.payment_term ?? "-"],

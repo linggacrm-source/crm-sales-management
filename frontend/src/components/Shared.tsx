@@ -285,4 +285,16 @@ export function SectionCard({
   );
 }
 
+export function AccessDenied({ testId = "access-denied" }: { testId?: string }) {
+  return (
+    <Card className="p-12 text-center" data-testid={testId}>
+      <AlertCircle className="mx-auto mb-3 h-10 w-10 text-destructive/70" />
+      <h2 className="text-lg font-semibold">Akses ditolak</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Modul ini hanya dapat diakses oleh Super Admin. Data tetap dilindungi di sisi server.
+      </p>
+    </Card>
+  );
+}
+
 export { Badge };

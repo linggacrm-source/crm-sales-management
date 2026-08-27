@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -74,16 +75,15 @@ class ActivitySummary(BaseModel):
 async def activity_summary(user: dict = Depends(current_user)):
     scope = await scope_filter(user)
     today = today_iso()
-    return ActivitySummary(
-        today=await db.activities.count_documents({**scope, "activity_date": today}),
-        upcoming=await db.activities.count_documents(
-            {**scope, "status": "Open", "next_followup": {"$gt": today}}
-        ),
-        overdue=await db.activities.count_documents(
+    today_count, upcoming, overdue, completed = await asyncio.gather(
+        db.activities.count_documents({**scope, "activity_date": today}),
+        db.activities.count_documents({**scope, "status": "Open", "next_followup": {"$gt": today}}),
+        db.activities.count_documents(
             {**scope, "status": "Open", "next_followup": {"$lt": today, "$ne": None}}
         ),
-        completed=await db.activities.count_documents({**scope, "status": "Completed"}),
+        db.activities.count_documents({**scope, "status": "Completed"}),
     )
+    return ActivitySummary(today=today_count, upcoming=upcoming, overdue=overdue, completed=completed)
 
 
 @router.get("", response_model=ActivityListResponse)

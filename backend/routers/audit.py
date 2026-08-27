@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from lib.auth import SALES_MANAGER, SUPER_ADMIN, require_roles
+from lib.auth import SUPER_ADMIN, require_roles
 from lib.db import db
 from lib.query import paginate, search_clause
 
@@ -48,7 +48,7 @@ async def list_audit(
     search: Optional[str] = None,
     module: Optional[str] = None,
     action: Optional[str] = None,
-    _: dict = Depends(require_roles(SUPER_ADMIN, SALES_MANAGER)),
+    _: dict = Depends(require_roles(SUPER_ADMIN)),
 ):
     query: dict = {}
     query.update(search_clause(search, ["user_name", "record_id", "module", "action"]))

@@ -16,6 +16,8 @@ export interface Me {
   phone?: string | null;
   status: string;
   must_change_password?: boolean;
+  signature_image?: string | null;
+  signature_title?: string | null;
 }
 
 export interface UserRow {
@@ -28,6 +30,8 @@ export interface UserRow {
   phone?: string | null;
   status: string;
   last_login?: string | null;
+  signature_title?: string | null;
+  has_signature?: boolean;
 }
 
 export interface SalesOption {
@@ -143,6 +147,13 @@ export interface QuotationDetail extends QuotationRow {
   tax_percent: number;
   tax: number;
   items: QuotationItem[];
+  customer_company?: string | null;
+  customer_pic_name?: string | null;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  signature_image?: string | null;
+  signature_name?: string | null;
+  signature_title?: string | null;
 }
 
 export interface POItem {

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -158,27 +159,27 @@ async def pipeline_kanban(
     limit_per_stage: int = 15,
     user: dict = Depends(current_user),
 ):
-    """Bounded per-stage fetch — never the whole board."""
+    """Bounded per-stage fetch — never the whole board. All stages queried concurrently."""
     base = await _build_query(user, search, None, sales_id, customer_id)
-    columns: list[KanbanColumn] = []
-    for stage in STAGES:
+    per_stage = min(limit_per_stage, 50)
+
+    async def column(stage: str) -> KanbanColumn:
         query = {**base, "stage": stage}
-        count = await db.opportunities.count_documents(query)
-        agg = await db.opportunities.aggregate(
-            [{"$match": query}, {"$group": {"_id": None, "value": {"$sum": "$value"}}}]
-        ).to_list(1)
-        items = await db.opportunities.find(query, LIST_PROJECTION).sort(
-            [("value", -1)]
-        ).limit(min(limit_per_stage, 50)).to_list(50)
-        columns.append(
-            KanbanColumn(
-                stage=stage,
-                count=count,
-                value=agg[0]["value"] if agg else 0,
-                items=[OpportunityRow(**i) for i in items],
-            )
+        count, agg, items = await asyncio.gather(
+            db.opportunities.count_documents(query),
+            db.opportunities.aggregate(
+                [{"$match": query}, {"$group": {"_id": None, "value": {"$sum": "$value"}}}]
+            ).to_list(1),
+            db.opportunities.find(query, LIST_PROJECTION).sort([("value", -1)]).limit(per_stage).to_list(per_stage),
         )
-    return columns
+        return KanbanColumn(
+            stage=stage,
+            count=count,
+            value=agg[0]["value"] if agg else 0,
+            items=[OpportunityRow(**i) for i in items],
+        )
+
+    return list(await asyncio.gather(*(column(s) for s in STAGES)))
 
 
 @router.get("/{opportunity_id}", response_model=OpportunityRow)

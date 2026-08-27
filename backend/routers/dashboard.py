@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -89,26 +90,53 @@ async def dashboard(
         base["customer_id"] = customer_id
 
     opp_open = {**base, "stage": stage} if stage else {**base, "stage": {"$in": OPEN_STAGES}}
-    kpi = DashboardKPI(
-        total_customers=await db.customers.count_documents({**base, "status": "Active"}),
-        open_pipeline=await _sum(db.opportunities, opp_open, "value"),
-        weighted_pipeline=await _sum(db.opportunities, opp_open, "weighted_value"),
-        won_value=await _sum(db.opportunities, {**base, "stage": "Won"}, "value"),
-        total_quotations=await db.quotations.count_documents(base),
-        total_po=await db.purchase_orders.count_documents(base),
-        po_value=await _sum(db.purchase_orders, base, "po_value"),
-        activities=await db.activities.count_documents(base),
-        open_orders=await db.order_monitoring.count_documents(
-            {**base, "status": {"$nin": ["Completed", "Cancelled"]}}
+    today = today_iso()
+
+    # All 11 KPI queries are independent → fire them concurrently instead of awaiting in series.
+    (
+        total_customers,
+        open_pipeline,
+        weighted_pipeline,
+        won_value,
+        total_quotations,
+        total_po,
+        po_value,
+        activities,
+        open_orders,
+        completed_orders,
+        overdue_orders,
+        agg,
+    ) = await asyncio.gather(
+        db.customers.count_documents({**base, "status": "Active"}),
+        _sum(db.opportunities, opp_open, "value"),
+        _sum(db.opportunities, opp_open, "weighted_value"),
+        _sum(db.opportunities, {**base, "stage": "Won"}, "value"),
+        db.quotations.count_documents(base),
+        db.purchase_orders.count_documents(base),
+        _sum(db.purchase_orders, base, "po_value"),
+        db.activities.count_documents(base),
+        db.order_monitoring.count_documents({**base, "status": {"$nin": ["Completed", "Cancelled"]}}),
+        db.order_monitoring.count_documents({**base, "status": "Completed"}),
+        db.order_monitoring.count_documents(
+            {**base, "status": {"$nin": ["Completed", "Cancelled"]}, "eta": {"$lt": today, "$ne": None}}
         ),
-        completed_orders=await db.order_monitoring.count_documents({**base, "status": "Completed"}),
-        overdue_orders=await db.order_monitoring.count_documents(
-            {**base, "status": {"$nin": ["Completed", "Cancelled"]}, "eta": {"$lt": today_iso(), "$ne": None}}
-        ),
+        db.opportunities.aggregate(
+            [{"$match": base}, {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"}}}]
+        ).to_list(20),
     )
-    agg = await db.opportunities.aggregate(
-        [{"$match": base}, {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"}}}]
-    ).to_list(20)
+    kpi = DashboardKPI(
+        total_customers=total_customers,
+        open_pipeline=open_pipeline,
+        weighted_pipeline=weighted_pipeline,
+        won_value=won_value,
+        total_quotations=total_quotations,
+        total_po=total_po,
+        po_value=po_value,
+        activities=activities,
+        open_orders=open_orders,
+        completed_orders=completed_orders,
+        overdue_orders=overdue_orders,
+    )
     by_stage = {r["_id"]: r for r in agg}
     bars = [
         StageBar(
@@ -143,16 +171,18 @@ async def sales_team(user: dict = Depends(current_user)):
         rows = await collection.aggregate([{"$match": {**match, **extra}}, {"$group": stage}]).to_list(500)
         return {r["_id"]: r for r in rows}
 
-    open_pipe = await group(db.opportunities, {"stage": {"$in": OPEN_STAGES}}, "value")
-    weighted = await group(db.opportunities, {"stage": {"$in": OPEN_STAGES}}, "weighted_value")
-    won = await group(db.opportunities, {"stage": "Won"}, "value")
-    qt = await group(db.quotations, {})
-    po = await group(db.purchase_orders, {}, "po_value")
-    acts = await group(db.activities, {})
-    indent = await group(db.order_monitoring, {"status": "Indent"})
-    overdue = await group(
-        db.order_monitoring,
-        {"status": {"$nin": ["Completed", "Cancelled"]}, "eta": {"$lt": today_iso(), "$ne": None}},
+    open_pipe, weighted, won, qt, po, acts, indent, overdue = await asyncio.gather(
+        group(db.opportunities, {"stage": {"$in": OPEN_STAGES}}, "value"),
+        group(db.opportunities, {"stage": {"$in": OPEN_STAGES}}, "weighted_value"),
+        group(db.opportunities, {"stage": "Won"}, "value"),
+        group(db.quotations, {}),
+        group(db.purchase_orders, {}, "po_value"),
+        group(db.activities, {}),
+        group(db.order_monitoring, {"status": "Indent"}),
+        group(
+            db.order_monitoring,
+            {"status": {"$nin": ["Completed", "Cancelled"]}, "eta": {"$lt": today_iso(), "$ne": None}},
+        ),
     )
 
     out: list[SalesKPIRow] = []

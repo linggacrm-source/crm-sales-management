@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
+  AccessDenied,
   EmptyRow,
   ErrorRow,
   FilterSelect,
@@ -70,6 +71,7 @@ export default function Users() {
     queryKey: ["users", qs],
     queryFn: () => apiGet<Paginated<UserRow>>(`/users?${qs}`),
     placeholderData: (prev) => prev,
+    enabled: isAdmin,
   });
 
   const { data: options } = useQuery<SalesOption[]>({
@@ -124,6 +126,15 @@ export default function Users() {
 
   const rows = isError ? [] : (data?.data ?? []);
   const managers = (options ?? []).filter((o) => o.role !== "SALES");
+
+  if (!isAdmin) {
+    return (
+      <div>
+        <PageHeader title="Kelola Pengguna" />
+        <AccessDenied testId="users-access-denied" />
+      </div>
+    );
+  }
 
   return (
     <div>
