@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Printer, ShoppingBag } from "lucide-react";
 import QRCode from "qrcode";
-import html2pdf from "html2pdf.js";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -61,61 +62,126 @@ export default function QuotationView() {
     try {
       toast.loading("Membuat PDF...", { id: "quotation-pdf" });
 
-      // Simpan kondisi asli elemen
-      const originalWidth = element.style.width;
-      const originalMaxWidth = element.style.maxWidth;
-      const originalMargin = element.style.margin;
-      const originalBoxSizing = element.style.boxSizing;
+      // Simpan kondisi scroll agar halaman tidak berubah setelah proses selesai.
+      const originalScrollY = window.scrollY;
 
-      // Ukuran dokumen A4 yang stabil untuk html2canvas
-      element.style.width = "794px";
-      element.style.maxWidth = "794px";
-      element.style.margin = "0 auto";
-      element.style.boxSizing = "border-box";
+      // Pastikan gambar/logo sudah selesai dimuat.
+      const images = Array.from(element.querySelectorAll("img"));
 
-      // Beri browser waktu menyelesaikan layout sebelum capture
-      await new Promise<void>((resolve) => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => resolve());
-        });
+      await Promise.all(
+        images.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) {
+                resolve();
+                return;
+              }
+
+              img.onload = () => resolve();
+              img.onerror = () => resolve();
+            }),
+        ),
+      );
+
+      // Render dokumen quotation yang sedang tampil.
+      const canvas = await html2canvas(element, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        logging: false,
+        imageTimeout: 10000,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
       });
+
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+        compress: true,
+      });
+
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      const margin = 10;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
+
+      const imageWidth = contentWidth;
+      const imageHeight = (canvas.height * imageWidth) / canvas.width;
+
+      let renderedHeight = 0;
+      let pageNumber = 0;
+
+      while (renderedHeight < imageHeight) {
+        if (pageNumber > 0) {
+          pdf.addPage();
+        }
+
+        const sourceY = Math.floor(
+          (renderedHeight / imageHeight) * canvas.height,
+        );
+
+        const sourceHeight = Math.min(
+          Math.floor(
+            (contentHeight / imageHeight) * canvas.height,
+          ),
+          canvas.height - sourceY,
+        );
+
+        const pageCanvas = document.createElement("canvas");
+
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+
+        const ctx = pageCanvas.getContext("2d");
+
+        if (!ctx) {
+          throw new Error("Canvas context tidak tersedia.");
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+
+        ctx.drawImage(
+          canvas,
+          0,
+          sourceY,
+          canvas.width,
+          sourceHeight,
+          0,
+          0,
+          pageCanvas.width,
+          sourceHeight,
+        );
+
+        const pageImage = pageCanvas.toDataURL("image/jpeg", 0.95);
+
+        const renderedPageHeight =
+          (sourceHeight * imageWidth) / canvas.width;
+
+        pdf.addImage(
+          pageImage,
+          "JPEG",
+          margin,
+          margin,
+          imageWidth,
+          renderedPageHeight,
+        );
+
+        renderedHeight += contentHeight;
+        pageNumber++;
+      }
 
       const quotationNumber =
         data?.quotation_number?.replace(/[^a-zA-Z0-9-_]/g, "_") ||
         "quotation";
 
-      await html2pdf()
-        .set({
-          margin: [8, 8, 8, 8] as [number, number, number, number],
-          filename: `${quotationNumber}.pdf`,
-          image: {
-            type: "jpeg" as const,
-            quality: 0.98,
-          },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: "#ffffff",
-            logging: false,
-            scrollX: 0,
-            scrollY: 0,
-            windowWidth: 794,
-          },
-          jsPDF: {
-            unit: "mm" as const,
-            format: "a4" as const,
-            orientation: "portrait" as const,
-          },
-          })
-        .from(element)
-        .save();
+      pdf.save(`${quotationNumber}.pdf`);
 
-      // Kembalikan style asli
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
-      element.style.margin = originalMargin;
-      element.style.boxSizing = originalBoxSizing;
+      window.scrollTo(0, originalScrollY);
 
       toast.success("PDF quotation berhasil dibuat", {
         id: "quotation-pdf",
@@ -123,9 +189,12 @@ export default function QuotationView() {
     } catch (error) {
       console.error("PDF generation error:", error);
 
-      toast.error("Gagal membuat PDF quotation", {
-        id: "quotation-pdf",
-      });
+      toast.error(
+        "Gagal membuat PDF quotation. Silakan coba lagi.",
+        {
+          id: "quotation-pdf",
+        },
+      );
     }
   };
 
