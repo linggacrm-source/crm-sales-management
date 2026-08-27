@@ -65,17 +65,8 @@ async def root():
     return {"message": "CRM Sales Management API", "status": "ok"}
 
 
-api_router.include_router(auth.router)
-api_router.include_router(users.router)
-api_router.include_router(customers.router)
-api_router.include_router(products.router)
-api_router.include_router(pipeline.router)
-api_router.include_router(quotations.router)
-api_router.include_router(purchase_orders.router)
-api_router.include_router(order_monitoring.router)
-api_router.include_router(activities.router)
-api_router.include_router(audit.router)
-api_router.include_router(dashboard.router)
+
+# Quotation routes
 
 app.add_middleware(
     CORSMiddleware,
@@ -91,7 +82,18 @@ logging.basicConfig(
 )
 
 # Register API routes first.
-app.include_router(api_router)
+# Register application routers directly under /api.
+app.include_router(auth.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
+app.include_router(customers.router, prefix="/api")
+app.include_router(products.router, prefix="/api")
+app.include_router(pipeline.router, prefix="/api")
+app.include_router(quotations.router, prefix="/api")
+app.include_router(purchase_orders.router, prefix="/api")
+app.include_router(order_monitoring.router, prefix="/api")
+app.include_router(activities.router, prefix="/api")
+app.include_router(audit.router, prefix="/api")
+app.include_router(dashboard.router, prefix="/api")
 
 # Serve the React production build from the same Railway service.
 # API routes stay under /api; all other unknown paths fall back to index.html

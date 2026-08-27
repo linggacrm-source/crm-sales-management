@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Printer, ShoppingBag } from "lucide-react";
 import QRCode from "qrcode";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -52,145 +50,78 @@ export default function QuotationView() {
   });
 
   const handleDownloadPDF = async () => {
-    const element = document.querySelector(".quotation-document") as HTMLElement | null;
-
-    if (!element) {
-      toast.error("Dokumen quotation tidak ditemukan");
+    if (!data?.quotation_id) {
+      toast.error("Quotation tidak ditemukan");
       return;
     }
 
     try {
       toast.loading("Membuat PDF...", { id: "quotation-pdf" });
 
-      // Simpan kondisi scroll agar halaman tidak berubah setelah proses selesai.
-      const originalScrollY = window.scrollY;
-
-      // Pastikan gambar/logo sudah selesai dimuat.
-      const images = Array.from(element.querySelectorAll("img"));
-
-      await Promise.all(
-        images.map(
-          (img) =>
-            new Promise<void>((resolve) => {
-              if (img.complete) {
-                resolve();
-                return;
-              }
-
-              img.onload = () => resolve();
-              img.onerror = () => resolve();
-            }),
-        ),
+      const response = await fetch(
+        `/api/quotations/${encodeURIComponent(data.quotation_id)}/pdf`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
       );
 
-      // Render dokumen quotation yang sedang tampil.
-      const canvas = await html2canvas(element, {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-        imageTimeout: 10000,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-      });
+      if (!response.ok) {
+        let message = `Gagal membuat PDF (${response.status})`;
 
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const pageWidth = 210;
-      const pageHeight = 297;
-
-      const margin = 10;
-      const contentWidth = pageWidth - margin * 2;
-      const contentHeight = pageHeight - margin * 2;
-
-      const imageWidth = contentWidth;
-      const imageHeight = (canvas.height * imageWidth) / canvas.width;
-
-      let renderedHeight = 0;
-      let pageNumber = 0;
-
-      while (renderedHeight < imageHeight) {
-        if (pageNumber > 0) {
-          pdf.addPage();
+        try {
+          const errorData = await response.json();
+          if (errorData?.detail) {
+            message = errorData.detail;
+          }
+        } catch {
+          // Response bukan JSON, gunakan pesan default.
         }
 
-        const sourceY = Math.floor(
-          (renderedHeight / imageHeight) * canvas.height,
+        throw new Error(message);
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+
+      if (!contentType.toLowerCase().includes("application/pdf")) {
+        throw new Error(
+          `Server tidak mengembalikan PDF. Content-Type: ${contentType || "tidak diketahui"}`,
         );
+      }
 
-        const sourceHeight = Math.min(
-          Math.floor(
-            (contentHeight / imageHeight) * canvas.height,
-          ),
-          canvas.height - sourceY,
-        );
+      const blob = await response.blob();
 
-        const pageCanvas = document.createElement("canvas");
-
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sourceHeight;
-
-        const ctx = pageCanvas.getContext("2d");
-
-        if (!ctx) {
-          throw new Error("Canvas context tidak tersedia.");
-        }
-
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-
-        ctx.drawImage(
-          canvas,
-          0,
-          sourceY,
-          canvas.width,
-          sourceHeight,
-          0,
-          0,
-          pageCanvas.width,
-          sourceHeight,
-        );
-
-        const pageImage = pageCanvas.toDataURL("image/jpeg", 0.95);
-
-        const renderedPageHeight =
-          (sourceHeight * imageWidth) / canvas.width;
-
-        pdf.addImage(
-          pageImage,
-          "JPEG",
-          margin,
-          margin,
-          imageWidth,
-          renderedPageHeight,
-        );
-
-        renderedHeight += contentHeight;
-        pageNumber++;
+      if (!blob.size) {
+        throw new Error("File PDF kosong.");
       }
 
       const quotationNumber =
-        data?.quotation_number?.replace(/[^a-zA-Z0-9-_]/g, "_") ||
+        data.quotation_number?.replace(/[^a-zA-Z0-9-_]/g, "_") ||
         "quotation";
 
-      pdf.save(`${quotationNumber}.pdf`);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
 
-      window.scrollTo(0, originalScrollY);
+      link.href = url;
+      link.download = `${quotationNumber}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-      toast.success("PDF quotation berhasil dibuat", {
+      window.setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+
+      toast.success("PDF quotation berhasil diunduh", {
         id: "quotation-pdf",
       });
     } catch (error) {
-      console.error("PDF generation error:", error);
+      console.error("Download quotation PDF failed:", error);
 
       toast.error(
-        "Gagal membuat PDF quotation. Silakan coba lagi.",
+        error instanceof Error
+          ? error.message
+          : "Gagal mengunduh PDF quotation",
         {
           id: "quotation-pdf",
         },
