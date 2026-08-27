@@ -106,20 +106,8 @@ export default function QuotationView() {
             unit: "mm" as const,
             format: "a4" as const,
             orientation: "portrait" as const,
-            compress: true,
           },
-          pagebreak: {
-            mode: ["css", "legacy"] as ("css" | "legacy" | "avoid-all")[],
-            avoid: [
-              ".quotation-items tr",
-              ".quotation-signature",
-              ".quotation-terms",
-              ".quotation-totals",
-              ".quotation-footer",
-              ".quotation-qr",
-            ],
-          },
-        })
+          })
         .from(element)
         .save();
 
