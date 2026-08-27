@@ -533,66 +533,75 @@ async def download_quotation_pdf(
     base_url = str(request.base_url).rstrip("/")
     verification_url = f"{base_url}/quotations/{quotation_id}"
 
-    qr_code = createBarcodeDrawing(
-        "QR",
-        value=verification_url,
-        width=25 * mm,
-        height=25 * mm,
-        barBorder=0,
-    )
+    # ============================================================
+    # DIGITAL APPROVAL
+    # Template mengikuti desain approval internal:
+    #
+    # DIGITALLY APPROVED
+    # Aripin Manager
+    # SALES_MANAGER
+    # ============================================================
 
-    signature_text_style = ParagraphStyle(
-        "DigitalSignatureText",
+    digital_approved_style = ParagraphStyle(
+        "DigitalApproved",
         parent=small,
-        fontSize=7.5,
-        leading=9,
-    )
-
-    signature_name_style = ParagraphStyle(
-        "DigitalSignatureName",
-        parent=normal,
         fontName="Helvetica-Bold",
         fontSize=8.5,
-        leading=10,
+        leading=11,
+        alignment=TA_LEFT,
+        textColor=colors.HexColor("#444444"),
+        spaceAfter=1,
     )
 
-    signature_data = [
-        [
-            qr_code,
-            [
-                Paragraph(
-                    "Ditandatangani secara elektronik oleh:",
-                    signature_text_style,
-                ),
-                Spacer(1, 2 * mm),
-                Paragraph(
-                    str(signature_name),
-                    signature_name_style,
-                ),
-                Paragraph(
-                    str(signature_title),
-                    signature_text_style,
-                ),
-                Paragraph(
-                    company_name,
-                    signature_text_style,
-                ),
-            ],
-        ]
-    ]
+    digital_approved_name_style = ParagraphStyle(
+        "DigitalApprovedName",
+        parent=small,
+        fontName="Helvetica-Bold",
+        fontSize=10,
+        leading=12,
+        alignment=TA_LEFT,
+        textColor=colors.HexColor("#444444"),
+        spaceAfter=1,
+    )
+
+    digital_approved_role_style = ParagraphStyle(
+        "DigitalApprovedRole",
+        parent=small,
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=11,
+        alignment=TA_LEFT,
+        textColor=colors.HexColor("#444444"),
+    )
+
+    signature_data = [[
+        Paragraph(
+            "DIGITALLY APPROVED",
+            digital_approved_style,
+        )
+    ], [
+        Paragraph(
+            str(signature_name),
+            digital_approved_name_style,
+        )
+    ], [
+        Paragraph(
+            str(signature_title),
+            digital_approved_role_style,
+        )
+    ]]
 
     signature_table = Table(
         signature_data,
-        colWidths=[30 * mm, 70 * mm],
+        colWidths=[70 * mm],
         hAlign="RIGHT",
     )
 
     signature_table.setStyle(
         TableStyle(
             [
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("ALIGN", (0, 0), (0, 0), "CENTER"),
-                ("ALIGN", (1, 0), (1, 0), "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -602,6 +611,7 @@ async def download_quotation_pdf(
     )
 
     story.append(signature_table)
+
     story.append(Spacer(1, 5 * mm))
 
     # ============================================================
