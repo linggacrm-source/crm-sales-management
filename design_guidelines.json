@@ -1,0 +1,298 @@
+{
+  "theme_strategy": {
+    "default_mode": "light",
+    "mode_support": "light and dark toggle supported via next-themes and index.css tokens",
+    "archetype": "ARCHETYPE 4: SWISS & HIGH-CONTRAST / ENTERPRISE OPERATIONAL PRO",
+    "vibe": "Ultra-clean, crisp, authoritative B2B Sales Ops & CRM command center with dense data hierarchy, precise geometric spacing, zero clutter, and distinct semantic status encoding."
+  },
+  "typography": {
+    "font_imports": [
+      "@import \"@fontsource-variable/plus-jakarta-sans\";",
+      "@import \"@fontsource-variable/jetbrains-mono\";"
+    ],
+    "font_family": {
+      "heading": "'Plus Jakarta Sans Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "sans": "'Plus Jakarta Sans Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      "mono": "'JetBrains Mono Variable', 'Courier New', monospace"
+    },
+    "scale_px": {
+      "display": 36,
+      "h1": 30,
+      "h2": 24,
+      "h3": 18,
+      "body": 16,
+      "caption": 14
+    },
+    "rules": {
+      "h1": "text-2xl lg:text-3xl font-bold tracking-tight text-foreground",
+      "h2": "text-xl lg:text-2xl font-semibold tracking-tight text-foreground",
+      "h3": "text-base lg:text-lg font-semibold text-foreground",
+      "body": "text-sm leading-relaxed text-foreground",
+      "body_muted": "text-sm text-muted-foreground",
+      "caption": "text-xs font-medium text-muted-foreground uppercase tracking-wider",
+      "numbers_currency": "font-mono font-semibold tracking-tight"
+    }
+  },
+  "colors": {
+    "surfaces": [
+      {
+        "name": "page",
+        "kind": "solid",
+        "bg": "#F8FAFC",
+        "on_bg": "#0F172A",
+        "on_bg_muted": "#475569",
+        "roles": {
+          "link": "#2563EB",
+          "error": "#DC2626",
+          "success": "#16A34A",
+          "warning": "#D97706",
+          "accent": "#0284C7"
+        }
+      },
+      {
+        "name": "panel",
+        "kind": "solid",
+        "bg": "#FFFFFF",
+        "on_bg": "#0F172A",
+        "on_bg_muted": "#475569",
+        "roles": {
+          "link": "#2563EB",
+          "error": "#DC2626",
+          "success": "#16A34A",
+          "warning": "#D97706",
+          "border": "#E2E8F0"
+        }
+      },
+      {
+        "name": "sidebar",
+        "kind": "solid",
+        "bg": "#0B132B",
+        "on_bg": "#F8FAFC",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "active_bg": "#1C2541",
+          "active_text": "#60A5FA",
+          "hover_bg": "#1E293B",
+          "hover_text": "#FFFFFF",
+          "badge_bg": "#3B82F6",
+          "badge_text": "#FFFFFF"
+        }
+      },
+      {
+        "name": "header_bar",
+        "kind": "solid",
+        "bg": "#FFFFFF",
+        "on_bg": "#0F172A",
+        "on_bg_muted": "#64748B",
+        "roles": {
+          "border": "#E2E8F0",
+          "search_bg": "#F1F5F9"
+        }
+      },
+      {
+        "name": "inverse",
+        "kind": "solid",
+        "bg": "#0F172A",
+        "on_bg": "#F8FAFC",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "link": "#60A5FA",
+          "error": "#F87171",
+          "success": "#4ADE80"
+        }
+      },
+      {
+        "name": "dark_page",
+        "kind": "solid",
+        "bg": "#0B1120",
+        "on_bg": "#F1F5F9",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "link": "#60A5FA",
+          "error": "#F87171",
+          "success": "#4ADE80",
+          "warning": "#FBBF24"
+        }
+      },
+      {
+        "name": "dark_panel",
+        "kind": "solid",
+        "bg": "#111827",
+        "on_bg": "#F9FAFB",
+        "on_bg_muted": "#9CA3AF",
+        "roles": {
+          "link": "#60A5FA",
+          "error": "#F87171",
+          "success": "#4ADE80",
+          "border": "#1F2937"
+        }
+      }
+    ],
+    "accent": "#0284C7",
+    "on_accent": "#FFFFFF",
+    "status_tokens": {
+      "pipeline_stages": {
+        "LEAD": { "bg": "#EFF6FF", "text": "#1D4ED8", "border": "#BFDBFE", "dark_bg": "#172554", "dark_text": "#93C5FD", "label": "Lead" },
+        "QUALIFICATION": { "bg": "#F0FDF4", "text": "#15803D", "border": "#BBF7D0", "dark_bg": "#052E16", "dark_text": "#86EFAC", "label": "Kualifikasi" },
+        "PROPOSAL": { "bg": "#FAF5FF", "text": "#7E22CE", "border": "#E9D5FF", "dark_bg": "#3B0764", "dark_text": "#D8B4FE", "label": "Proposal Disiapkan" },
+        "NEGOTIATION": { "bg": "#FFFBEB", "text": "#B45309", "border": "#FDE68A", "dark_bg": "#451A03", "dark_text": "#FDE68A", "label": "Negosiasi" },
+        "WON": { "bg": "#ECFDF5", "text": "#047857", "border": "#A7F3D0", "dark_bg": "#064E3B", "dark_text": "#6EE7B7", "label": "Deal Won (Berhasil)" },
+        "LOST": { "bg": "#FEF2F2", "text": "#B91C1C", "border": "#FECACA", "dark_bg": "#450A0A", "dark_text": "#FCA5A5", "label": "Deal Lost (Batal)" }
+      },
+      "quotation_status": {
+        "DRAFT": { "bg": "#F1F5F9", "text": "#475569", "border": "#CBD5E1", "label": "Draft" },
+        "SENT": { "bg": "#EFF6FF", "text": "#1D4ED8", "border": "#BFDBFE", "label": "Terkirim" },
+        "NEGOTIATION": { "bg": "#FFFBEB", "text": "#B45309", "border": "#FDE68A", "label": "Negosiasi" },
+        "APPROVED": { "bg": "#ECFDF5", "text": "#047857", "border": "#A7F3D0", "label": "Disetujui" },
+        "REJECTED": { "bg": "#FEF2F2", "text": "#B91C1C", "border": "#FECACA", "label": "Ditolak" },
+        "EXPIRED": { "bg": "#F8FAFC", "text": "#64748B", "border": "#E2E8F0", "label": "Kadaluarsa" },
+        "CONVERTED": { "bg": "#F0FDF4", "text": "#047857", "border": "#86EFAC", "label": "Menjadi PO" }
+      },
+      "po_status": {
+        "DRAFT": { "bg": "#F1F5F9", "text": "#475569", "border": "#CBD5E1", "label": "Draft" },
+        "RECEIVED": { "bg": "#EFF6FF", "text": "#1D4ED8", "border": "#BFDBFE", "label": "PO Diterima" },
+        "CONFIRMED": { "bg": "#F5F3FF", "text": "#6D28D9", "border": "#DDD6FE", "label": "Terkonfirmasi" },
+        "PROCESSING": { "bg": "#FFFBEB", "text": "#B45309", "border": "#FDE68A", "label": "Diproses" },
+        "COMPLETED": { "bg": "#ECFDF5", "text": "#047857", "border": "#A7F3D0", "label": "Selesai" },
+        "CANCELLED": { "bg": "#FEF2F2", "text": "#B91C1C", "border": "#FECACA", "label": "Dibatalkan" }
+      },
+      "order_monitoring_eta": {
+        "ON_TIME": { "bg": "#ECFDF5", "text": "#047857", "border": "#A7F3D0", "label": "On Time" },
+        "DUE_SOON": { "bg": "#FFFBEB", "text": "#B45309", "border": "#FDE68A", "label": "Due Soon (≤ 3 Hari)" },
+        "OVERDUE": { "bg": "#FEF2F2", "text": "#B91C1C", "border": "#FECACA", "label": "Overdue (Terlambat)" },
+        "COMPLETED": { "bg": "#F1F5F9", "text": "#334155", "border": "#CBD5E1", "label": "Selesai" }
+      },
+      "order_fulfillment_stages": {
+        "PO_RECEIVED": { "label": "PO Diterima", "color": "#2563EB" },
+        "PROCESSING": { "label": "Pemrosesan", "color": "#D97706" },
+        "INDENT": { "label": "Indent / Impor", "color": "#9333EA" },
+        "READY_STOCK": { "label": "Ready Stock", "color": "#0284C7" },
+        "DELIVERY": { "label": "Pengiriman (Delivery)", "color": "#0D9488" },
+        "COMPLETED": { "label": "Pesanan Selesai", "color": "#16A34A" }
+      },
+      "activity_status": {
+        "TODAY": { "bg": "#EFF6FF", "text": "#1D4ED8", "border": "#BFDBFE", "label": "Hari Ini" },
+        "UPCOMING": { "bg": "#F8FAFC", "text": "#475569", "border": "#E2E8F0", "label": "Akan Datang" },
+        "OVERDUE": { "bg": "#FEF2F2", "text": "#B91C1C", "border": "#FECACA", "label": "Terlambat" },
+        "COMPLETED": { "bg": "#ECFDF5", "text": "#047857", "border": "#A7F3D0", "label": "Selesai" }
+      },
+      "roles": {
+        "SUPER_ADMIN": { "bg": "#FEF2F2", "text": "#991B1B", "border": "#FECACA", "label": "Super Admin" },
+        "SALES_MANAGER": { "bg": "#FAF5FF", "text": "#6B21A8", "border": "#E9D5FF", "label": "Sales Manager" },
+        "SALES": { "bg": "#EFF6FF", "text": "#1E40AF", "border": "#BFDBFE", "label": "Sales Executive" }
+      }
+    }
+  },
+  "entry_surfaces": {
+    "/login": "branded split login — deep navy branding and KPI overview panel on the left, high-contrast crisp auth credentials card on the right",
+    "/": "command center dashboard with global date/sales filter, 9 KPI stat cards with trend sparklines, sales funnel pipeline chart, and actionable order alert feed"
+  },
+  "sidebar_navigation_structure": {
+    "groups": [
+      {
+        "group_label": "CRM DATABASE",
+        "items": [
+          { "label": "Dashboard", "path": "/", "icon": "LayoutDashboard", "test_id": "nav-dashboard" },
+          { "label": "Customers", "path": "/customers", "icon": "Users", "test_id": "nav-customers" },
+          { "label": "Sales Pipeline", "path": "/pipeline", "icon": "Kanban", "test_id": "nav-pipeline" },
+          { "label": "Aktivitas Sales", "path": "/activities", "icon": "CalendarCheck", "test_id": "nav-activities" },
+          { "label": "Quotation", "path": "/quotations", "icon": "FileText", "test_id": "nav-quotations" },
+          { "label": "Purchase Orders", "path": "/purchase-orders", "icon": "ShoppingBag", "test_id": "nav-purchase-orders" },
+          { "label": "Order Monitoring", "path": "/order-monitoring", "icon": "Truck", "test_id": "nav-order-monitoring" }
+        ]
+      },
+      {
+        "group_label": "MANAGEMENT",
+        "items": [
+          { "label": "Sales Team & KPI", "path": "/sales-team", "icon": "Target", "test_id": "nav-sales-team" },
+          { "label": "Laporan & Audit Log", "path": "/audit-log", "icon": "ShieldCheck", "test_id": "nav-audit-log" }
+        ]
+      },
+      {
+        "group_label": "ADMINISTRATION",
+        "items": [
+          { "label": "Kelola Pengguna", "path": "/users", "icon": "UserCog", "test_id": "nav-users" },
+          { "label": "Master Produk", "path": "/products", "icon": "Package", "test_id": "nav-products" },
+          { "label": "Pengaturan Sistem", "path": "/settings", "icon": "Settings", "test_id": "nav-settings" }
+        ]
+      }
+    ],
+    "footer": {
+      "user_profile": "Display current logged-in user name, role badge, quick role switch (Demo purpose) and logout button",
+      "test_id_logout": "btn-logout"
+    }
+  },
+  "layout_and_component_specs": {
+    "dashboard_kpis": {
+      "cards": [
+        { "id": "total_customers", "title": "Total Customer Aktif", "format": "number", "badge": "+12% MoM", "icon": "Users", "test_id": "kpi-total-customers" },
+        { "id": "open_pipeline", "title": "Open Pipeline Value", "format": "currency_idr", "badge": "Active Deals", "icon": "TrendingUp", "test_id": "kpi-open-pipeline" },
+        { "id": "weighted_pipeline", "title": "Weighted Pipeline (Prob.)", "format": "currency_idr", "badge": "Forecasted", "icon": "Calculator", "test_id": "kpi-weighted-pipeline" },
+        { "id": "won_value", "title": "Total Won Deals", "format": "currency_idr", "badge": "Target 85%", "icon": "Award", "test_id": "kpi-won-value" },
+        { "id": "total_quotations", "title": "Total Quotation", "format": "number", "badge": "QT Terkirim", "icon": "FileText", "test_id": "kpi-total-quotations" },
+        { "id": "total_po", "title": "Total Purchase Orders", "format": "number", "badge": "Verified PO", "icon": "ShoppingBag", "test_id": "kpi-total-po" },
+        { "id": "po_value", "title": "Akumulasi Nilai PO", "format": "currency_idr", "badge": "Closed Rev", "icon": "DollarSign", "test_id": "kpi-po-value" },
+        { "id": "activities", "title": "Aktivitas Hari Ini", "format": "number", "badge": "Tasks/Calls", "icon": "CalendarCheck", "test_id": "kpi-activities" },
+        { "id": "order_overdue", "title": "Order Overdue Alert", "format": "number", "badge": "Needs Action", "icon": "AlertTriangle", "test_id": "kpi-order-overdue" }
+      ],
+      "grid_layout": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4"
+    },
+    "data_table_standard": {
+      "density": "compact",
+      "row_height": "h-12 (48px)",
+      "header_style": "bg-slate-50 dark:bg-slate-900 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 px-4 py-3",
+      "row_style": "border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-150 text-sm",
+      "action_column": "text-right pr-4 sticky right-0 bg-inherit",
+      "pagination": "Server-side pagination with page size selector (10, 25, 50), total record counter, and Prev/Next controls with data-testids",
+      "skeleton_rows": 5
+    },
+    "kanban_board_styling": {
+      "column_container": "flex-1 min-w-[300px] max-w-[340px] bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 border border-slate-200/80 dark:border-slate-800 flex flex-col max-h-[calc(100vh-220px)]",
+      "column_header": "flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-3",
+      "column_counter": "px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-white dark:bg-slate-800 shadow-xs border border-slate-200 dark:border-slate-700",
+      "card_item": "bg-white dark:bg-slate-800/90 rounded-lg p-3.5 border border-slate-200/90 dark:border-slate-700/80 shadow-xs hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-150 cursor-grab active:cursor-grabbing mb-3 group select-none",
+      "card_accent_bar": "w-1 absolute left-0 top-2 bottom-2 rounded-r"
+    },
+    "quotation_pdf_modal": {
+      "style": "clean corporate formal standard invoice / quotation letterhead layout with company logo, auto quotation code, bill-to, line items table with subtotal, PPN (11%), and grand total, payment terms, terms & conditions, and authorized signature stamp block.",
+      "print_feature": "Window print triggering via standard browser print style sheet optimization (@media print) + CSV Export."
+    },
+    "order_monitoring_timeline": {
+      "steps": ["PO Diterima", "Pemrosesan", "Indent / Impor", "Ready Stock", "Pengiriman (Delivery)", "Selesai"],
+      "eta_alert_pills": "High visibility badge with pulse dot indicator for Overdue or Due Soon items."
+    }
+  },
+  "motion_and_micro_interactions": {
+    "page_transition": {
+      "initial": { "opacity": 0, "y": 6 },
+      "animate": { "opacity": 1, "y": 0 },
+      "transition": { "duration": 0.2, "ease": "easeOut" }
+    },
+    "kpi_card_hover": {
+      "hover_class": "hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 ease-out"
+    },
+    "badge_pulse": {
+      "overdue_pulse": "relative flex h-2 w-2 mr-1.5 inline-block rounded-full bg-red-500 animate-ping"
+    },
+    "skeleton_shimmer": {
+      "class": "animate-pulse bg-slate-200 dark:bg-slate-800 rounded"
+    }
+  },
+  "accessibility_and_contrast": {
+    "standards": "WCAG 2.1 AA Compliant (min 4.5:1 text-to-background contrast)",
+    "table_scannability": "Alternating subtle row hover, explicit column headers, keyboard accessible modal and dropdown controls.",
+    "testing_attributes": {
+      "rules": "Every button, input, tab, filter, navigation link, table row action, modal trigger, status badge, and KPI card MUST carry explicit `data-testid` attributes.",
+      "naming_convention": "kebab-case (e.g. data-testid='btn-add-customer', data-testid='input-search-deals', data-testid='kpi-card-won-value', data-testid='kanban-stage-lead')"
+    }
+  },
+  "instructions_to_main_agent": {
+    "architecture_and_framework": "Implement standard farm-ts (FastAPI backend with Motor MongoDB + Vite React 19 frontend). Ensure all 11 modules are fully functional with realistic seed data.",
+    "language": "Bahasa Indonesia interface labels, buttons, tables, and dialogs (e.g. 'Tambah Pelanggan', 'Simpan Quotation', 'Konfirmasi Pesanan', 'Filter Rentang Tanggal'). Currency format: Indonesian Rupiah (Rp X.XXX.XXX) using Intl.NumberFormat('id-ID').",
+    "seed_data_richness": "Pre-seed at least 15 active Customers with contacts, 20 Pipeline Deals across all 5 stages, 15 Quotations with realistic multiple line items and auto QT-2026-XXXX numbering, 12 Purchase Orders, 15 Order Monitoring items with varying ETAs (On Time, Due Soon, Overdue), 25 Activities (Today, Upcoming, Overdue, Completed), 5 Sales Team members with calculated KPI targets vs achievements, 10 Product masters with SKU and unit prices, and Audit Logs for trackability.",
+    "role_simulation": "Include a quick role switcher in the user profile / header (SUPER_ADMIN, SALES_MANAGER, SALES) so the user can test permissions (e.g. SALES can only manage their own leads/deals and create quotes; SALES_MANAGER approves quotations and reviews all team KPIs; SUPER_ADMIN has full system access, user management, and audit log inspection).",
+    "view_modes": "In Sales Pipeline, provide an instant toggle between Kanban View and Table View.",
+    "export_features": "Provide 'Cetak / PDF' on Quotations and 'Export CSV' on all major tables (Customers, Deals, Quotations, Orders, Sales Team).",
+    "performance": "Use optimistic UI or clean React Query mutations, instant client-side tab switching, and loading skeletons on table/card regions during data fetch."
+  }
+}
