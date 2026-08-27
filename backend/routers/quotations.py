@@ -434,30 +434,32 @@ async def download_quotation_pdf(
 
     items = doc.get("items") or []
 
-    # Tampilkan kolom Discount hanya jika ada item yang memiliki discount
+    # Kolom Discount hanya ditampilkan jika ada diskon
     has_discount = any(
         float(item.get("discount") or 0) > 0
         for item in items
     )
 
     item_header_row = [
-        Paragraph("<b>No.</b>", item_header),
-        Paragraph("<b>Description</b>", item_header),
-        Paragraph("<b>Qty</b>", item_header),
-        Paragraph("<b>Unit</b>", item_header),
-        Paragraph("<b>Unit Price</b>", item_header),
+        Paragraph("<b>NO</b>", item_header),
+        Paragraph("<b>ITEMS / SPECIFICATION</b>", item_header),
+        Paragraph("<b>UNIT PRICE</b>", item_header),
     ]
 
     if has_discount:
         item_header_row.append(
-            Paragraph("<b>Discount</b>", item_header)
+            Paragraph("<b>DISCOUNT</b>", item_header)
         )
 
-    item_header_row.append(
-        Paragraph("<b>Subtotal</b>", item_header)
-    )
+    item_header_row.extend([
+        Paragraph("<b>QTY</b>", item_header),
+        Paragraph("<b>AMOUNT</b>", item_header),
+    ])
 
     item_rows = [item_header_row]
+
+    def money(value):
+        return f"Rp {float(value or 0):,.0f}".replace(",", ".")
 
     for idx, item in enumerate(items, start=1):
         description = str(item.get("description") or "-")
@@ -467,14 +469,12 @@ async def download_quotation_pdf(
         discount = float(item.get("discount") or 0)
         subtotal = float(item.get("subtotal") or 0)
 
-        def money(value):
-            return f"Rp {value:,.0f}".replace(",", ".")
+        # Qty + Unit dibuat satu kolom seperti referensi
+        qty_text = f"{qty:g} {unit}"
 
         row = [
             Paragraph(str(idx), center),
             Paragraph(description, normal),
-            Paragraph(f"{qty:g}", center),
-            Paragraph(unit, center),
             Paragraph(money(unit_price), right),
         ]
 
@@ -483,30 +483,30 @@ async def download_quotation_pdf(
                 Paragraph(money(discount), right)
             )
 
-        row.append(
-            Paragraph(money(subtotal), right)
-        )
+        row.extend([
+            Paragraph(qty_text, center),
+            Paragraph(money(subtotal), right),
+        ])
 
         item_rows.append(row)
 
+    # Lebar tabel dibuat mengikuti layout referensi
     if has_discount:
         item_col_widths = [
-            9 * mm,
-            65 * mm,
-            14 * mm,
-            18 * mm,
-            27 * mm,
-            22 * mm,
-            25 * mm,
+            10 * mm,   # No
+            72 * mm,   # Items / Specification
+            30 * mm,   # Unit Price
+            25 * mm,   # Discount
+            22 * mm,   # Qty
+            31 * mm,   # Amount
         ]
     else:
         item_col_widths = [
-            9 * mm,
-            75 * mm,
-            14 * mm,
-            18 * mm,
-            32 * mm,
-            32 * mm,
+            10 * mm,   # No
+            90 * mm,   # Items / Specification
+            32 * mm,   # Unit Price
+            23 * mm,   # Qty
+            35 * mm,   # Amount
         ]
 
     item_table = Table(
@@ -518,10 +518,25 @@ async def download_quotation_pdf(
     item_table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111827")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#777777")),
+                # Header abu-abu terang seperti referensi
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#374151")),
+
+                # Border tipis dan rapi
+                ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#555555")),
+                ("INNERGRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#777777")),
+
+                # Alignment
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (0, 0), (0, -1), "CENTER"),
+                ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
+
+                # Header alignment
+                ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                ("ALIGN", (1, 0), (1, 0), "LEFT"),
+                ("ALIGN", (2, 0), (-1, 0), "CENTER"),
+
+                # Padding
                 ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 3),
                 ("TOPPADDING", (0, 0), (-1, 0), 5),
