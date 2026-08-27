@@ -1,8 +1,23 @@
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import mm
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table,
+    TableStyle,
+    PageBreak,
+)
 
 from lib.auth import SALES, current_user, scope_filter, write_audit
 from lib.dates import today_iso
@@ -157,6 +172,469 @@ async def list_quotations(
         sort_spec(sort_by, sort_dir, SORTABLE, "created_date"),
     )
     return QuotationListResponse(**result)
+
+
+
+
+@router.get("/{quotation_id}/pdf")
+async def download_quotation_pdf(
+    quotation_id: str,
+    user: dict = Depends(current_user),
+):
+    """
+    Generate quotation PDF server-side with ReportLab.
+
+    Browser hanya menerima file PDF final.
+    Tidak menggunakan html2canvas/jsPDF sehingga tidak membebani
+    halaman React dan tidak menyebabkan browser freeze.
+    """
+    scope = await scope_filter(user)
+
+    doc = await db.quotations.find_one(
+        {"quotation_id": quotation_id, **scope},
+        {"_id": 0},
+    )
+
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail="Quotation tidak ditemukan",
+        )
+
+    doc = await _decorate(doc)
+
+    buffer = BytesIO()
+
+    quotation_number = (
+        str(doc.get("quotation_number") or quotation_id)
+        .replace("/", "_")
+        .replace("\\", "_")
+        .replace(" ", "_")
+    )
+
+    customer_company = (
+        doc.get("customer_company")
+        or doc.get("customer_name")
+        or "-"
+    )
+
+    styles = getSampleStyleSheet()
+
+    normal = ParagraphStyle(
+        "QuotationNormal",
+        parent=styles["Normal"],
+        fontName="Helvetica",
+        fontSize=8.5,
+        leading=11,
+        spaceAfter=2,
+    )
+
+    small = ParagraphStyle(
+        "QuotationSmall",
+        parent=normal,
+        fontSize=7.5,
+        leading=9,
+    )
+
+    title = ParagraphStyle(
+        "QuotationTitle",
+        parent=normal,
+        fontName="Helvetica-Bold",
+        fontSize=17,
+        leading=20,
+        alignment=TA_RIGHT,
+    )
+
+    section = ParagraphStyle(
+        "QuotationSection",
+        parent=normal,
+        fontName="Helvetica-Bold",
+        fontSize=9,
+        leading=11,
+    )
+
+    right = ParagraphStyle(
+        "QuotationRight",
+        parent=normal,
+        alignment=TA_RIGHT,
+    )
+
+    center = ParagraphStyle(
+        "QuotationCenter",
+        parent=normal,
+        alignment=TA_CENTER,
+    )
+
+    story = []
+
+    # ============================================================
+    # HEADER
+    # ============================================================
+
+    company_name = "PT. WELLRACOM INDUSTRI KOMPUTINDO"
+
+    header_left = [
+        Paragraph(f"<b>{company_name}</b>", section),
+        Paragraph(
+            "Industrial Computing • Automation • Communication",
+            small,
+        ),
+        Spacer(1, 2 * mm),
+        Paragraph(
+            "EPIWALK A707 Rasuna Epicentrum Kuningan, Jakarta Selatan",
+            small,
+        ),
+    ]
+
+    header_right = [
+        Paragraph("QUOTATION", title),
+        Spacer(1, 2 * mm),
+        Paragraph(
+            f"<b>No:</b> {doc.get('quotation_number') or '-'}",
+            right,
+        ),
+        Paragraph(
+            f"<b>Date:</b> {doc.get('quotation_date') or '-'}",
+            right,
+        ),
+        Paragraph(
+            f"<b>Valid Until:</b> {doc.get('validity_date') or '-'}",
+            right,
+        ),
+    ]
+
+    header = Table(
+        [[header_left, header_right]],
+        colWidths=[105 * mm, 75 * mm],
+    )
+
+    header.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
+
+    story.append(header)
+    story.append(Spacer(1, 5 * mm))
+
+    # ============================================================
+    # CUSTOMER
+    # ============================================================
+
+    customer_data = [
+        [
+            Paragraph("<b>TO:</b>", section),
+            Paragraph(
+                f"<b>{customer_company}</b>",
+                normal,
+            ),
+        ],
+        [
+            Paragraph("<b>Attention:</b>", small),
+            Paragraph(
+                str(doc.get("customer_pic_name") or "-"),
+                normal,
+            ),
+        ],
+        [
+            Paragraph("<b>Email:</b>", small),
+            Paragraph(
+                str(doc.get("customer_email") or "-"),
+                normal,
+            ),
+        ],
+        [
+            Paragraph("<b>Phone:</b>", small),
+            Paragraph(
+                str(doc.get("customer_phone") or "-"),
+                normal,
+            ),
+        ],
+    ]
+
+    customer_table = Table(
+        customer_data,
+        colWidths=[28 * mm, 152 * mm],
+    )
+
+    customer_table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 1),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 1),
+            ]
+        )
+    )
+
+    story.append(customer_table)
+    story.append(Spacer(1, 5 * mm))
+
+    # ============================================================
+    # ITEMS
+    # ============================================================
+
+    item_rows = [
+        [
+            Paragraph("<b>No.</b>", center),
+            Paragraph("<b>Description</b>", center),
+            Paragraph("<b>Qty</b>", center),
+            Paragraph("<b>Unit</b>", center),
+            Paragraph("<b>Unit Price</b>", center),
+            Paragraph("<b>Discount</b>", center),
+            Paragraph("<b>Subtotal</b>", center),
+        ]
+    ]
+
+    for idx, item in enumerate(doc.get("items") or [], start=1):
+        description = str(item.get("description") or "-")
+        qty = item.get("qty") or 0
+        unit = str(item.get("unit") or "Unit")
+        unit_price = float(item.get("unit_price") or 0)
+        discount = float(item.get("discount") or 0)
+        subtotal = float(item.get("subtotal") or 0)
+
+        def money(value):
+            return f"Rp {value:,.0f}".replace(",", ".")
+
+        item_rows.append(
+            [
+                Paragraph(str(idx), center),
+                Paragraph(description, normal),
+                Paragraph(f"{qty:g}", center),
+                Paragraph(unit, center),
+                Paragraph(money(unit_price), right),
+                Paragraph(money(discount), right),
+                Paragraph(money(subtotal), right),
+            ]
+        )
+
+    item_table = Table(
+        item_rows,
+        colWidths=[
+            9 * mm,
+            65 * mm,
+            14 * mm,
+            18 * mm,
+            27 * mm,
+            22 * mm,
+            25 * mm,
+        ],
+        repeatRows=1,
+    )
+
+    item_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111827")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#555555")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 3),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+        )
+    )
+
+    story.append(item_table)
+    story.append(Spacer(1, 5 * mm))
+
+    # ============================================================
+    # TOTALS
+    # ============================================================
+
+    def money(value):
+        return f"Rp {float(value or 0):,.0f}".replace(",", ".")
+
+    totals_data = [
+        ["Subtotal", money(doc.get("subtotal"))],
+        ["Discount", money(doc.get("discount"))],
+        [
+            f"Tax ({float(doc.get('tax_percent') or 0):g}%)",
+            money(doc.get("tax")),
+        ],
+        ["GRAND TOTAL", money(doc.get("grand_total"))],
+    ]
+
+    totals_table = Table(
+        totals_data,
+        colWidths=[40 * mm, 40 * mm],
+        hAlign="RIGHT",
+    )
+
+    totals_table.setStyle(
+        TableStyle(
+            [
+                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                ("ALIGN", (0, 0), (0, -1), "RIGHT"),
+                ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
+                ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                ("LINEABOVE", (0, -1), (-1, -1), 1, colors.black),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ]
+        )
+    )
+
+    story.append(totals_table)
+    story.append(Spacer(1, 6 * mm))
+
+    # ============================================================
+    # TERMS / NOTES
+    # ============================================================
+
+    story.append(Paragraph("TERMS & CONDITIONS", section))
+    story.append(Spacer(1, 2 * mm))
+
+    notes = doc.get("notes")
+
+    if notes:
+        note_lines = str(notes).splitlines()
+    else:
+        note_lines = [
+            f"Payment: {doc.get('payment_term') or '-'}",
+            f"Pengiriman: {doc.get('delivery_term') or '-'}",
+            f"Validitas: s/d {doc.get('validity_date') or '-'}",
+        ]
+
+    for line in note_lines:
+        if str(line).strip():
+            story.append(
+                Paragraph(
+                    f"• {str(line)}",
+                    small,
+                )
+            )
+
+    story.append(Spacer(1, 10 * mm))
+
+    # ============================================================
+    # SIGNATURE
+    # ============================================================
+
+    signature_name = doc.get("signature_name") or doc.get("sales_name") or "-"
+    signature_title = doc.get("signature_title") or "Sales"
+
+    signature_data = [
+        [
+            Paragraph("Customer", center),
+            Paragraph("For and on behalf of", center),
+        ],
+        [
+            Spacer(1, 18 * mm),
+            Spacer(1, 18 * mm),
+        ],
+        [
+            Paragraph("<b>________________________</b>", center),
+            Paragraph(f"<b>{signature_name}</b>", center),
+        ],
+        [
+            Paragraph("Authorized Representative", center),
+            Paragraph(str(signature_title), center),
+        ],
+    ]
+
+    signature_table = Table(
+        signature_data,
+        colWidths=[90 * mm, 90 * mm],
+    )
+
+    signature_table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+            ]
+        )
+    )
+
+    story.append(signature_table)
+    story.append(Spacer(1, 5 * mm))
+
+    # ============================================================
+    # FOOTER
+    # ============================================================
+
+    story.append(
+        Table(
+            [[
+                Paragraph(
+                    f"Quotation {doc.get('quotation_number') or quotation_id}",
+                    small,
+                ),
+                Paragraph(
+                    "This document is digitally generated.",
+                    ParagraphStyle(
+                        "FooterRight",
+                        parent=small,
+                        alignment=TA_RIGHT,
+                    ),
+                ),
+            ]],
+            colWidths=[90 * mm, 90 * mm],
+            style=TableStyle(
+                [
+                    ("LINEABOVE", (0, 0), (-1, 0), 0.5, colors.HexColor("#555555")),
+                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ]
+            ),
+        )
+    )
+
+    def add_page_number(canvas, document):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 7)
+        canvas.drawRightString(
+            A4[0] - 10 * mm,
+            6 * mm,
+            f"Page {document.page}",
+        )
+        canvas.restoreState()
+
+    pdf = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=15 * mm,
+        leftMargin=15 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm,
+        title=f"Quotation {quotation_number}",
+        author=company_name,
+    )
+
+    pdf.build(
+        story,
+        onFirstPage=add_page_number,
+        onLaterPages=add_page_number,
+    )
+
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{quotation_number}.pdf"'
+            )
+        },
+    )
 
 
 @router.get("/{quotation_id}", response_model=QuotationDetail)
