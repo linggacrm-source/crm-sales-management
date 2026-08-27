@@ -18,6 +18,7 @@ from reportlab.platypus import (
     Table,
     TableStyle,
     PageBreak,
+    Image,
 )
 
 from lib.auth import SALES, current_user, scope_filter, write_audit
@@ -267,6 +268,17 @@ async def download_quotation_pdf(
         alignment=TA_CENTER,
     )
 
+    # Header tabel item: background gelap + teks putih
+    item_header = ParagraphStyle(
+        "QuotationItemHeader",
+        parent=normal,
+        fontName="Helvetica-Bold",
+        fontSize=7.5,
+        leading=9,
+        alignment=TA_CENTER,
+        textColor=colors.white,
+    )
+
     story = []
 
     # ============================================================
@@ -275,13 +287,23 @@ async def download_quotation_pdf(
 
     company_name = "PT. WELLRACOM INDUSTRI KOMPUTINDO"
 
+    logo_path = "/app/frontend/public/wellracom-logo.png"
+
+    logo = Image(
+        logo_path,
+        width=42 * mm,
+        height=16 * mm,
+        kind="proportional",
+    )
+
     header_left = [
-        Paragraph(f"<b>{company_name}</b>", section),
+        logo,
+        Spacer(1, 2 * mm),
         Paragraph(
             "Industrial Computing • Automation • Communication",
             small,
         ),
-        Spacer(1, 2 * mm),
+        Spacer(1, 1 * mm),
         Paragraph(
             "EPIWALK A707 Rasuna Epicentrum Kuningan, Jakarta Selatan",
             small,
@@ -386,13 +408,13 @@ async def download_quotation_pdf(
 
     item_rows = [
         [
-            Paragraph("<b>No.</b>", center),
-            Paragraph("<b>Description</b>", center),
-            Paragraph("<b>Qty</b>", center),
-            Paragraph("<b>Unit</b>", center),
-            Paragraph("<b>Unit Price</b>", center),
-            Paragraph("<b>Discount</b>", center),
-            Paragraph("<b>Subtotal</b>", center),
+            Paragraph("<b>No.</b>", item_header),
+            Paragraph("<b>Description</b>", item_header),
+            Paragraph("<b>Qty</b>", item_header),
+            Paragraph("<b>Unit</b>", item_header),
+            Paragraph("<b>Unit Price</b>", item_header),
+            Paragraph("<b>Discount</b>", item_header),
+            Paragraph("<b>Subtotal</b>", item_header),
         ]
     ]
 
@@ -438,12 +460,14 @@ async def download_quotation_pdf(
             [
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111827")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#555555")),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#777777")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, 0), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 5),
+                ("TOPPADDING", (0, 1), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
             ]
         )
     )
