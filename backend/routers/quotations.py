@@ -541,7 +541,6 @@ async def download_quotation_pdf(
     )
 
     story.append(item_table)
-    story.append(item_table)
     story.append(Spacer(1, 5 * mm))
 
     # ============================================================
