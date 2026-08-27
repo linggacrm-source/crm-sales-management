@@ -61,87 +61,73 @@ export default function QuotationView() {
     try {
       toast.loading("Membuat PDF...", { id: "quotation-pdf" });
 
-      const clone = element.cloneNode(true) as HTMLElement;
+      // Simpan kondisi asli elemen
+      const originalWidth = element.style.width;
+      const originalMaxWidth = element.style.maxWidth;
+      const originalMargin = element.style.margin;
+      const originalBoxSizing = element.style.boxSizing;
 
-      clone.style.width = "794px";
-      clone.style.maxWidth = "794px";
-      clone.style.margin = "0";
-      clone.style.background = "#ffffff";
-      clone.style.color = "#111111";
-      clone.style.boxSizing = "border-box";
+      // Ukuran dokumen A4 yang stabil untuk html2canvas
+      element.style.width = "794px";
+      element.style.maxWidth = "794px";
+      element.style.margin = "0 auto";
+      element.style.boxSizing = "border-box";
 
-      const wrapper = document.createElement("div");
-
-      wrapper.style.position = "fixed";
-      wrapper.style.left = "-100000px";
-      wrapper.style.top = "0";
-      wrapper.style.width = "794px";
-      wrapper.style.background = "#ffffff";
-      wrapper.style.zIndex = "-1";
-
-      wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
-
-      const images = Array.from(clone.querySelectorAll("img"));
-
-      await Promise.all(
-        images.map(
-          (img) =>
-            new Promise<void>((resolve) => {
-              if (img.complete) {
-                resolve();
-                return;
-              }
-
-              img.onload = () => resolve();
-              img.onerror = () => resolve();
-            }),
-        ),
-      );
+      // Beri browser waktu menyelesaikan layout sebelum capture
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
 
       const quotationNumber =
         data?.quotation_number?.replace(/[^a-zA-Z0-9-_]/g, "_") ||
         "quotation";
 
-      const options = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
-        filename: `${quotationNumber}.pdf`,
-        image: {
-          type: "jpeg" as const,
-          quality: 0.98,
-        },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: "#ffffff",
-          logging: false,
-        },
-        jsPDF: {
-          unit: "mm" as const,
-          format: "a4" as const,
-          orientation: "portrait" as const,
-          compress: true,
-        },
-        pagebreak: {
-          mode: ["css", "legacy"] as ("css" | "legacy" | "avoid-all")[],
-          avoid: [
-            ".quotation-items tr",
-            ".quotation-signature",
-            ".quotation-terms",
-            ".quotation-totals",
-            ".quotation-footer",
-            ".quotation-qr",
-          ],
-        },
-      };
-
       await html2pdf()
-        .set(options)
-        .from(clone)
+        .set({
+          margin: [8, 8, 8, 8] as [number, number, number, number],
+          filename: `${quotationNumber}.pdf`,
+          image: {
+            type: "jpeg" as const,
+            quality: 0.98,
+          },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: "#ffffff",
+            logging: false,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 794,
+          },
+          jsPDF: {
+            unit: "mm" as const,
+            format: "a4" as const,
+            orientation: "portrait" as const,
+            compress: true,
+          },
+          pagebreak: {
+            mode: ["css", "legacy"] as ("css" | "legacy" | "avoid-all")[],
+            avoid: [
+              ".quotation-items tr",
+              ".quotation-signature",
+              ".quotation-terms",
+              ".quotation-totals",
+              ".quotation-footer",
+              ".quotation-qr",
+            ],
+          },
+        })
+        .from(element)
         .save();
 
-      wrapper.remove();
+      // Kembalikan style asli
+      element.style.width = originalWidth;
+      element.style.maxWidth = originalMaxWidth;
+      element.style.margin = originalMargin;
+      element.style.boxSizing = originalBoxSizing;
 
       toast.success("PDF quotation berhasil dibuat", {
         id: "quotation-pdf",
