@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from reportlab.lib import colors
@@ -10,6 +10,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
+from reportlab.graphics.barcode import createBarcodeDrawing
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -179,6 +180,7 @@ async def list_quotations(
 @router.get("/{quotation_id}/pdf")
 async def download_quotation_pdf(
     quotation_id: str,
+    request: Request,
     user: dict = Depends(current_user),
 ):
     """
@@ -520,45 +522,81 @@ async def download_quotation_pdf(
     story.append(Spacer(1, 10 * mm))
 
     # ============================================================
-    # SIGNATURE
+    # DIGITAL SIGNATURE - INTERNAL
     # ============================================================
 
     signature_name = doc.get("signature_name") or doc.get("sales_name") or "-"
     signature_title = doc.get("signature_title") or "Sales"
 
+    # URL quotation untuk QR Code.
+    # Mengikuti domain yang sedang digunakan oleh browser.
+    base_url = str(request.base_url).rstrip("/")
+    verification_url = f"{base_url}/quotations/{quotation_id}"
+
+    qr_code = createBarcodeDrawing(
+        "QR",
+        value=verification_url,
+        width=25 * mm,
+        height=25 * mm,
+        barBorder=0,
+    )
+
+    signature_text_style = ParagraphStyle(
+        "DigitalSignatureText",
+        parent=small,
+        fontSize=7.5,
+        leading=9,
+    )
+
+    signature_name_style = ParagraphStyle(
+        "DigitalSignatureName",
+        parent=normal,
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        leading=10,
+    )
+
     signature_data = [
         [
-            Paragraph("Customer", center),
-            Paragraph("For and on behalf of", center),
-        ],
-        [
-            Spacer(1, 18 * mm),
-            Spacer(1, 18 * mm),
-        ],
-        [
-            Paragraph("<b>________________________</b>", center),
-            Paragraph(f"<b>{signature_name}</b>", center),
-        ],
-        [
-            Paragraph("Authorized Representative", center),
-            Paragraph(str(signature_title), center),
-        ],
+            qr_code,
+            [
+                Paragraph(
+                    "Ditandatangani secara elektronik oleh:",
+                    signature_text_style,
+                ),
+                Spacer(1, 2 * mm),
+                Paragraph(
+                    str(signature_name),
+                    signature_name_style,
+                ),
+                Paragraph(
+                    str(signature_title),
+                    signature_text_style,
+                ),
+                Paragraph(
+                    company_name,
+                    signature_text_style,
+                ),
+            ],
+        ]
     ]
 
     signature_table = Table(
         signature_data,
-        colWidths=[90 * mm, 90 * mm],
+        colWidths=[30 * mm, 70 * mm],
+        hAlign="RIGHT",
     )
 
     signature_table.setStyle(
         TableStyle(
             [
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 2),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-                ("TOPPADDING", (0, 0), (-1, -1), 2),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+                ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                ("ALIGN", (1, 0), (1, 0), "LEFT"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
             ]
         )
     )
