@@ -464,6 +464,18 @@ async def download_quotation_pdf(
 
     for idx, item in enumerate(items, start=1):
         description = str(item.get("description") or "-")
+
+        # Pertahankan Enter dari input item sebagai baris baru di PDF
+        description_html = (
+            description
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\\r\\n", "\\n")
+            .replace("\\r", "\\n")
+            .replace("\\n", "<br/>")
+        )
+
         qty = item.get("qty") or 0
         unit = str(item.get("unit") or "Unit")
         unit_price = float(item.get("unit_price") or 0)
@@ -472,7 +484,7 @@ async def download_quotation_pdf(
 
         row = [
             Paragraph(str(idx), center),
-            Paragraph(description, normal),
+            Paragraph(description_html, normal),
             Paragraph(money(unit_price), right),
             Paragraph(f"{qty:g} {unit}", center),
         ]
