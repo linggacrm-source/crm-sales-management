@@ -276,7 +276,7 @@ async def download_quotation_pdf(
         fontSize=7.5,
         leading=9,
         alignment=TA_CENTER,
-        textColor=colors.white,
+        textColor=colors.HexColor("#111827"),
     )
 
     story = []
