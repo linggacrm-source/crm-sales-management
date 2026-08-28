@@ -203,7 +203,7 @@ export default function QuotationView() {
         </Card>
       ) : data ? (
         <Card
-          className="print-area quotation-document border-2 border-neutral-900 bg-white p-0 text-neutral-900"
+          className="print-area quotation-document bg-white p-0 text-neutral-900"
           data-testid="quotation-document"
         >
           {/* Letterhead */}
@@ -270,67 +270,127 @@ export default function QuotationView() {
 
           {/* Items */}
           <div className="px-8">
-            <table className="w-full border border-neutral-900 text-xs">
+            <table className="w-full border border-neutral-400 text-xs">
               <thead>
-                <tr className="border-b border-neutral-900 bg-neutral-100 text-[10px] tracking-widest">
-                  <th className="w-8 border-r border-neutral-300 px-2 py-2 text-left">NO</th>
-                  <th className="border-r border-neutral-300 px-2 py-2 text-left">ITEMS / SPECIFICATION</th>
-                  <th className="w-24 border-r border-neutral-300 px-2 py-2 text-right">UNIT PRICE</th>
-                  <th className="w-16 border-r border-neutral-300 px-2 py-2 text-center">QTY</th>
-                  <th className="w-28 px-2 py-2 text-right">AMOUNT</th>
+                <tr className="border-b border-neutral-400 bg-neutral-900 text-[10px] tracking-widest text-white">
+                  <th className="w-10 border-r border-neutral-500 px-2 py-2 text-center font-bold">
+                    NO
+                  </th>
+
+                  <th className="border-r border-neutral-500 px-2 py-2 text-left font-bold">
+                    ITEMS / SPECIFICATION
+                  </th>
+
+                  <th className="w-32 border-r border-neutral-500 px-2 py-2 text-right font-bold">
+                    UNIT PRICE
+                  </th>
+
+                  <th className="w-20 border-r border-neutral-500 px-2 py-2 text-center font-bold">
+                    QTY
+                  </th>
+
+                  {data.items.some((it) => Number(it.discount ?? 0) > 0) && (
+                    <th className="w-28 border-r border-neutral-500 px-2 py-2 text-right font-bold">
+                      DISCOUNT
+                    </th>
+                  )}
+
+                  <th className="w-36 px-2 py-2 text-right font-bold">
+                    AMOUNT
+                  </th>
                 </tr>
               </thead>
+
               <tbody>
-                {data.items.map((it, i) => (
-                  <tr
-                    key={it.quotation_item_id}
-                    className="border-b border-neutral-300 align-top"
-                    data-testid={`quotation-item-${i}`}
-                  >
-                    <td className="border-r border-neutral-200 px-2 py-2 font-mono">{i + 1}</td>
-                    <td className="border-r border-neutral-200 px-2 py-2">
-                      {/* whitespace-pre-line keeps the operator's ENTER line breaks in the PDF */}
-                      <span className="whitespace-pre-line" data-testid={`quotation-item-spec-${i}`}>
-                        {it.description}
-                      </span>
-                    </td>
-                    <td className="border-r border-neutral-200 px-2 py-2 text-right font-mono">
-                      {formatIDR(it.unit_price)}
-                    </td>
-                    <td className="border-r border-neutral-200 px-2 py-2 text-center font-mono">
-                      {it.qty} {it.unit}
-                    </td>
-                    <td className="px-2 py-2 text-right font-mono font-semibold">{formatIDR(it.subtotal)}</td>
-                  </tr>
-                ))}
+                {data.items.map((it, i) => {
+                  const hasDiscount = data.items.some(
+                    (item) => Number(item.discount ?? 0) > 0
+                  );
+
+                  return (
+                    <tr
+                      key={it.quotation_item_id}
+                      className="border-b border-neutral-300 align-top"
+                      data-testid={`quotation-item-${i}`}
+                    >
+                      <td className="border-r border-neutral-200 px-2 py-2 text-center font-mono">
+                        {i + 1}
+                      </td>
+
+                      <td className="border-r border-neutral-200 px-2 py-2">
+                        <span
+                          className="whitespace-pre-line"
+                          data-testid={`quotation-item-spec-${i}`}
+                        >
+                          {it.description}
+                        </span>
+                      </td>
+
+                      <td className="border-r border-neutral-200 px-2 py-2 text-right font-mono">
+                        {formatIDR(it.unit_price)}
+                      </td>
+
+                      <td className="border-r border-neutral-200 px-2 py-2 text-center font-mono">
+                        {it.qty} {it.unit}
+                      </td>
+
+                      {hasDiscount && (
+                        <td className="border-r border-neutral-200 px-2 py-2 text-right font-mono">
+                          {Number(it.discount ?? 0) > 0
+                            ? formatIDR(it.discount)
+                            : "-"}
+                        </td>
+                      )}
+
+                      <td className="px-2 py-2 text-right font-mono font-semibold">
+                        {formatIDR(it.subtotal)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Totals */}
           <div className="quotation-totals flex justify-end px-8 pt-4">
-            <table className="w-full max-w-xs border border-neutral-900 text-xs">
+            <table className="w-[85mm] text-xs">
               <tbody>
-                <tr className="border-b border-neutral-300">
-                  <th className="bg-neutral-100 px-3 py-1.5 text-left tracking-wider">SUBTOTAL</th>
-                  <td className="px-3 py-1.5 text-right font-mono">{formatIDR(data.subtotal)}</td>
+                <tr>
+                  <th className="px-1 py-1 text-left font-normal">
+                    SUBTOTAL
+                  </th>
+                  <td className="px-1 py-1 text-right font-mono">
+                    {formatIDR(data.subtotal)}
+                  </td>
                 </tr>
+
                 {data.discount > 0 && (
-                  <tr className="border-b border-neutral-300">
-                    <th className="bg-neutral-100 px-3 py-1.5 text-left tracking-wider">DISCOUNT</th>
-                    <td className="px-3 py-1.5 text-right font-mono">-{formatIDR(data.discount)}</td>
+                  <tr>
+                    <th className="px-1 py-1 text-left font-normal">
+                      DISCOUNT
+                    </th>
+                    <td className="px-1 py-1 text-right font-mono">
+                      -{formatIDR(data.discount)}
+                    </td>
                   </tr>
                 )}
-                <tr className="border-b border-neutral-300">
-                  <th className="bg-neutral-100 px-3 py-1.5 text-left tracking-wider">
+
+                <tr>
+                  <th className="px-1 py-1 text-left font-normal">
                     PPN {data.tax_percent}%
                   </th>
-                  <td className="px-3 py-1.5 text-right font-mono">{formatIDR(data.tax)}</td>
+                  <td className="px-1 py-1 text-right font-mono">
+                    {formatIDR(data.tax)}
+                  </td>
                 </tr>
+
                 <tr className="bg-neutral-900 text-white">
-                  <th className="px-3 py-2 text-left tracking-wider">GRAND TOTAL</th>
+                  <th className="px-2 py-2 text-left font-bold tracking-wider">
+                    GRAND TOTAL
+                  </th>
                   <td
-                    className="px-3 py-2 text-right font-mono font-bold"
+                    className="px-2 py-2 text-right font-mono font-bold"
                     data-testid="quotation-grand-total-view"
                   >
                     {formatIDR(data.grand_total)}
