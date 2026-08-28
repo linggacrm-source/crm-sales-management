@@ -434,13 +434,27 @@ async def download_quotation_pdf(
 
     items = doc.get("items") or []
 
+    # Discount hanya muncul jika ada discount
+    has_discount = any(
+        float(item.get("discount") or 0) > 0
+        for item in items
+    )
+
     item_header_row = [
         Paragraph("<b>NO</b>", item_header),
         Paragraph("<b>ITEMS / SPECIFICATION</b>", item_header),
         Paragraph("<b>UNIT PRICE</b>", item_header),
         Paragraph("<b>QTY</b>", item_header),
-        Paragraph("<b>AMOUNT</b>", item_header),
     ]
+
+    if has_discount:
+        item_header_row.append(
+            Paragraph("<b>DISCOUNT</b>", item_header)
+        )
+
+    item_header_row.append(
+        Paragraph("<b>AMOUNT</b>", item_header)
+    )
 
     item_rows = [item_header_row]
 
@@ -451,7 +465,7 @@ async def download_quotation_pdf(
         description = str(item.get("description") or "-")
 
         # Pertahankan Enter dari textarea.
-        # Enter di website akan menjadi baris baru di PDF.
+        # ReportLab Paragraph menggunakan <br/> untuk line break.
         description_html = (
             description
             .replace("&", "&amp;")
@@ -465,6 +479,7 @@ async def download_quotation_pdf(
         qty = item.get("qty") or 0
         unit = str(item.get("unit") or "Unit")
         unit_price = float(item.get("unit_price") or 0)
+        discount = float(item.get("discount") or 0)
         subtotal = float(item.get("subtotal") or 0)
 
         row = [
@@ -472,31 +487,46 @@ async def download_quotation_pdf(
             Paragraph(description_html, normal),
             Paragraph(money(unit_price), right),
             Paragraph(f"{qty:g} {unit}", center),
-            Paragraph(money(subtotal), right),
         ]
+
+        if has_discount:
+            row.append(
+                Paragraph(money(discount), right)
+            )
+
+        row.append(
+            Paragraph(money(subtotal), right)
+        )
 
         item_rows.append(row)
 
     # ============================================================
-    # ITEM TABLE
+    # ITEM TABLE WIDTH
     # ============================================================
-
-    # Total lebar = 180 mm
-    # Mengikuti proporsi template referensi:
-    # NO                10 mm
-    # ITEMS / SPEC.    100 mm
-    # UNIT PRICE        32 mm
-    # QTY               18 mm
-    # AMOUNT            35 mm
     #
-    # Total sebenarnya 195 mm, sesuai area halaman quotation.
-    item_col_widths = [
-        10 * mm,
-        100 * mm,
-        32 * mm,
-        18 * mm,
-        35 * mm,
-    ]
+    # Total lebar dibuat sekitar 180 mm agar aman di A4
+    # dan tidak keluar halaman.
+    #
+    # Referensi:
+    # NO | DESCRIPTION | UNIT PRICE | QTY | AMOUNT
+
+    if has_discount:
+        item_col_widths = [
+            9 * mm,    # NO
+            76 * mm,   # ITEMS / SPECIFICATION
+            30 * mm,   # UNIT PRICE
+            18 * mm,   # QTY
+            20 * mm,   # DISCOUNT
+            27 * mm,   # AMOUNT
+        ]
+    else:
+        item_col_widths = [
+            9 * mm,    # NO
+            92 * mm,   # ITEMS / SPECIFICATION
+            30 * mm,   # UNIT PRICE
+            18 * mm,   # QTY
+            31 * mm,   # AMOUNT
+        ]
 
     item_table = Table(
         item_rows,
@@ -509,37 +539,48 @@ async def download_quotation_pdf(
         TableStyle(
             [
                 # ------------------------------------------------
-                # HEADER
+                # HEADER - mengikuti referensi
                 # ------------------------------------------------
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#111827")),
 
-                # Header alignment
-                ("ALIGN", (0, 0), (0, 0), "CENTER"),
-                ("ALIGN", (1, 0), (1, 0), "LEFT"),
-                ("ALIGN", (2, 0), (2, 0), "RIGHT"),
-                ("ALIGN", (3, 0), (3, 0), "CENTER"),
-                ("ALIGN", (4, 0), (4, 0), "RIGHT"),
+                # Border tipis
+                ("GRID", (0, 0), (-1, -1), 0.45, colors.HexColor("#6B7280")),
 
                 # ------------------------------------------------
-                # BODY
+                # ALIGNMENT
                 # ------------------------------------------------
-                ("ALIGN", (0, 1), (0, -1), "CENTER"),
-                ("ALIGN", (1, 1), (1, -1), "LEFT"),
-                ("ALIGN", (2, 1), (2, -1), "RIGHT"),
-                ("ALIGN", (3, 1), (3, -1), "CENTER"),
-                ("ALIGN", (4, 1), (4, -1), "RIGHT"),
-
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
 
-                # Border tipis seperti referensi
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#9CA3AF")),
+                # NO
+                ("ALIGN", (0, 0), (0, -1), "CENTER"),
 
-                # Padding
+                # Description
+                ("ALIGN", (1, 1), (1, -1), "LEFT"),
+
+                # Unit Price
+                ("ALIGN", (2, 1), (2, -1), "RIGHT"),
+
+                # Qty
+                ("ALIGN", (3, 1), (3, -1), "CENTER"),
+
+                # Discount jika ada
+                ("ALIGN", (4, 1), (4, -1), "RIGHT")
+                if has_discount
+                else ("ALIGN", (0, 0), (0, 0), "CENTER"),
+
+                # Amount
+                ("ALIGN", (-1, 1), (-1, -1), "RIGHT"),
+
+                # ------------------------------------------------
+                # PADDING
+                # ------------------------------------------------
                 ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+
                 ("TOPPADDING", (0, 0), (-1, 0), 4),
                 ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
+
                 ("TOPPADDING", (0, 1), (-1, -1), 4),
                 ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
             ]
@@ -562,7 +603,7 @@ async def download_quotation_pdf(
     grand_total_value = float(doc.get("grand_total") or 0)
     tax_percent = float(doc.get("tax_percent") or 0)
 
-    # Discount hanya ditampilkan jika memang ada.
+    # Discount hanya ditampilkan jika ada
     totals_data = [
         ["SUBTOTAL", money(subtotal_value)],
     ]
@@ -581,21 +622,21 @@ async def download_quotation_pdf(
     )
 
     # ============================================================
-    # TOTALS ALIGNMENT
+    # TOTALS LAYOUT
     # ============================================================
     #
-    # Total berada tepat di bawah area 3 kolom kanan:
+    # Total ditempatkan di bawah area kanan tabel.
+    # Lebarnya dibuat compact seperti referensi:
     #
-    # UNIT PRICE | QTY | AMOUNT
-    #    32 mm   + 18 +  35 mm
+    #       SUBTOTAL        Rp xxx
+    #       PPN 11%         Rp xxx
+    #       GRAND TOTAL     Rp xxx
     #
-    # Total area = 85 mm
-    #
-    # Dibuat lebih compact agar label dan angka tidak terlalu jauh.
+    # Tidak menggunakan border untuk subtotal/PPN.
 
     totals_table = Table(
         totals_data,
-        colWidths=[43 * mm, 42 * mm],
+        colWidths=[32 * mm, 38 * mm],
         hAlign="RIGHT",
     )
 
@@ -622,15 +663,19 @@ async def download_quotation_pdf(
                 # ------------------------------------------------
                 # GRAND TOTAL
                 # ------------------------------------------------
-                ("BACKGROUND", (0, grand_total_row), (-1, grand_total_row), colors.HexColor("#18181B")),
-                ("TEXTCOLOR", (0, grand_total_row), (-1, grand_total_row), colors.white),
-                ("FONTNAME", (0, grand_total_row), (-1, grand_total_row), "Helvetica-Bold"),
+                ("BACKGROUND", (0, grand_total_row), (-1, grand_total_row),
+                 colors.HexColor("#18181B")),
+                ("TEXTCOLOR", (0, grand_total_row), (-1, grand_total_row),
+                 colors.white),
+                ("FONTNAME", (0, grand_total_row), (-1, grand_total_row),
+                 "Helvetica-Bold"),
 
                 # ------------------------------------------------
                 # PADDING
                 # ------------------------------------------------
                 ("LEFTPADDING", (0, 0), (-1, -1), 3),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+
                 ("TOPPADDING", (0, 0), (-1, -1), 3),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
             ]
