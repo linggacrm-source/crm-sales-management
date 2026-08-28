@@ -573,19 +573,21 @@ async def download_quotation_pdf(
         ["GRAND TOTAL", money(doc.get("grand_total"))],
     ]
 
+    # Lebar total mengikuti area:
+    # UNIT PRICE + QTY + AMOUNT
+    # 32 mm + 18 mm + 35 mm = 85 mm
+    #
+    # Posisi otomatis rata kanan sehingga sisi kanan
+    # sejajar dengan sisi kanan tabel item.
     totals_table = Table(
         totals_data,
-        colWidths=[42 * mm, 48 * mm],
+        colWidths=[50 * mm, 35 * mm],
         hAlign="RIGHT",
     )
 
     totals_table.setStyle(
         TableStyle(
             [
-                # Tidak menggunakan border pada bagian total
-                ("BOX", (0, 0), (-1, -1), 0, colors.white),
-                ("INNERGRID", (0, 0), (-1, -1), 0, colors.white),
-
                 # Alignment
                 ("ALIGN", (0, 0), (0, -1), "LEFT"),
                 ("ALIGN", (1, 0), (1, -1), "RIGHT"),
@@ -596,15 +598,16 @@ async def download_quotation_pdf(
                 ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 8.5),
 
-                # Grand Total seperti referensi
+                # Grand Total
                 ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#E5E7EB")),
-                ("TEXTCOLOR", (0, -1), (-1, -1), colors.black),
 
-                # Padding
+                # Spacing kiri-kanan
                 ("LEFTPADDING", (0, 0), (-1, -1), 4),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+
+                # Jarak antar baris dibuat rapih
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
             ]
         )
     )
