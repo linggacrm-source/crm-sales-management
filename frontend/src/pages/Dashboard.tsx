@@ -111,7 +111,6 @@ export default function Dashboard() {
   const num = (v?: number) => (kpi ? formatNumber(v) : "-");
   const cur = (v?: number) => (kpi ? formatCompactIDR(v) : "-");
   const totalPipeline = bars.reduce((sum, item) => sum + item.value, 0);
-  const totalDeals = bars.reduce((sum, item) => sum + item.count, 0);
   const wonRatio = totalPipeline > 0 && kpi?.won_value ? Math.round((kpi.won_value / totalPipeline) * 100) : 0;
   const activeFilterCount = [period, salesId, stage, customerId].filter(Boolean).length;
 
