@@ -31,7 +31,6 @@ LIST_PROJECTION = {
     "status": 1,
     "last_login": 1,
     "signature_title": 1,
-    # computed server-side so the big base64 image never travels with the list
     "has_signature": {"$toBool": {"$ifNull": ["$signature_image", False]}},
 }
 SORTABLE = ["name", "email", "role", "status", "created_date", "last_login"]
@@ -120,7 +119,7 @@ async def list_users(
     manager_id: Optional[str] = None,
     sort_by: Optional[str] = None,
     sort_dir: Optional[str] = None,
-    user: dict = Depends(require_roles(SUPER_ADMIN)),
+    user: dict = Depends(require_roles(SUPER_ADMIN, SALES_MANAGER)),
 ):
     query: dict = {}
     query.update(search_clause(search, ["name", "email", "user_id"]))
