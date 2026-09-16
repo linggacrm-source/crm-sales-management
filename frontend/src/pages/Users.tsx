@@ -51,7 +51,8 @@ const EMPTY: FormState = {
 
 export default function Users() {
   const qc = useQueryClient();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isManager } = useAuth();
+  const canViewUsers = isAdmin || isManager;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [search, setSearch] = useState("");
@@ -71,13 +72,14 @@ export default function Users() {
     queryKey: ["users", qs],
     queryFn: () => apiGet<Paginated<UserRow>>(`/users?${qs}`),
     placeholderData: (prev) => prev,
-    enabled: isAdmin,
+    enabled: canViewUsers,
   });
 
   const { data: options } = useQuery<SalesOption[]>({
     queryKey: ["user-options"],
     queryFn: () => apiGet<SalesOption[]>("/users/options"),
     staleTime: 10 * 60_000,
+    enabled: canViewUsers,
   });
 
   const invalidate = () => {
@@ -127,7 +129,7 @@ export default function Users() {
   const rows = isError ? [] : (data?.data ?? []);
   const managers = (options ?? []).filter((o) => o.role !== "SALES");
 
-  if (!isAdmin) {
+  if (!canViewUsers) {
     return (
       <div>
         <PageHeader title="Kelola Pengguna" />
@@ -138,7 +140,7 @@ export default function Users() {
 
   return (
     <div>
-      <PageHeader title="Kelola Pengguna" subtitle="User_ID adalah identifier utama; Manager_ID menghubungkan hierarki">
+      <PageHeader title="Kelola Pengguna" subtitle={isAdmin ? "User_ID adalah identifier utama; Manager_ID menghubungkan hierarki" : "Akses lihat saja untuk Manager"}>
         {isAdmin && (
           <Button
             onClick={() => {
@@ -281,116 +283,61 @@ export default function Users() {
         />
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{form.user_id ? "Edit User" : "Tambah User"}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="u-name">Nama</Label>
-              <Input
-                id="u-name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="mt-1.5"
-                data-testid="input-user-name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="u-email">Email</Label>
-              <Input
-                id="u-email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="mt-1.5"
-                data-testid="input-user-email"
-              />
-            </div>
-            <div>
-              <Label htmlFor="u-role">Role</Label>
-              <select
-                id="u-role"
-                value={form.role}
-                onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                data-testid="input-user-role"
-              >
-                {ROLES.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="u-manager">Manager</Label>
-              <select
-                id="u-manager"
-                value={form.manager_id}
-                onChange={(e) => setForm({ ...form, manager_id: e.target.value })}
-                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                data-testid="input-user-manager"
-              >
-                <option value="">— Tanpa manager —</option>
-                {managers.map((m) => (
-                  <option key={m.user_id} value={m.user_id}>
-                    {m.name} ({m.user_id})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="u-phone">Telepon</Label>
-              <Input
-                id="u-phone"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="mt-1.5"
-                data-testid="input-user-phone"
-              />
-            </div>
-            <div>
-              <Label htmlFor="u-status">Status</Label>
-              <select
-                id="u-status"
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                data-testid="input-user-status"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
-            {!form.user_id && (
-              <div className="sm:col-span-2">
-                <Label htmlFor="u-pass">Password Awal</Label>
-                <Input
-                  id="u-pass"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="mt-1.5"
-                  data-testid="input-user-password"
-                />
+      {isAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>{form.user_id ? "Edit User" : "Tambah User"}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="u-name">Nama</Label>
+                <Input id="u-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1.5" data-testid="input-user-name" />
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-user">
-              Batal
-            </Button>
-            <Button
-              onClick={() => save.mutate(form)}
-              disabled={!form.name || !form.email || save.isPending}
-              data-testid="btn-save-user"
-            >
-              {save.isPending ? "Menyimpan..." : "Simpan"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <div>
+                <Label htmlFor="u-email">Email</Label>
+                <Input id="u-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-1.5" data-testid="input-user-email" />
+              </div>
+              <div>
+                <Label htmlFor="u-role">Role</Label>
+                <select id="u-role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-user-role">
+                  {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="u-manager">Manager</Label>
+                <select id="u-manager" value={form.manager_id} onChange={(e) => setForm({ ...form, manager_id: e.target.value })} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-user-manager">
+                  <option value="">— Tanpa manager —</option>
+                  {managers.map((m) => <option key={m.user_id} value={m.user_id}>{m.name} ({m.user_id})</option>)}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="u-phone">Telepon</Label>
+                <Input id="u-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1.5" data-testid="input-user-phone" />
+              </div>
+              <div>
+                <Label htmlFor="u-status">Status</Label>
+                <select id="u-status" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-user-status">
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+              </div>
+              {!form.user_id && (
+                <div className="sm:col-span-2">
+                  <Label htmlFor="u-pass">Password Awal</Label>
+                  <Input id="u-pass" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="mt-1.5" data-testid="input-user-password" />
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-user">Batal</Button>
+              <Button onClick={() => save.mutate(form)} disabled={!form.name || !form.email || save.isPending} data-testid="btn-save-user">
+                {save.isPending ? "Menyimpan..." : "Simpan"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
