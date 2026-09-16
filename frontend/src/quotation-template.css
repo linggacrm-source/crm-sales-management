@@ -1,10 +1,9 @@
-/* Quotation web preview — pixel/layout match to the server-side PDF master. */
+/* QUOTATION WEB PREVIEW — pixel-oriented layout matching the supplied PDF master. */
 
 .quotation-document {
-  position: relative !important;
   box-sizing: border-box !important;
   width: 210mm !important;
-  max-width: 100% !important;
+  max-width: 210mm !important;
   min-height: 297mm !important;
   margin: 0 auto !important;
   padding: 12mm 15mm !important;
@@ -12,36 +11,33 @@
   border-radius: 0 !important;
   background: #fff !important;
   color: #303030 !important;
-  font-family: Helvetica, Arial, sans-serif !important;
+  font-family: Arial, Helvetica, sans-serif !important;
   font-size: 8.5px !important;
   line-height: 1.3 !important;
   box-shadow: none !important;
   overflow: hidden !important;
 }
 
-/* ============================================================
-   HEADER — same 105mm / 75mm split as the PDF
-   ============================================================ */
+/* Header: PDF coordinates are approximately x=15mm, y=14mm. */
 .quotation-document .quotation-header {
   box-sizing: border-box !important;
   position: relative !important;
   display: flex !important;
   align-items: flex-start !important;
-  width: 105mm !important;
-  height: 25mm !important;
-  min-height: 25mm !important;
-  margin: 0 0 5mm !important;
+  width: 180mm !important;
+  height: 28mm !important;
+  min-height: 28mm !important;
+  margin: 0 !important;
   padding: 0 !important;
   gap: 0 !important;
   border: 0 !important;
-  overflow: visible !important;
 }
 
 .quotation-document .quotation-header img {
   display: block !important;
-  width: 25mm !important;
-  height: 25mm !important;
-  flex: 0 0 25mm !important;
+  width: 22mm !important;
+  height: 22mm !important;
+  flex: 0 0 22mm !important;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
@@ -54,18 +50,15 @@
 
 .quotation-document .quotation-header > div {
   box-sizing: border-box !important;
-  min-width: 0 !important;
-  width: 80mm !important;
-  padding: 0 !important;
+  width: 83mm !important;
+  padding: 0 0 0 3mm !important;
   margin: 0 !important;
-  padding-left: 0 !important;
-  transform: none !important;
 }
 
 .quotation-document .quotation-header h2 {
-  margin: 0 0 1mm !important;
+  margin: 0 0 0.4mm !important;
   padding: 0 !important;
-  color: #171717 !important;
+  color: #111 !important;
   font-size: 11px !important;
   line-height: 13px !important;
   font-weight: 700 !important;
@@ -75,182 +68,134 @@
 .quotation-document .quotation-header p {
   margin: 0 !important;
   padding: 0 !important;
-  color: #333 !important;
+  color: #111 !important;
   font-size: 7.5px !important;
-  line-height: 10px !important;
+  line-height: 10.5px !important;
 }
 
-/* The React component keeps shared company metadata; visually use the PDF copy. */
 .quotation-document .quotation-header p:first-of-type,
 .quotation-document .quotation-header p:last-of-type {
   font-size: 0 !important;
 }
+
 .quotation-document .quotation-header p:first-of-type::before {
   content: "Industrial Computing • Automation • Communication";
   font-size: 7.5px !important;
 }
+
 .quotation-document .quotation-header p:last-of-type::before {
   content: "EPIWALK A707 Rasuna Epicentrum Kuningan, Jakarta Selatan";
   font-size: 7.5px !important;
 }
-.quotation-document .quotation-header p:last-of-type {
-  margin-top: 1mm !important;
-}
 
-/* PDF title is in the right 75mm header column. */
+.quotation-document .quotation-header p:last-of-type { margin-top: 2mm !important; }
+
+/* QUOTATION + metadata are visually part of the same header in the PDF. */
 .quotation-document .quotation-header::after {
   content: "QUOTATION";
   position: absolute !important;
-  top: 0 !important;
-  left: 105mm !important;
-  width: 75mm !important;
-  color: #171717 !important;
+  top: -0.5mm !important;
+  right: 0 !important;
+  color: #111 !important;
   font-size: 17px !important;
   line-height: 20px !important;
   font-weight: 700 !important;
   letter-spacing: 0 !important;
-  text-align: right !important;
-  white-space: nowrap !important;
 }
 
-/* ============================================================
-   META — move DATE / NO / VALID UNTIL into the PDF header area
-   ============================================================ */
 .quotation-document > div:nth-child(2) {
-  box-sizing: border-box !important;
-  position: absolute !important;
-  top: 19mm !important;
-  right: 15mm !important;
-  z-index: 3 !important;
+  position: relative !important;
   display: block !important;
-  width: 75mm !important;
-  height: 17mm !important;
-  min-height: 0 !important;
+  box-sizing: border-box !important;
+  width: 180mm !important;
+  height: 16mm !important;
+  min-height: 16mm !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-.quotation-document > div:nth-child(2) > div:first-child,
-.quotation-document [data-testid="quotation-status-badge"] {
-  display: none !important;
-}
+.quotation-document > div:nth-child(2) > div:first-child { display: none !important; }
+.quotation-document [data-testid="quotation-status-badge"] { display: none !important; }
 
 .quotation-document > div:nth-child(2) > table {
-  position: static !important;
-  width: 75mm !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  position: absolute !important;
+  top: -14mm !important;
+  right: 0 !important;
+  width: 76mm !important;
   border: 0 !important;
   border-collapse: collapse !important;
   background: transparent !important;
   font-size: 8px !important;
-  line-height: 11px !important;
 }
 
 .quotation-document > div:nth-child(2) > table tr,
 .quotation-document > div:nth-child(2) > table th,
 .quotation-document > div:nth-child(2) > table td {
   height: auto !important;
-  padding: 0 0 1.2mm !important;
+  padding: 0 0 1.1mm !important;
   border: 0 !important;
   background: transparent !important;
-  color: #222 !important;
+  color: #111 !important;
   font-size: 8px !important;
   line-height: 11px !important;
 }
 
 .quotation-document > div:nth-child(2) > table th {
   width: 50% !important;
-  text-align: left !important;
+  text-align: right !important;
   font-weight: 700 !important;
+  padding-right: 1mm !important;
 }
 
 .quotation-document > div:nth-child(2) > table td {
   width: 50% !important;
-  text-align: right !important;
+  text-align: left !important;
   font-weight: 400 !important;
   white-space: nowrap !important;
 }
 
-/* Replace web labels with the PDF labels without changing data. */
-.quotation-document > div:nth-child(2) > table tr:nth-child(1) th,
-.quotation-document > div:nth-child(2) > table tr:nth-child(2) th,
-.quotation-document > div:nth-child(2) > table tr:nth-child(3) th {
-  font-size: 0 !important;
-}
-.quotation-document > div:nth-child(2) > table tr:nth-child(1) th::before {
-  content: "Date:";
-  font-size: 8px !important;
-}
-.quotation-document > div:nth-child(2) > table tr:nth-child(2) th::before {
-  content: "No:";
-  font-size: 8px !important;
-}
-.quotation-document > div:nth-child(2) > table tr:nth-child(3) th::before {
-  content: "Valid Until:";
-  font-size: 8px !important;
-}
+/* Hide original uppercase labels and reproduce the exact PDF wording. */
+.quotation-document > div:nth-child(2) > table th { font-size: 0 !important; }
+.quotation-document > div:nth-child(2) > table th::before { font-size: 8px !important; }
+.quotation-document > div:nth-child(2) > table tr:nth-child(1) th::before { content: "No:"; }
+.quotation-document > div:nth-child(2) > table tr:nth-child(2) th::before { content: "Date:"; }
+.quotation-document > div:nth-child(2) > table tr:nth-child(3) th::before { content: "Valid Until:"; }
 
-/* ============================================================
-   CUSTOMER — exact 28mm / 152mm PDF grid
-   ============================================================ */
+/* Customer starts at PDF y≈42mm. */
 .quotation-document > div:nth-child(3) {
   box-sizing: border-box !important;
   display: grid !important;
   grid-template-columns: 28mm 152mm !important;
   width: 180mm !important;
-  height: auto !important;
-  min-height: 0 !important;
-  margin: 0 0 5mm !important;
+  height: 20mm !important;
+  min-height: 20mm !important;
+  margin: 0 !important;
   padding: 0 !important;
-  color: #303030 !important;
 }
 
 .quotation-document > div:nth-child(3) > p:first-child {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-  padding: 1px 3px 1px 0 !important;
-  font-size: 8.5px !important;
-  line-height: 11px !important;
-  font-weight: 700 !important;
-  color: #303030 !important;
+  grid-column: 1 !important; grid-row: 1 !important;
+  margin: 0 !important; padding: 0 !important;
+  font-size: 9px !important; line-height: 11px !important;
+  font-weight: 700 !important; color: #111 !important;
 }
-
 .quotation-document > div:nth-child(3) > p:nth-child(2) {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  margin: 0 !important;
-  padding: 1px 3px 1px 0 !important;
-  font-size: 8.5px !important;
-  line-height: 11px !important;
-  font-weight: 700 !important;
-  color: #303030 !important;
+  grid-column: 2 !important; grid-row: 1 !important;
+  margin: 0 !important; padding: 0 !important;
+  font-size: 8.5px !important; line-height: 11px !important;
+  font-weight: 700 !important; color: #111 !important;
 }
-
 .quotation-document > div:nth-child(3) > div {
-  grid-column: 2 !important;
-  grid-row: 2 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  color: #444 !important;
-  font-size: 7.5px !important;
-  line-height: 10px !important;
+  grid-column: 2 !important; grid-row: 2 !important;
+  margin: 0 !important; padding: 0 !important;
+  color: #111 !important; font-size: 7.5px !important; line-height: 13px !important;
 }
+.quotation-document > div:nth-child(3) > div p { margin: 0 !important; padding: 0 !important; }
 
-.quotation-document > div:nth-child(3) > div p {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Hide email/phone rows when absent, preserving ReportLab's compact spacing. */
-
-/* ============================================================
-   ITEMS — exact PDF table widths and light-gray header
-   ============================================================ */
+/* Item table starts at PDF y≈66.5mm. */
 .quotation-document > div:nth-child(4) {
-  box-sizing: border-box !important;
   width: 180mm !important;
+  height: auto !important;
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -259,7 +204,7 @@
   width: 180mm !important;
   max-width: 180mm !important;
   margin: 0 !important;
-  border: 0.45mm solid #6b7280 !important;
+  border: 0.35mm solid #9ca3af !important;
   border-collapse: collapse !important;
   table-layout: fixed !important;
   background: #fff !important;
@@ -267,17 +212,13 @@
   line-height: 11px !important;
 }
 
-.quotation-document > div:nth-child(4) thead tr {
-  height: auto !important;
-  background: #f3f4f6 !important;
-}
-
+.quotation-document > div:nth-child(4) thead tr { height: 6.5mm !important; background: #f3f4f6 !important; }
 .quotation-document > div:nth-child(4) thead th {
   box-sizing: border-box !important;
-  height: auto !important;
-  padding: 1.1mm 1.1mm !important;
-  border-right: 0.25mm solid #6b7280 !important;
-  border-bottom: 0.45mm solid #6b7280 !important;
+  height: 6.5mm !important;
+  padding: 1mm 1mm !important;
+  border-right: 0.25mm solid #9ca3af !important;
+  border-bottom: 0.35mm solid #9ca3af !important;
   background: #f3f4f6 !important;
   color: #111827 !important;
   font-size: 7.5px !important;
@@ -290,8 +231,8 @@
 .quotation-document > div:nth-child(4) tbody td {
   box-sizing: border-box !important;
   padding: 1.1mm 1.1mm !important;
-  border-right: 0.25mm solid #c3c3c3 !important;
-  border-bottom: 0.25mm solid #c3c3c3 !important;
+  border-right: 0.25mm solid #c0c0c0 !important;
+  border-bottom: 0.25mm solid #c0c0c0 !important;
   background: #fff !important;
   color: #303030 !important;
   font-size: 8.5px !important;
@@ -300,7 +241,7 @@
 }
 .quotation-document > div:nth-child(4) tbody td:last-child { border-right: 0 !important; }
 
-/* No discount: 9 | 92 | 30 | 18 | 31 mm. */
+/* Exact PDF widths: 9 | 92 | 30 | 18 | 31 mm. */
 .quotation-document > div:nth-child(4) table:not(:has(th:nth-child(5))) th:nth-child(1),
 .quotation-document > div:nth-child(4) table:not(:has(th:nth-child(5))) td:nth-child(1) { width: 9mm !important; }
 .quotation-document > div:nth-child(4) table:not(:has(th:nth-child(5))) th:nth-child(2),
@@ -312,7 +253,7 @@
 .quotation-document > div:nth-child(4) table:not(:has(th:nth-child(5))) th:nth-child(5),
 .quotation-document > div:nth-child(4) table:not(:has(th:nth-child(5))) td:nth-child(5) { width: 31mm !important; }
 
-/* Discount: 9 | 76 | 30 | 18 | 20 | 27 mm. */
+/* Discount variant: 9 | 76 | 30 | 18 | 20 | 27 mm. */
 .quotation-document > div:nth-child(4) table:has(th:nth-child(6)) th:nth-child(1),
 .quotation-document > div:nth-child(4) table:has(th:nth-child(6)) td:nth-child(1) { width: 9mm !important; }
 .quotation-document > div:nth-child(4) table:has(th:nth-child(6)) th:nth-child(2),
@@ -328,227 +269,136 @@
 
 .quotation-document > div:nth-child(4) tbody td:nth-child(1),
 .quotation-document > div:nth-child(4) tbody td:nth-child(4) { text-align: center !important; }
-.quotation-document > div:nth-child(4) tbody td:nth-child(2) { text-align: left !important; }
 .quotation-document > div:nth-child(4) tbody td:nth-child(3),
 .quotation-document > div:nth-child(4) tbody td:nth-last-child(1) { text-align: right !important; white-space: nowrap !important; }
+.quotation-document > div:nth-child(4) tbody td:nth-child(2) { text-align: left !important; }
 .quotation-document > div:nth-child(4) tbody td .whitespace-pre-line { white-space: pre-line !important; }
 
-/* ============================================================
-   TOTALS — 70mm right aligned, exactly like PDF
-   ============================================================ */
+/* Totals starts at PDF y≈84mm, aligned to the right edge. */
 .quotation-document .quotation-totals {
   box-sizing: border-box !important;
   display: flex !important;
   justify-content: flex-end !important;
   width: 180mm !important;
-  height: auto !important;
-  min-height: 0 !important;
+  height: 22mm !important;
+  min-height: 22mm !important;
   margin: 5mm 0 0 !important;
   padding: 0 !important;
 }
-
 .quotation-document .quotation-totals table {
   width: 70mm !important;
+  height: 18mm !important;
   margin: 0 !important;
   border: 0 !important;
   border-collapse: collapse !important;
   background: #fff !important;
-  font-size: 8.5px !important;
-  line-height: 11px !important;
+  font-size: 8px !important;
 }
-
-.quotation-document .quotation-totals tr { height: auto !important; }
+.quotation-document .quotation-totals tr { height: 6mm !important; }
 .quotation-document .quotation-totals th,
 .quotation-document .quotation-totals td {
-  padding: 1mm 1.2mm !important;
+  padding: 0 1.2mm !important;
   border: 0 !important;
   background: #fff !important;
-  color: #303030 !important;
-  font-size: 8.5px !important;
+  color: #333 !important;
+  font-size: 8px !important;
   line-height: 11px !important;
   font-weight: 400 !important;
 }
 .quotation-document .quotation-totals th { text-align: left !important; }
 .quotation-document .quotation-totals td { text-align: right !important; white-space: nowrap !important; }
-
 .quotation-document .quotation-totals tr:last-child,
 .quotation-document .quotation-totals tr:last-child th,
 .quotation-document .quotation-totals tr:last-child td {
-  padding: 1mm 1.2mm !important;
+  padding: 0 1.5mm !important;
   background: #18181b !important;
   color: #fff !important;
   font-weight: 700 !important;
   font-size: 8.5px !important;
-  line-height: 11px !important;
 }
 
-/* ============================================================
-   TERMS + DIGITAL APPROVAL — same 70mm approval column
-   ============================================================ */
+/* Terms and signature: PDF terms x≈17mm/y≈108mm, signature x≈123mm/y≈136mm. */
 .quotation-document .quotation-signature {
   box-sizing: border-box !important;
   display: grid !important;
   grid-template-columns: 1fr 70mm !important;
   width: 180mm !important;
-  min-height: 0 !important;
-  margin: 6mm 0 0 !important;
+  height: 54mm !important;
+  min-height: 54mm !important;
+  margin: 0 !important;
   padding: 0 !important;
   gap: 10mm !important;
 }
-
 .quotation-document .quotation-signature > div:first-child {
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-  color: #555 !important;
-  font-size: 7.5px !important;
+  margin: 0 !important; padding: 0 !important; border: 0 !important;
+  color: #303030 !important;
 }
 .quotation-document .quotation-signature > div:first-child > p {
-  margin: 0 0 2mm !important;
-  padding: 0 !important;
-  color: #303030 !important;
-  font-size: 8.5px !important;
-  line-height: 10px !important;
-  font-weight: 700 !important;
+  margin: 0 0 3mm !important; padding: 0 !important;
+  color: #111 !important; font-size: 8.5px !important; line-height: 11px !important; font-weight: 700 !important;
 }
 .quotation-document .quotation-signature ol {
-  margin: 0 !important;
-  padding: 0 !important;
-  list-style: none !important;
-  color: #555 !important;
-  font-size: 7.5px !important;
-  line-height: 11px !important;
+  margin: 0 !important; padding: 0 !important; list-style: none !important;
+  color: #333 !important; font-size: 7.5px !important; line-height: 11px !important;
 }
 .quotation-document .quotation-signature ol li { margin: 0 !important; padding: 0 !important; }
 .quotation-document .quotation-signature ol li::before { content: "• "; }
 
 .quotation-document .quotation-signature > div:last-child {
-  padding: 0 !important;
-  margin: 0 !important;
-  border: 0 !important;
-  text-align: left !important;
-  color: #555 !important;
+  margin: 0 !important; padding: 26mm 0 0 !important; border: 0 !important;
+  text-align: left !important; color: #555 !important;
 }
-.quotation-document .quotation-signature > div:last-child > p:first-child {
-  margin: 0 0 2mm !important;
-  padding: 0 !important;
-  color: #555 !important;
-  font-size: 7.5px !important;
-  line-height: 10px !important;
-}
-
-.quotation-document .quotation-signature [data-testid="quotation-signature-block"] {
-  margin: 0 !important;
-  padding: 0 !important;
-}
+.quotation-document .quotation-signature > div:last-child > p:first-child { display: none !important; }
+.quotation-document .quotation-signature [data-testid="quotation-signature-block"] { margin: 0 !important; padding: 0 !important; }
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] > img { display: none !important; }
-.quotation-document .quotation-signature [data-testid="quotation-signature-block"] > div.mb-1.h-20 {
-  display: block !important;
-  width: 59mm !important;
-  height: 10mm !important;
-  margin: 0 0 1mm !important;
-  border-bottom: 0.25mm solid #777 !important;
-}
+.quotation-document .quotation-signature [data-testid="quotation-signature-block"] > div.mb-1.h-20 { display: none !important; }
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"]::before {
   content: "DIGITALLY APPROVED";
-  display: block !important;
-  margin: 0 0 0.5mm !important;
-  color: #555 !important;
-  font-size: 8px !important;
-  line-height: 10px !important;
-  font-weight: 700 !important;
+  display: block !important; margin: 0 0 0.5mm !important;
+  color: #555 !important; font-size: 8px !important; line-height: 11px !important; font-weight: 700 !important;
 }
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] > p.inline-block {
-  display: block !important;
-  width: max-content !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  color: #555 !important;
-  font-size: 8.5px !important;
-  line-height: 11px !important;
-  font-weight: 700 !important;
+  display: block !important; width: max-content !important; margin: 0 !important; padding: 0 !important; border: 0 !important;
+  color: #555 !important; font-size: 8.5px !important; line-height: 11px !important; font-weight: 700 !important;
 }
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] > p.text-\[11px\] {
-  display: block !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  color: #555 !important;
-  font-size: 8px !important;
-  line-height: 10px !important;
-  font-weight: 700 !important;
+  display: block !important; margin: 0 !important; padding: 0 !important; border: 0 !important;
+  color: #555 !important; font-size: 8px !important; line-height: 11px !important; font-weight: 700 !important;
 }
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] > p.mt-1 { display: none !important; }
 .quotation-document .quotation-qr { display: none !important; }
 
-/* ============================================================
-   FOOTER — PDF has one thin line and two short text blocks
-   ============================================================ */
+/* Footer: exact PDF wording, including quotation number from data-* attribute. */
 .quotation-document .quotation-footer {
   box-sizing: border-box !important;
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: space-between !important;
   width: 180mm !important;
-  min-height: 9mm !important;
-  margin: 5mm 0 0 !important;
-  padding: 1.5mm 0 0 !important;
-  border-top: 0.5px solid #555 !important;
+  height: 8mm !important;
+  min-height: 8mm !important;
+  margin: 0 !important;
+  padding: 2mm 0 0 !important;
+  border-top: 0.25mm solid #777 !important;
   background: #fff !important;
-  color: #555 !important;
+  color: #111 !important;
   font-size: 7.5px !important;
+  line-height: 10px !important;
 }
 .quotation-document .quotation-footer > div { display: none !important; }
 .quotation-document .quotation-footer::before {
-  content: "Quotation";
-  display: block !important;
-  color: #555 !important;
+  content: "Quotation " attr(data-quotation-number) !important;
+  display: block !important; color: #111 !important;
 }
 .quotation-document .quotation-footer::after {
-  content: "This document is digitally generated.";
-  display: block !important;
-  color: #555 !important;
-  text-align: right !important;
+  content: "This document is digitally generated." !important;
+  display: block !important; color: #111 !important; text-align: right !important;
 }
 
-/* ============================================================
-   RESPONSIVE / PRINT
-   ============================================================ */
 @media (max-width: 900px) {
-  .quotation-document {
-    width: 100% !important;
-    min-height: 0 !important;
-    padding: 8mm !important;
-  }
-
-  .quotation-document .quotation-header {
-    width: 100% !important;
-  }
-  .quotation-document .quotation-header > div { width: auto !important; }
-  .quotation-document .quotation-header::after {
-    left: auto !important;
-    right: 0 !important;
-    width: auto !important;
-  }
-  .quotation-document > div:nth-child(2) {
-    right: 8mm !important;
-    width: 72mm !important;
-  }
-  .quotation-document > div:nth-child(2) > table { width: 72mm !important; }
-  .quotation-document > div:nth-child(3),
-  .quotation-document > div:nth-child(4),
-  .quotation-document .quotation-totals,
-  .quotation-document .quotation-signature,
-  .quotation-document .quotation-footer { width: 100% !important; }
-  .quotation-document .quotation-signature { grid-template-columns: 1fr !important; }
+  .quotation-document { max-width: 100% !important; width: 100% !important; min-height: 0 !important; padding: 8mm !important; overflow-x: auto !important; }
 }
 
 @media print {
-  .quotation-document {
-    width: 210mm !important;
-    min-height: 297mm !important;
-    margin: 0 !important;
-    padding: 12mm 15mm !important;
-    box-shadow: none !important;
-  }
+  .quotation-document { width: 210mm !important; max-width: 210mm !important; min-height: 297mm !important; margin: 0 !important; padding: 12mm 15mm !important; box-shadow: none !important; }
 }
