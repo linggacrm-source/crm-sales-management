@@ -1,0 +1,6 @@
+/* CRM brand lockup: use the supplied WELLRACOM emblem and CRM SALES MANAGEMENT text. */
+[data-testid="sidebar-brand"] > img,
+[data-testid="sidebar-brand"] img[src$="wellracom-logo.png"] { content: url("/wellracom-crm-brand.svg"); width: 208px; height: 48px; object-fit: contain; }
+@media (max-width: 1023px) {
+  header a img[src$="wellracom-logo.png"] { content: url("/wellracom-crm-brand.svg"); width: 208px; height: 42px; object-fit: contain; }
+}
