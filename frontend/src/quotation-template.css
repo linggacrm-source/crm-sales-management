@@ -1,0 +1,79 @@
+/* Quotation web preview aligned to the approved PDF layout. */
+.quotation-document {
+  max-width: 210mm;
+  margin: 0 auto;
+  border: 1px solid #d7dce3 !important;
+  border-radius: 0 !important;
+  box-shadow: 0 14px 45px rgba(15, 23, 42, 0.08) !important;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.quotation-document .quotation-header {
+  position: relative;
+  min-height: 96px;
+  padding: 22px 28px 16px !important;
+  border-bottom: 1.5px solid #111827 !important;
+}
+.quotation-document .quotation-header::after {
+  content: "QUOTATION";
+  margin-left: auto;
+  font-size: 25px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: .12em;
+  color: #111827;
+}
+.quotation-document .quotation-header img { width: 58px !important; height: 58px !important; }
+.quotation-document .quotation-header h2 { font-size: 15px !important; color: #111827 !important; }
+.quotation-document .quotation-header p { color: #6b7280 !important; }
+.quotation-document > div:nth-child(2) {
+  padding: 14px 28px 8px !important;
+  align-items: flex-start !important;
+}
+.quotation-document > div:nth-child(2) > div:first-child h1 { display: none; }
+.quotation-document > div:nth-child(2) > div:first-child { min-width: 1px; }
+.quotation-document > div:nth-child(2) > table {
+  margin-left: auto;
+  border-color: #333 !important;
+  font-size: 11px !important;
+}
+.quotation-document > div:nth-child(2) > table th { background: #f3f4f6 !important; color: #111827 !important; }
+.quotation-document > div:nth-child(3) {
+  padding: 4px 28px 16px !important;
+}
+.quotation-document > div:nth-child(3) > p:first-child { color: #111827 !important; }
+.quotation-document > div:nth-child(3) > p:nth-child(2) { font-size: 14px; color: #111827; }
+.quotation-document > div:nth-child(4) { padding: 0 28px !important; }
+.quotation-document > div:nth-child(4) table { border-color: #333 !important; }
+.quotation-document > div:nth-child(4) thead tr { background: #f3f4f6 !important; color: #111827 !important; }
+.quotation-document > div:nth-child(4) thead th { color: #111827 !important; border-color: #9ca3af !important; }
+.quotation-document > div:nth-child(4) tbody td { border-color: #d1d5db !important; color: #111827 !important; }
+.quotation-document .quotation-totals { padding: 12px 28px 0 !important; }
+.quotation-document .quotation-totals table { border-collapse: collapse; border: 1px solid #333; width: 85mm !important; }
+.quotation-document .quotation-totals tr:not(:last-child) { border-bottom: 1px solid #d1d5db; }
+.quotation-document .quotation-totals tr:last-child { background: #e5e7eb !important; color: #111827 !important; }
+.quotation-document .quotation-totals tr:last-child th,
+.quotation-document .quotation-totals tr:last-child td { color: #111827 !important; }
+.quotation-document .quotation-totals th,
+.quotation-document .quotation-totals td { padding: 7px 9px !important; }
+.quotation-document .quotation-signature { padding: 22px 28px !important; }
+.quotation-document .quotation-signature > div:first-child { font-size: 11px; }
+.quotation-document .quotation-signature > div:last-child { border-left: 1px solid #e5e7eb; padding-left: 28px; }
+.quotation-document .quotation-footer {
+  border-top: 1px solid #111827 !important;
+  background: #fff !important;
+  padding: 12px 28px !important;
+  color: #6b7280 !important;
+}
+.quotation-document .quotation-footer p:first-child { color: #111827 !important; }
+@media (max-width: 640px) {
+  .quotation-document { border-left: 0 !important; border-right: 0 !important; box-shadow: none !important; }
+  .quotation-document .quotation-header::after { display: none; }
+  .quotation-document .quotation-header { padding: 18px 16px 14px !important; }
+  .quotation-document > div:nth-child(2), .quotation-document > div:nth-child(3), .quotation-document > div:nth-child(4), .quotation-document .quotation-totals, .quotation-document .quotation-signature, .quotation-document .quotation-footer { padding-left: 16px !important; padding-right: 16px !important; }
+  .quotation-document .quotation-signature > div:last-child { border-left: 0; border-top: 1px solid #e5e7eb; padding-left: 0; padding-top: 20px; }
+}
+@media print {
+  .quotation-document { max-width: none !important; width: 100% !important; border: 0 !important; box-shadow: none !important; }
+  .quotation-document .quotation-header::after { font-size: 21px; }
+  .quotation-document .quotation-signature > div:last-child { border-left: 0; }
+}
