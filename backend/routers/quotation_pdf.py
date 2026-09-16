@@ -127,31 +127,33 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     else:
         signature_flow.append(Spacer(1, 18 * mm))
     signature_flow.extend([Paragraph(f"<b>{signature_name}</b>", normal), Paragraph(signature_title, small)])
+    signature_table = Table([[terms, signature_flow]], colWidths=[100 * mm, 80 * mm])
+    signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
+    story += [signature_table, Spacer(1, 4 * mm)]
 
-    # Terms and digital approval are intentionally stacked vertically.
-    terms_signature = Table([[terms], [signature_flow]], colWidths=[180 * mm])
-    terms_signature.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        ("TOPPADDING", (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        ("TOPPADDING", (0, 1), (0, 1), 4 * mm),
-    ]))
-    story += [terms_signature, Spacer(1, 4 * mm)]
-
-    def draw_page_number(canvas, doc_obj):
+    def draw_page_footer(canvas, doc_obj):
         canvas.saveState()
-        canvas.setFont("Helvetica", 6.7)
-        canvas.setFillColor(colors.HexColor("#6B7280"))
-        canvas.drawCentredString(A4[0] / 2, 11.5 * mm, "Jakarta : Gedung Epicentrum Walk A707 Jl. Hr Rasuna Said Kuningan Jakarta Selatan")
-        canvas.drawCentredString(A4[0] / 2, 8.2 * mm, "Surabaya : Jl. Bratang Binangun 83 Jawa Timur")
-        canvas.setFont("Helvetica", 7)
-        canvas.drawRightString(A4[0] - 15 * mm, 8 * mm, f"Page {doc_obj.page}")
+        footer_height = 18 * mm
+        footer_y = 0
+        canvas.setFillColor(colors.HexColor("#EEB53C"))
+        canvas.rect(0, footer_y, A4[0], footer_height, fill=1, stroke=0)
+        canvas.setFillColor(colors.HexColor("#111111"))
+        canvas.setFont("Helvetica-Bold", 8.8)
+        canvas.drawString(15 * mm, 13.5 * mm, "Surabaya Office :")
+        canvas.drawString(105 * mm, 13.5 * mm, "Jakarta Office :")
+        canvas.setFont("Helvetica", 7.4)
+        canvas.drawString(15 * mm, 9.3 * mm, "Jl Bratang Binangun No. 83, Surabaya - Jawa Timur")
+        canvas.drawString(105 * mm, 9.3 * mm, "Epicentrum - Walk A - 707, HR Rasuna Said, East Jakarta 12960 - Indonesia")
+        canvas.setFont("Helvetica", 7.2)
+        canvas.drawString(15 * mm, 5.1 * mm, "Ph.   (+62 - 31) 502 8999,  Fax. (+62 - 31) 503 3999")
+        canvas.drawString(105 * mm, 5.1 * mm, "Ph.   (+62 21) 2994 1841,  Fax. (+62 21) 2994 1842")
+        canvas.setFont("Helvetica", 5.8)
+        canvas.setFillColor(colors.HexColor("#555555"))
+        canvas.drawRightString(A4[0] - 15 * mm, 1.7 * mm, f"Page {doc_obj.page}")
         canvas.restoreState()
 
     pdf_doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=15 * mm, leftMargin=15 * mm, topMargin=12 * mm, bottomMargin=12 * mm, title=f"Quotation {doc.get('quotation_number') or '-'}", author=company_name)
-    pdf_doc.build(story, onFirstPage=draw_page_number, onLaterPages=draw_page_number)
+    pdf_doc.build(story, onFirstPage=draw_page_footer, onLaterPages=draw_page_footer)
     buffer.seek(0)
     filename = f"Quotation_{quotation_number}.pdf"
     return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
