@@ -1,7 +1,8 @@
-/* Quotation web preview — pixel-oriented A4 reproduction of the PDF master. */
+/* Quotation web preview — A4 reproduction of the supplied PDF master. */
 
 .quotation-document {
   box-sizing: border-box;
+  position: relative !important;
   width: 210mm !important;
   max-width: 100% !important;
   min-height: 297mm !important;
@@ -10,17 +11,17 @@
   border: 0 !important;
   border-radius: 0 !important;
   background: #fff !important;
-  color: #252525 !important;
+  color: #303030 !important;
   font-family: Arial, Helvetica, sans-serif !important;
-  font-size: 10px !important;
+  font-size: 9px !important;
   line-height: 1.35 !important;
   box-shadow: none !important;
   overflow: hidden !important;
 }
 
-/* ------------------------------
+/* ==============================
    HEADER / LETTERHEAD
-   ------------------------------ */
+   ============================== */
 .quotation-document .quotation-header {
   box-sizing: border-box;
   position: relative !important;
@@ -33,7 +34,6 @@
   padding: 4.5mm 15mm 0 !important;
   gap: 4mm !important;
   border: 0 !important;
-  border-bottom: 0 !important;
 }
 
 .quotation-document .quotation-header::before {
@@ -43,15 +43,15 @@
   right: 9.5mm;
   bottom: 0;
   height: 0.7mm;
-  background: #202020;
+  background: #222;
 }
 
 .quotation-document .quotation-header img {
   width: 20mm !important;
   height: 20mm !important;
   flex: 0 0 20mm !important;
-  object-fit: contain !important;
   margin: 0 !important;
+  object-fit: contain !important;
 }
 
 .quotation-document .quotation-header > div {
@@ -61,48 +61,31 @@
 
 .quotation-document .quotation-header h2 {
   margin: 0 !important;
+  color: #171717 !important;
   font-size: 11px !important;
   line-height: 13px !important;
   font-weight: 800 !important;
   letter-spacing: -0.15px !important;
-  color: #171717 !important;
   white-space: nowrap !important;
 }
 
-/* The PDF uses these exact visible lines. */
+/* Exact wording shown in the PDF master. */
 .quotation-document .quotation-header p {
   margin: 0 !important;
-  color: #303030 !important;
-  font-size: 8px !important;
+  color: #333 !important;
+  font-size: 0 !important;
   line-height: 10px !important;
 }
 
-.quotation-document .quotation-header p:first-of-type {
-  font-size: 8px !important;
-}
-
-.quotation-document .quotation-header p:last-of-type {
-  margin-top: 0.4mm !important;
-  font-size: 7px !important;
-}
-
-.quotation-document .quotation-header p:first-of-type::after,
-.quotation-document .quotation-header p:last-of-type::after {
-  content: none !important;
-}
-
-/* Company shared profile may contain the newer web wording; visually use the PDF master wording. */
-.quotation-document .quotation-header p:first-of-type {
-  font-size: 0 !important;
-}
 .quotation-document .quotation-header p:first-of-type::before {
   content: "Industrial Computer & Automation Solution";
   font-size: 8px;
 }
 
 .quotation-document .quotation-header p:last-of-type {
-  font-size: 0 !important;
+  margin-top: 0.4mm !important;
 }
+
 .quotation-document .quotation-header p:last-of-type::before {
   content: "www.wellkomputindo.id";
   font-size: 7px;
@@ -117,12 +100,12 @@
   font-size: 17px;
   line-height: 19px;
   font-weight: 800;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.25px;
 }
 
-/* ------------------------------
-   TITLE / STATUS / META
-   ------------------------------ */
+/* ==============================
+   STATUS + DATE / NUMBER / VALIDITY
+   ============================== */
 .quotation-document > div:nth-child(2) {
   box-sizing: border-box;
   position: relative !important;
@@ -135,10 +118,10 @@
 }
 
 .quotation-document > div:nth-child(2) > div:first-child {
-  display: block !important;
   position: absolute !important;
-  top: -18.5mm !important;
+  top: -10.5mm !important;
   right: 15mm !important;
+  display: block !important;
   width: auto !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -169,7 +152,8 @@
 .quotation-document > div:nth-child(2) > table {
   box-sizing: border-box;
   position: absolute !important;
-  top: 6.8mm !important;
+  z-index: 5;
+  top: 6.2mm !important;
   right: 15mm !important;
   width: 76mm !important;
   height: 24mm !important;
@@ -209,7 +193,6 @@
   width: 50% !important;
   text-align: left !important;
   font-weight: 700 !important;
-  letter-spacing: 0 !important;
 }
 
 .quotation-document > div:nth-child(2) > table td {
@@ -219,77 +202,49 @@
   white-space: nowrap !important;
 }
 
-/* Restore the exact PDF labels rather than the longer React labels. */
-.quotation-document > div:nth-child(2) > table tr:nth-child(1) th,
-.quotation-document > div:nth-child(2) > table tr:nth-child(2) th,
-.quotation-document > div:nth-child(2) > table tr:nth-child(3) th {
-  font-size: 0 !important;
-}
-.quotation-document > div:nth-child(2) > table tr:nth-child(1) th::after {
-  content: "DATE";
-  font-size: 8px;
-}
-.quotation-document > div:nth-child(2) > table tr:nth-child(2) th::after {
-  content: "QUOTE NO";
-  font-size: 8px;
-}
-.quotation-document > div:nth-child(2) > table tr:nth-child(3) th::after {
-  content: "EXPIRATION DATE";
-  font-size: 8px;
-}
-
-/* ------------------------------
-   CUSTOMER / RECIPIENT
-   ------------------------------ */
+/* ==============================
+   CUSTOMER
+   ============================== */
 .quotation-document > div:nth-child(3) {
   box-sizing: border-box;
-  display: grid !important;
-  grid-template-columns: 0 1fr !important;
-  grid-auto-rows: min-content !important;
+  display: block !important;
   width: 100% !important;
-  height: 56mm !important;
-  min-height: 56mm !important;
+  height: 50.4mm !important;
+  min-height: 50.4mm !important;
   margin: 0 !important;
   padding: 6mm 15mm 0 !important;
   color: #303030 !important;
 }
 
 .quotation-document > div:nth-child(3) > p:first-child {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  position: relative !important;
-  left: 0 !important;
-  width: 0 !important;
-  overflow: visible !important;
-  white-space: nowrap !important;
-  margin: 0 !important;
+  display: block !important;
+  width: auto !important;
+  margin: 0 0 3mm !important;
   padding: 0 !important;
-  font-size: 9px !important;
-  line-height: 12px !important;
-  font-weight: 700 !important;
   color: #303030 !important;
+  font-size: 9px !important;
+  line-height: 11px !important;
+  font-weight: 700 !important;
   letter-spacing: 0.2px !important;
 }
 
 .quotation-document > div:nth-child(3) > p:nth-child(2) {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
+  display: block !important;
   margin: 0 !important;
-  padding-left: 0 !important;
+  padding: 0 !important;
+  color: #303030 !important;
   font-size: 11px !important;
   line-height: 14px !important;
   font-weight: 700 !important;
-  color: #303030 !important;
 }
 
 .quotation-document > div:nth-child(3) > div {
-  grid-column: 2 !important;
-  grid-row: 2 / span 3 !important;
-  margin: 1mm 0 0 !important;
+  display: block !important;
+  margin: 0.8mm 0 0 !important;
   padding: 0 !important;
+  color: #555 !important;
   font-size: 9px !important;
   line-height: 16px !important;
-  color: #505050 !important;
 }
 
 .quotation-document > div:nth-child(3) > div p {
@@ -297,17 +252,9 @@
   padding: 0 !important;
 }
 
-.quotation-document > div:nth-child(3) > p:first-child::after {
-  content: "TO:";
-  font-size: 9px;
-}
-.quotation-document > div:nth-child(3) > p:first-child {
-  font-size: 0 !important;
-}
-
-/* ------------------------------
-   ITEM TABLE
-   ------------------------------ */
+/* ==============================
+   ITEMS TABLE
+   ============================== */
 .quotation-document > div:nth-child(4) {
   box-sizing: border-box;
   width: 100% !important;
@@ -323,26 +270,26 @@
   table-layout: fixed !important;
   background: #fff !important;
   font-size: 9px !important;
-  line-height: 12px !important;
+  line-height: 13px !important;
 }
 
 .quotation-document > div:nth-child(4) thead tr {
-  height: 10mm !important;
+  height: 9mm !important;
   background: #fff !important;
 }
 
 .quotation-document > div:nth-child(4) thead th {
-  height: 10mm !important;
+  height: 9mm !important;
   padding: 0 2mm !important;
-  border-right: 0.3mm solid #9b9b9b !important;
+  border-right: 0.3mm solid #a4a4a4 !important;
   border-bottom: 0.45mm solid #303030 !important;
   background: #fff !important;
   color: #222 !important;
   font-size: 8px !important;
-  line-height: 10mm !important;
+  line-height: 9mm !important;
   font-weight: 700 !important;
   text-align: center !important;
-  letter-spacing: 0.25px !important;
+  letter-spacing: 0.2px !important;
 }
 
 .quotation-document > div:nth-child(4) thead th:last-child {
@@ -350,14 +297,14 @@
 }
 
 .quotation-document > div:nth-child(4) tbody tr {
-  min-height: 36mm !important;
+  min-height: 33mm !important;
   height: auto !important;
 }
 
 .quotation-document > div:nth-child(4) tbody td {
-  padding: 2.2mm 2.5mm !important;
-  border-right: 0.25mm solid #c0c0c0 !important;
-  border-bottom: 0.25mm solid #c0c0c0 !important;
+  padding: 2mm 2.5mm !important;
+  border-right: 0.25mm solid #c3c3c3 !important;
+  border-bottom: 0.25mm solid #c3c3c3 !important;
   background: #fff !important;
   color: #303030 !important;
   font-size: 9px !important;
@@ -370,34 +317,22 @@
 }
 
 .quotation-document > div:nth-child(4) th:nth-child(1),
-.quotation-document > div:nth-child(4) td:nth-child(1) {
-  width: 11mm !important;
-}
+.quotation-document > div:nth-child(4) td:nth-child(1) { width: 11mm !important; }
 
 .quotation-document > div:nth-child(4) th:nth-child(2),
-.quotation-document > div:nth-child(4) td:nth-child(2) {
-  width: 98mm !important;
-}
+.quotation-document > div:nth-child(4) td:nth-child(2) { width: 98mm !important; }
 
 .quotation-document > div:nth-child(4) th:nth-child(3),
-.quotation-document > div:nth-child(4) td:nth-child(3) {
-  width: 36mm !important;
-}
+.quotation-document > div:nth-child(4) td:nth-child(3) { width: 36mm !important; }
 
 .quotation-document > div:nth-child(4) th:nth-child(4),
-.quotation-document > div:nth-child(4) td:nth-child(4) {
-  width: 20mm !important;
-}
+.quotation-document > div:nth-child(4) td:nth-child(4) { width: 20mm !important; }
 
 .quotation-document > div:nth-child(4) th:nth-last-child(1),
-.quotation-document > div:nth-child(4) td:nth-last-child(1) {
-  width: 38mm !important;
-}
+.quotation-document > div:nth-child(4) td:nth-last-child(1) { width: 38mm !important; }
 
 .quotation-document > div:nth-child(4) tbody td:nth-child(1),
-.quotation-document > div:nth-child(4) tbody td:nth-child(4) {
-  text-align: center !important;
-}
+.quotation-document > div:nth-child(4) tbody td:nth-child(4) { text-align: center !important; }
 
 .quotation-document > div:nth-child(4) tbody td:nth-child(3),
 .quotation-document > div:nth-child(4) tbody td:nth-last-child(1) {
@@ -414,79 +349,77 @@
   white-space: pre-line !important;
 }
 
-/* ------------------------------
-   TOTALS BOX
-   ------------------------------ */
+/* ==============================
+   TOTALS
+   ============================== */
 .quotation-document .quotation-totals {
   box-sizing: border-box;
   display: flex !important;
   justify-content: flex-end !important;
   width: 100% !important;
-  margin: 5mm 0 0 !important;
+  height: 22mm !important;
+  min-height: 22mm !important;
+  margin: 4.5mm 0 0 !important;
   padding: 0 15mm !important;
 }
 
 .quotation-document .quotation-totals table {
   width: 70mm !important;
+  height: 20mm !important;
+  margin: 0 !important;
   border: 0.45mm solid #222 !important;
   border-collapse: collapse !important;
   background: #fff !important;
-  font-size: 9px !important;
-  line-height: 12px !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
 }
 
 .quotation-document .quotation-totals tr {
-  height: 6mm !important;
+  height: 4.5mm !important;
 }
 
 .quotation-document .quotation-totals th,
 .quotation-document .quotation-totals td {
-  height: 6mm !important;
+  height: 4.5mm !important;
   padding: 0 2.5mm !important;
   border: 0 !important;
   background: #fff !important;
-  color: #707985 !important;
+  color: #737b85 !important;
   font-size: 8px !important;
-  line-height: 6mm !important;
+  line-height: 4.5mm !important;
   font-weight: 400 !important;
 }
 
-.quotation-document .quotation-totals th {
-  text-align: left !important;
-}
-
+.quotation-document .quotation-totals th { text-align: left !important; }
 .quotation-document .quotation-totals td {
   text-align: right !important;
-  color: #343a40 !important;
+  color: #3b4147 !important;
   white-space: nowrap !important;
 }
 
 .quotation-document .quotation-totals tr:last-child,
 .quotation-document .quotation-totals tr:last-child th,
 .quotation-document .quotation-totals tr:last-child td {
-  height: 8mm !important;
+  height: 6mm !important;
+  border-top: 0.45mm solid #222 !important;
   background: #fff !important;
   color: #20252a !important;
   font-size: 9px !important;
+  line-height: 6mm !important;
   font-weight: 700 !important;
-  border-top: 0.45mm solid #222 !important;
 }
 
-.quotation-document .quotation-totals tr:last-child th,
-.quotation-document .quotation-totals tr:last-child td {
-  line-height: 8mm !important;
-}
-
-/* ------------------------------
-   TERMS + APPROVAL
-   ------------------------------ */
+/* ==============================
+   TERMS + DIGITAL APPROVAL
+   ============================== */
 .quotation-document .quotation-signature {
   box-sizing: border-box;
+  position: relative !important;
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   width: 100% !important;
   min-height: 78mm !important;
-  margin: 0 !important;
+  margin: -13mm 0 0 !important;
   padding: 0 15mm !important;
   gap: 12mm !important;
 }
@@ -495,55 +428,55 @@
   padding: 0 !important;
   margin: 0 !important;
   border: 0 !important;
+  color: #555 !important;
   font-size: 8px !important;
-  color: #4b4b4b !important;
 }
 
 .quotation-document .quotation-signature > div:first-child > p {
   margin: 0 0 2mm !important;
   padding: 0 !important;
+  color: #242424 !important;
   font-size: 8px !important;
   line-height: 10px !important;
   font-weight: 700 !important;
-  color: #242424 !important;
   letter-spacing: 0.35px !important;
 }
 
 .quotation-document .quotation-signature ol {
   margin: 0 !important;
   padding: 0 !important;
-  list-style: none !important;
+  list-style-position: inside !important;
+  list-style-type: decimal !important;
+  color: #555 !important;
   font-size: 8px !important;
   line-height: 13px !important;
-  color: #555 !important;
 }
 
 .quotation-document .quotation-signature ol li {
   margin: 0 !important;
   padding: 0 !important;
-  white-space: normal !important;
 }
 
-/* Master PDF uses numbered terms. Keep numbers instead of bullets. */
 .quotation-document .quotation-signature ol li::before {
   content: none !important;
 }
 
 .quotation-document .quotation-signature > div:last-child {
   position: relative !important;
-  padding: 29mm 0 0 !important;
+  padding: 44mm 0 0 !important;
   margin: 0 !important;
   border: 0 !important;
   text-align: left !important;
-  color: #4b4b4b !important;
+  color: #555 !important;
 }
 
 .quotation-document .quotation-signature > div:last-child > p:first-child {
   display: block !important;
   margin: 0 0 2mm !important;
+  padding: 0 !important;
+  color: #666 !important;
   font-size: 8px !important;
   line-height: 10px !important;
-  color: #666 !important;
 }
 
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] {
@@ -567,10 +500,10 @@
   content: "DIGITALLY APPROVED";
   display: block !important;
   margin: 0 0 0.5mm !important;
+  color: #555 !important;
   font-size: 8px !important;
   line-height: 10px !important;
   font-weight: 700 !important;
-  color: #555 !important;
 }
 
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] > p.inline-block {
@@ -579,58 +512,61 @@
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
+  color: #555 !important;
   font-size: 9px !important;
   line-height: 12px !important;
   font-weight: 700 !important;
-  color: #555 !important;
 }
 
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] > p.text-\[11px\] {
   display: block !important;
   margin: 0 !important;
   padding: 0 !important;
+  color: #555 !important;
   font-size: 9px !important;
   line-height: 12px !important;
   font-weight: 700 !important;
-  color: #555 !important;
 }
 
 .quotation-document .quotation-signature [data-testid="quotation-signature-block"] > p.mt-1 {
   display: none !important;
 }
 
-/* Hide QR from the PDF-matching web template. */
 .quotation-document .quotation-qr {
   display: none !important;
 }
 
-/* Thank-you line is part of the PDF master. */
 .quotation-document .quotation-signature::after {
   content: "THANK YOU FOR YOUR BUSINESS!";
   position: absolute;
+  top: 78mm;
   left: 0;
   right: 0;
-  margin-top: 69mm;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #555;
   text-align: center;
   font-size: 8px;
   line-height: 10px;
   font-weight: 700;
-  color: #555;
-  letter-spacing: 0.1px;
 }
 
-/* ------------------------------
+/* ==============================
    OFFICE FOOTER
-   ------------------------------ */
+   ============================== */
 .quotation-document .quotation-footer {
   box-sizing: border-box;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 7mm !important;
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
   gap: 12mm !important;
   width: 100% !important;
-  min-height: 22mm !important;
+  min-height: 18mm !important;
   margin: 0 !important;
-  padding: 0 15mm 7mm !important;
+  padding: 0 15mm !important;
   border: 0 !important;
   background: #fff !important;
   color: #4f4f4f !important;
@@ -648,23 +584,23 @@
 .quotation-document .quotation-footer > div p {
   margin: 0 !important;
   padding: 0 !important;
+  color: #4f4f4f !important;
   font-size: 7px !important;
   line-height: 10px !important;
-  color: #4f4f4f !important;
 }
 
 .quotation-document .quotation-footer > div p:first-child {
   margin-bottom: 0.4mm !important;
+  color: #313131 !important;
   font-size: 8px !important;
   line-height: 10px !important;
   font-weight: 700 !important;
   letter-spacing: 0.2px !important;
-  color: #313131 !important;
 }
 
-/* ------------------------------
+/* ==============================
    RESPONSIVE / PRINT
-   ------------------------------ */
+   ============================== */
 @media (max-width: 900px) {
   .quotation-document {
     width: 100% !important;
@@ -683,9 +619,7 @@
   .quotation-document .quotation-header::after {
     right: 8mm;
   }
-  .quotation-document > div:nth-child(2) > table {
-    right: 8mm !important;
-  }
+  .quotation-document > div:nth-child(2) > table,
   .quotation-document > div:nth-child(2) > div:first-child {
     right: 8mm !important;
   }
@@ -711,28 +645,5 @@
     border: 0 !important;
     box-shadow: none !important;
     overflow: hidden !important;
-  }
-
-  .quotation-document .quotation-header {
-    padding-left: 15mm !important;
-    padding-right: 15mm !important;
-  }
-  .quotation-document .quotation-header::before {
-    left: 9.5mm;
-    right: 9.5mm;
-  }
-  .quotation-document > div:nth-child(2) > table,
-  .quotation-document > div:nth-child(2) > div:first-child {
-    right: 15mm !important;
-  }
-  .quotation-document > div:nth-child(3),
-  .quotation-document > div:nth-child(4),
-  .quotation-document .quotation-signature {
-    padding-left: 15mm !important;
-    padding-right: 15mm !important;
-  }
-  .quotation-document .quotation-footer {
-    padding-left: 15mm !important;
-    padding-right: 15mm !important;
   }
 }
