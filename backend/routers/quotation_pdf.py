@@ -1,6 +1,4 @@
 from io import BytesIO
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from reportlab.lib import colors
@@ -9,7 +7,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
-
 from lib.auth import current_user, scope_filter
 from lib.db import db
 from routers.quotations import _decorate
@@ -33,6 +30,7 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     section = ParagraphStyle("QuotationSectionClean", parent=normal, fontName="Helvetica-Bold", fontSize=9, leading=11)
     right = ParagraphStyle("QuotationRightClean", parent=normal, alignment=TA_RIGHT)
     center = ParagraphStyle("QuotationCenterClean", parent=normal, alignment=TA_CENTER)
+    white_right = ParagraphStyle("QuotationWhiteRightClean", parent=right, textColor=colors.white)
     item_header = ParagraphStyle("QuotationItemHeaderClean", parent=normal, fontName="Helvetica-Bold", fontSize=7.5, leading=9, alignment=TA_CENTER, textColor=colors.HexColor("#111827"))
     story = []
 
@@ -105,7 +103,7 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
         totals_rows.append([Paragraph("DISCOUNT", right), Paragraph(money(discount_value), right)])
     totals_rows.extend([
         [Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right), Paragraph(money(tax_value), right)],
-        [Paragraph("<b>GRAND TOTAL</b>", right, textColor=colors.white), Paragraph(f"<b>{money(grand_total)}</b>", right, textColor=colors.white)],
+        [Paragraph("<b>GRAND TOTAL</b>", white_right), Paragraph(f"<b>{money(grand_total)}</b>", white_right)],
     ])
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm])
     totals_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")), ("TEXTCOLOR", (0, -1), (-1, -1), colors.white)]))
