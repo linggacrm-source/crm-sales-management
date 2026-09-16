@@ -282,6 +282,7 @@ export default function Customers() {
           <TableHeader>
             <TableRow>
               <TableHead>Customer ID</TableHead>
+              <TableHead>Nama Perusahaan</TableHead>
               {sortHead("Nama Customer", "customer_name")}
               <TableHead>Industri</TableHead>
               {sortHead("Kota", "city")}
@@ -293,15 +294,16 @@ export default function Customers() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableSkeleton cols={8} />
+              <TableSkeleton cols={9} />
             ) : isError ? (
-              <ErrorRow colSpan={8} />
+              <ErrorRow colSpan={9} />
             ) : rows.length === 0 ? (
-              <EmptyRow colSpan={8} message="Tidak ada customer yang cocok dengan filter." />
+              <EmptyRow colSpan={9} message="Tidak ada customer yang cocok dengan filter." />
             ) : (
               rows.map((c) => (
                 <TableRow key={c.customer_id} data-testid={`row-customer-${c.customer_id}`}>
                   <TableCell className="font-mono text-xs">{c.customer_id}</TableCell>
+                  <TableCell className="font-medium">{c.company ?? "-"}</TableCell>
                   <TableCell>
                     <Link
                       to={`/customers/${c.customer_id}`}
