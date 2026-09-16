@@ -1,0 +1,25 @@
+/* Final quotation web-only fixes. */
+/* Keep the QUOTATION heading in the upper-right. */
+body .quotation-document .quotation-header:after {
+  display: block !important;
+  content: "QUOTATION" !important;
+  top: 0 !important;
+  right: 0 !important;
+  color: #111 !important;
+  font-size: 17px !important;
+  line-height: 20px !important;
+  font-weight: 700 !important;
+}
+
+/* Remove only the bottom quotation footer text and its line. */
+body .quotation-document .quotation-footer {
+  display: none !important;
+  border-top: 0 !important;
+}
+
+/* Grand total must remain readable on the dark background. */
+body .quotation-document .quotation-totals tr:last-child,
+body .quotation-document .quotation-totals tr:last-child th,
+body .quotation-document .quotation-totals tr:last-child td {
+  color: #fff !important;
+}
