@@ -20,20 +20,41 @@ type JsonBody = unknown;
 
 async function request<T>(method: string, path: string, body?: JsonBody): Promise<T> {
   // Auth rides the httpOnly session cookie automatically — never add auth headers here.
-  const res = await fetch(`${BASE}${path}`, {
-    method,
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  // GETs are retried because a transient proxy/browser connection failure should not
+  // leave detail pages stuck on an error state when the API itself is healthy.
+  const maxAttempts = method === "GET" ? 3 : 1;
+  let lastError: unknown;
 
-  // FastAPI reports request-validation failures as 422 with a {detail: [...]} body.
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => null);
-    throw new ApiError(res.status, errBody);
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const res = await fetch(`${BASE}${path}`, {
+        method,
+        headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        cache: method === "GET" ? "no-store" : undefined,
+      });
+
+      // FastAPI reports request-validation failures as 422 with a {detail: [...]} body.
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        // Retry transient server/proxy errors, but do not retry normal 4xx responses.
+        if (method === "GET" && res.status >= 500 && attempt < maxAttempts) {
+          await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
+          continue;
+        }
+        throw new ApiError(res.status, errBody);
+      }
+
+      if (res.status === 204) return undefined as T;
+      return (await res.json()) as T;
+    } catch (error) {
+      lastError = error;
+      if (error instanceof ApiError || attempt >= maxAttempts) throw error;
+      await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
+    }
   }
 
-  if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  throw lastError instanceof Error ? lastError : new Error("Request failed");
 }
 
 // The response type is yours to declare: nothing infers across the Python boundary, so a
