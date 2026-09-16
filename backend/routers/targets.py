@@ -75,12 +75,15 @@ async def target_options(user: dict = Depends(require_roles(SUPER_ADMIN, SALES_M
 @router.get("", response_model=list[TargetRow])
 async def list_targets(
     year: int = Query(..., ge=2000, le=2100),
-    user: dict = Depends(require_roles(SUPER_ADMIN, SALES_MANAGER)),
+    user: dict = Depends(require_roles(SUPER_ADMIN, SALES_MANAGER, SALES)),
 ):
-    ids = await visible_sales_ids(user)
-    query: dict = {"year": year}
-    if ids is not None:
-        query["owner_id"] = {"$in": ids}
+    if user["role"] == SALES:
+        query: dict = {"year": year, "target_type": "PERSONAL", "owner_id": user["user_id"]}
+    else:
+        ids = await visible_sales_ids(user)
+        query = {"year": year}
+        if ids is not None:
+            query["owner_id"] = {"$in": ids}
     rows = await db.targets.find(query, {"_id": 0}).sort([("target_type", 1), ("owner_name", 1)]).to_list(1000)
     return [TargetRow(**r) for r in rows]
 
