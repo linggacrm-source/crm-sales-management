@@ -45,7 +45,7 @@ export default function AppShell() {
   return <div className="min-h-screen bg-background">
     <aside className={cn("fixed inset-y-0 left-0 z-40 flex w-[248px] flex-col border-r border-slate-200/80 bg-white transition-transform duration-200 lg:translate-x-0", open ? "translate-x-0" : "-translate-x-full")} data-testid="app-sidebar">
       <div className="flex h-[76px] items-center border-b border-slate-100 px-5">
-        <Link to="/" className="flex items-center" data-testid="sidebar-brand"><img src="/wellracom-logo.png" alt="WELLRACOM" className="h-11 w-auto object-contain" /></Link>
+        <Link to="/" className="flex items-center" data-testid="sidebar-brand"><img src="/wellracom-logo-clean.svg" alt="WELLRACOM" className="h-11 w-auto object-contain" /></Link>
         <button className="ml-auto rounded-lg p-2 text-slate-400 hover:bg-slate-50 lg:hidden" onClick={() => setOpen(false)} data-testid="btn-close-sidebar" aria-label="Tutup menu"><X className="h-5 w-5" /></button>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-5">
@@ -65,7 +65,7 @@ export default function AppShell() {
         <div className="relative max-w-xl flex-1"><Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /><input className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-10 pr-16 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-4 focus:ring-blue-100" placeholder="Search customers, quotations, opportunities..." aria-label="Global search" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 ring-1 ring-slate-200">Ctrl K</span></div>
         <div className="ml-auto flex items-center gap-3"><button className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-blue-50 hover:text-blue-600" aria-label="Notifikasi"><Bell className="h-5 w-5" /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" /></button><div className="h-8 w-px bg-slate-200" /><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 text-sm font-bold text-white shadow-sm">{initials}</div><div className="hidden xl:block"><p className="text-xs font-bold text-slate-800">{user.name}</p><p className="text-[10px] text-slate-400">{user.role.replaceAll("_", " ")}</p></div></div></div>
       </header>
-      <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur lg:hidden"><button className="rounded-lg p-2 hover:bg-slate-50" onClick={() => setOpen(true)} data-testid="btn-open-sidebar" aria-label="Buka menu"><Menu className="h-5 w-5" /></button><img src="/wellracom-logo.png" alt="WELLRACOM" className="h-8 w-auto object-contain" /></header>
+      <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur lg:hidden"><button className="rounded-lg p-2 hover:bg-slate-50" onClick={() => setOpen(true)} data-testid="btn-open-sidebar" aria-label="Buka menu"><Menu className="h-5 w-5" /></button><img src="/wellracom-logo-clean.svg" alt="WELLRACOM" className="h-8 w-auto object-contain" /></header>
       <main className="animate-rise min-h-[calc(100vh-76px)] px-4 py-5 sm:px-6 lg:px-7 lg:py-6"><Outlet /></main>
     </div>
   </div>;
