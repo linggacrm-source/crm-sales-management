@@ -24,6 +24,7 @@ from routers import (  # noqa: E402
     purchase_orders,
     quotation_pdf,
     quotations,
+    targets,
     users,
 )
 
@@ -39,6 +40,7 @@ INDEXES: dict[str, list] = {
     "order_monitoring": [[("monitoring_id", 1)], [("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("eta", 1)], [("created_date", -1)], [("sales_id", 1), ("eta", 1)], [("sales_id", 1), ("status", 1)], [("status", 1), ("eta", 1)]],
     "activities": [[("activity_id", 1)], [("sales_id", 1)], [("customer_id", 1)], [("status", 1)], [("activity_date", -1)], [("next_followup", 1)], [("sales_id", 1), ("activity_date", -1)], [("sales_id", 1), ("status", 1)], [("customer_id", 1), ("created_date", -1)]],
     "audit_logs": [[("timestamp", -1)], [("module", 1)], [("user_id", 1)]],
+    "targets": [[("target_id", 1)], [("year", 1), ("target_type", 1), ("owner_id", 1)], [("owner_id", 1), ("year", 1)]],
 }
 
 
@@ -95,6 +97,7 @@ app.include_router(order_monitoring.router, prefix="/api")
 app.include_router(activities.router, prefix="/api")
 app.include_router(audit.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
+app.include_router(targets.router, prefix="/api")
 
 FRONTEND_DIST = Path("/app/frontend/dist")
 
