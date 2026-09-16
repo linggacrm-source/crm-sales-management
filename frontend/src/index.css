@@ -94,32 +94,12 @@
 }
 
 .dark {
-  --background: #0b1220;
-  --foreground: #e5eefb;
-  --card: #111b2d;
-  --card-foreground: #f8fafc;
-  --popover: #111b2d;
-  --popover-foreground: #f8fafc;
-  --primary: #4da3ff;
-  --primary-foreground: #071426;
-  --secondary: #17243a;
-  --secondary-foreground: #dbeafe;
-  --muted: #17243a;
-  --muted-foreground: #94a3b8;
-  --accent: #122b4f;
-  --accent-foreground: #93c5fd;
-  --destructive: #f87171;
-  --border: #223149;
-  --input: #293952;
-  --ring: #60a5fa;
-  --sidebar: #0d1728;
-  --sidebar-foreground: #cbd5e1;
-  --sidebar-primary: #1677ff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #13243d;
-  --sidebar-accent-foreground: #dbeafe;
-  --sidebar-border: #1c2b41;
-  --sidebar-ring: #60a5fa;
+  --background: #0b1220; --foreground: #e5eefb; --card: #111b2d; --card-foreground: #f8fafc;
+  --popover: #111b2d; --popover-foreground: #f8fafc; --primary: #4da3ff; --primary-foreground: #071426;
+  --secondary: #17243a; --secondary-foreground: #dbeafe; --muted: #17243a; --muted-foreground: #94a3b8;
+  --accent: #122b4f; --accent-foreground: #93c5fd; --destructive: #f87171; --border: #223149; --input: #293952; --ring: #60a5fa;
+  --sidebar: #0d1728; --sidebar-foreground: #cbd5e1; --sidebar-primary: #1677ff; --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #13243d; --sidebar-accent-foreground: #dbeafe; --sidebar-border: #1c2b41; --sidebar-ring: #60a5fa;
 }
 
 @layer base {
@@ -129,29 +109,28 @@
   button, input, select, textarea { font: inherit; }
 }
 
-/* Modern CRM visual language */
-.card, [data-slot="card"] { box-shadow: 0 1px 2px rgba(15, 23, 42, .03), 0 8px 30px rgba(59, 130, 246, .035); }
+.card, [data-slot="card"] { box-shadow: 0 1px 2px rgba(15,23,42,.03), 0 8px 30px rgba(59,130,246,.035); }
 button, a, input, select, textarea { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: 150ms; }
 select { color: #334155; }
 select:focus, input:focus, textarea:focus { outline: none; }
 ::selection { background: #dbeafe; color: #0f3d8a; }
-
-/* Softer scrollbar for desktop data-heavy CRM screens */
 * { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
 *::-webkit-scrollbar { width: 7px; height: 7px; }
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
 *::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-/* Tables */
 thead tr { background: #f8fbff; }
 tbody tr { border-color: #edf2f7; }
 tbody tr:hover { background: #f8fbff; }
 
-/* Dashboard-friendly helpers */
 .crm-gradient { background: linear-gradient(135deg, #eff7ff 0%, #ffffff 48%, #ecfeff 100%); }
 .crm-blue-gradient { background: linear-gradient(135deg, #1677ff 0%, #2494ff 55%, #38bdf8 100%); }
 .crm-glass { background: rgba(255,255,255,.78); backdrop-filter: blur(16px); border: 1px solid rgba(226,234,244,.9); }
+
+/* Keep the existing dashboard hero bright even where older utility classes are used. */
+.from-slate-950 { --tw-gradient-from: #eff7ff var(--tw-gradient-from-position) !important; --tw-gradient-to: rgb(239 247 255 / 0) var(--tw-gradient-to-position) !important; }
+.via-slate-900 { --tw-gradient-to: rgb(255 255 255 / 0) var(--tw-gradient-to-position) !important; --tw-gradient-stops: var(--tw-gradient-from), #ffffff var(--tw-gradient-via-position), var(--tw-gradient-to) !important; }
+.to-blue-950 { --tw-gradient-to: #ecfeff var(--tw-gradient-to-position) !important; }
 
 @media print {
   .no-print { display: none !important; }
@@ -162,10 +141,8 @@ tbody tr:hover { background: #f8fbff; }
   body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .print-area { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
   .print-area table, .print-area tr, .print-area td, .print-area th, .print-area img, .quotation-terms, .quotation-signature, .quotation-footer, .quotation-totals { break-inside: avoid !important; page-break-inside: avoid !important; }
-  .quotation-header { break-inside: avoid !important; page-break-inside: avoid !important; }
-  .quotation-items tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .quotation-header, .quotation-items tr, .quotation-signature, .quotation-footer { break-inside: avoid !important; page-break-inside: avoid !important; }
   .quotation-document { overflow: visible !important; height: auto !important; min-height: 0 !important; }
-  .quotation-signature, .quotation-footer { break-inside: avoid !important; page-break-inside: avoid !important; }
   .quotation-print-section { break-inside: avoid; }
 }
 
@@ -173,10 +150,6 @@ tbody tr:hover { background: #f8fbff; }
 .quotation-items { width: 100%; border-collapse: collapse; }
 .quotation-items th, .quotation-items td { vertical-align: top; }
 .quotation-items td { word-break: normal; overflow-wrap: break-word; }
-.quotation-signature, .quotation-terms, .quotation-totals, .quotation-footer { break-inside: avoid; page-break-inside: avoid; }
-.quotation-qr { break-inside: avoid; page-break-inside: avoid; }
+.quotation-signature, .quotation-terms, .quotation-totals, .quotation-footer, .quotation-qr { break-inside: avoid; page-break-inside: avoid; }
 .quotation-qr img { display: block; width: 80px; height: 80px; object-fit: contain; }
-@media print {
-  .quotation-qr { break-inside: avoid !important; page-break-inside: avoid !important; }
-  .quotation-qr img { width: 80px !important; height: 80px !important; }
-}
+@media print { .quotation-qr { break-inside: avoid !important; page-break-inside: avoid !important; } .quotation-qr img { width: 80px !important; height: 80px !important; } }
