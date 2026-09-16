@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import './quotation-template.css'
+import './quotation-final-fixes.css'
 import App from './App.tsx'
 import { queryClient } from './lib/queryClient'
 
