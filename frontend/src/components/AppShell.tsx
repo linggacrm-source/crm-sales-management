@@ -23,7 +23,7 @@ const GROUPS: { group: string; items: NavItem[] }[] = [
   ]},
   { group: "Management", items: [
     { label: "Sales Team", path: "/sales-team", icon: Target, testId: "nav-sales-team" },
-    { label: "Target", path: "/targets", icon: Target, testId: "nav-targets", roles: ["SUPER_ADMIN", "SALES_MANAGER"] },
+    { label: "Target", path: "/targets", icon: Target, testId: "nav-targets", roles: ["SUPER_ADMIN", "SALES_MANAGER", "SALES"] },
     { label: "Audit Log", path: "/audit-log", icon: ShieldCheck, testId: "nav-audit-log", roles: ["SUPER_ADMIN"] },
   ]},
   { group: "Administration", items: [
