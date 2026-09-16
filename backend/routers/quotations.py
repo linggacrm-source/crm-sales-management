@@ -103,7 +103,6 @@ class QuotationDetail(QuotationRow):
     tax_percent: float = 11
     tax: float = 0
     items: list[QuotationItem] = []
-    # customer contact snapshot + signature, resolved for the printable document
     customer_company: Optional[str] = None
     customer_pic_name: Optional[str] = None
     customer_email: Optional[str] = None
@@ -174,8 +173,6 @@ async def list_quotations(
         sort_spec(sort_by, sort_dir, SORTABLE, "created_date"),
     )
     return QuotationListResponse(**result)
-
-
 
 
 @router.get("/{quotation_id}/pdf")
@@ -268,7 +265,6 @@ async def download_quotation_pdf(
         alignment=TA_CENTER,
     )
 
-    # Header tabel item: background gelap + teks putih
     item_header = ParagraphStyle(
         "QuotationItemHeader",
         parent=normal,
@@ -289,10 +285,12 @@ async def download_quotation_pdf(
 
     logo_path = "/app/frontend/public/logo well.jpg"
 
+    # Sedikit diperkecil agar proporsinya lebih ringan saat dicetak,
+    # sementara posisi blok company text tetap sama seperti layout PDF.
     logo = Image(
         logo_path,
-        width=22 * mm,
-        height=22 * mm,
+        width=19 * mm,
+        height=19 * mm,
         kind="proportional",
     )
 
@@ -434,7 +432,6 @@ async def download_quotation_pdf(
 
     items = doc.get("items") or []
 
-    # Discount hanya muncul jika ada discount
     has_discount = any(
         float(item.get("discount") or 0) > 0
         for item in items
@@ -464,8 +461,6 @@ async def download_quotation_pdf(
     for idx, item in enumerate(items, start=1):
         description = str(item.get("description") or "-")
 
-        # Pertahankan Enter dari textarea.
-        # ReportLab Paragraph menggunakan <br/> untuk line break.
         description_html = (
             description
             .replace("&", "&amp;")
@@ -500,301 +495,145 @@ async def download_quotation_pdf(
 
         item_rows.append(row)
 
-    # ============================================================
-    # ITEM TABLE WIDTH
-    # ============================================================
-    #
-    # Total lebar dibuat sekitar 180 mm agar aman di A4
-    # dan tidak keluar halaman.
-    #
-    # Referensi:
-    # NO | DESCRIPTION | UNIT PRICE | QTY | AMOUNT
-
     if has_discount:
-        item_col_widths = [
-            9 * mm,    # NO
-            76 * mm,   # ITEMS / SPECIFICATION
-            30 * mm,   # UNIT PRICE
-            18 * mm,   # QTY
-            20 * mm,   # DISCOUNT
-            27 * mm,   # AMOUNT
-        ]
+        item_col_widths = [9 * mm, 78 * mm, 30 * mm, 18 * mm, 25 * mm, 20 * mm]
     else:
-        item_col_widths = [
-            9 * mm,    # NO
-            92 * mm,   # ITEMS / SPECIFICATION
-            30 * mm,   # UNIT PRICE
-            18 * mm,   # QTY
-            31 * mm,   # AMOUNT
-        ]
+        item_col_widths = [9 * mm, 92 * mm, 30 * mm, 18 * mm, 31 * mm]
 
     item_table = Table(
         item_rows,
         colWidths=item_col_widths,
         repeatRows=1,
-        hAlign="LEFT",
     )
 
     item_table.setStyle(
         TableStyle(
             [
-                # ------------------------------------------------
-                # HEADER - mengikuti referensi
-                # ------------------------------------------------
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#111827")),
-
-                # Border tipis
-                ("GRID", (0, 0), (-1, -1), 0.45, colors.HexColor("#6B7280")),
-
-                # ------------------------------------------------
-                # ALIGNMENT
-                # ------------------------------------------------
+                ("GRID", (0, 0), (-1, -1), 0.6, colors.HexColor("#111827")),
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E5E7EB")),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-
-                # NO
-                ("ALIGN", (0, 0), (0, -1), "CENTER"),
-
-                # Description
-                ("ALIGN", (1, 1), (1, -1), "LEFT"),
-
-                # Unit Price
-                ("ALIGN", (2, 1), (2, -1), "RIGHT"),
-
-                # Qty
-                ("ALIGN", (3, 1), (3, -1), "CENTER"),
-
-                # Discount jika ada
-                ("ALIGN", (4, 1), (4, -1), "RIGHT")
-                if has_discount
-                else ("ALIGN", (0, 0), (0, 0), "CENTER"),
-
-                # Amount
-                ("ALIGN", (-1, 1), (-1, -1), "RIGHT"),
-
-                # ------------------------------------------------
-                # PADDING
-                # ------------------------------------------------
-                ("LEFTPADDING", (0, 0), (-1, -1), 3),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-
-                ("TOPPADDING", (0, 0), (-1, 0), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 4),
-
-                ("TOPPADDING", (0, 1), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 1), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
             ]
         )
     )
 
     story.append(item_table)
-    story.append(Spacer(1, 5 * mm))
+    story.append(Spacer(1, 4 * mm))
 
     # ============================================================
     # TOTALS
     # ============================================================
 
-    def money(value):
-        return f"Rp {float(value or 0):,.0f}".replace(",", ".")
-
     subtotal_value = float(doc.get("subtotal") or 0)
     discount_value = float(doc.get("discount") or 0)
     tax_value = float(doc.get("tax") or 0)
-    grand_total_value = float(doc.get("grand_total") or 0)
-    tax_percent = float(doc.get("tax_percent") or 0)
+    grand_total = float(doc.get("grand_total") or 0)
 
-    # Discount hanya ditampilkan jika ada
-    totals_data = [
-        ["SUBTOTAL", money(subtotal_value)],
+    totals_rows = [
+        [Paragraph("SUBTOTAL", right), Paragraph(money(subtotal_value), right)],
     ]
 
     if discount_value > 0:
-        totals_data.append(
-            ["DISCOUNT", money(discount_value)]
+        totals_rows.append(
+            [Paragraph("DISCOUNT", right), Paragraph(money(discount_value), right)]
         )
 
-    totals_data.append(
-        [f"PPN {tax_percent:g}%", money(tax_value)]
+    totals_rows.extend(
+        [
+            [
+                Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right),
+                Paragraph(money(tax_value), right),
+            ],
+            [Paragraph("<b>GRAND TOTAL</b>", right), Paragraph(f"<b>{money(grand_total)}</b>", right)],
+        ]
     )
-
-    totals_data.append(
-        ["GRAND TOTAL", money(grand_total_value)]
-    )
-
-    # ============================================================
-    # TOTALS LAYOUT
-    # ============================================================
-    #
-    # Total ditempatkan di bawah area kanan tabel.
-    # Lebarnya dibuat compact seperti referensi:
-    #
-    #       SUBTOTAL        Rp xxx
-    #       PPN 11%         Rp xxx
-    #       GRAND TOTAL     Rp xxx
-    #
-    # Tidak menggunakan border untuk subtotal/PPN.
 
     totals_table = Table(
-        totals_data,
-        colWidths=[32 * mm, 38 * mm],
-        hAlign="RIGHT",
+        totals_rows,
+        colWidths=[35 * mm, 35 * mm],
     )
 
-    grand_total_row = len(totals_data) - 1
+    totals_style = [
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 1),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 1),
+        ("TOPPADDING", (0, 0), (-1, -1), 1.2),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")),
+        ("TEXTCOLOR", (0, -1), (-1, -1), colors.white),
+    ]
+    totals_table.setStyle(TableStyle(totals_style))
 
-    totals_table.setStyle(
+    totals_wrapper = Table(
+        [["", totals_table]],
+        colWidths=[110 * mm, 70 * mm],
+    )
+    totals_wrapper.setStyle(
         TableStyle(
             [
-                # ------------------------------------------------
-                # GENERAL
-                # ------------------------------------------------
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-
-                # Label
-                ("ALIGN", (0, 0), (0, -1), "LEFT"),
-
-                # Nominal rata kanan
-                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-
-                # Font
-                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8.5),
-
-                # ------------------------------------------------
-                # GRAND TOTAL
-                # ------------------------------------------------
-                ("BACKGROUND", (0, grand_total_row), (-1, grand_total_row),
-                 colors.HexColor("#18181B")),
-                ("TEXTCOLOR", (0, grand_total_row), (-1, grand_total_row),
-                 colors.white),
-                ("FONTNAME", (0, grand_total_row), (-1, grand_total_row),
-                 "Helvetica-Bold"),
-
-                # ------------------------------------------------
-                # PADDING
-                # ------------------------------------------------
-                ("LEFTPADDING", (0, 0), (-1, -1), 3),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
             ]
         )
     )
 
-    story.append(totals_table)
-    story.append(Spacer(1, 6 * mm))
+    story.append(totals_wrapper)
+    story.append(Spacer(1, 4 * mm))
 
     # ============================================================
-    # TERMS / NOTES
+    # TERMS + SIGNATURE
     # ============================================================
 
-    story.append(Paragraph("TERMS & CONDITIONS", section))
-    story.append(Spacer(1, 2 * mm))
+    terms = [Paragraph("<b>TERMS &amp; CONDITIONS</b>", section)]
 
-    notes = doc.get("notes")
+    payment_term = doc.get("payment_term") or "-"
+    delivery_term = doc.get("delivery_term") or "-"
+    validity_date = doc.get("validity_date") or "-"
 
-    if notes:
-        note_lines = str(notes).splitlines()
-    else:
-        note_lines = [
-            f"Payment: {doc.get('payment_term') or '-'}",
-            f"Pengiriman: {doc.get('delivery_term') or '-'}",
-            f"Validitas: s/d {doc.get('validity_date') or '-'}",
+    terms.extend(
+        [
+            Paragraph(f"• Payment: {payment_term}", small),
+            Paragraph(f"• Pengiriman: {delivery_term}", small),
+            Paragraph(f"• Validitas: s/d {validity_date}", small),
         ]
+    )
 
-    for line in note_lines:
-        if str(line).strip():
-            story.append(
-                Paragraph(
-                    f"• {str(line)}",
-                    small,
-                )
-            )
+    signature_flow = []
+    signature_flow.append(Paragraph("<b>DIGITALLY APPROVED</b>", section))
 
-    story.append(Spacer(1, 10 * mm))
-
-    # ============================================================
-    # DIGITAL SIGNATURE - INTERNAL
-    # ============================================================
-
-    signature_name = doc.get("signature_name") or doc.get("sales_name") or "-"
+    signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"
     signature_title = doc.get("signature_title") or "Sales"
 
-    # URL quotation untuk QR Code.
-    # Mengikuti domain yang sedang digunakan oleh browser.
-    base_url = str(request.base_url).rstrip("/")
-    verification_url = f"{base_url}/quotations/{quotation_id}"
+    signature_image_path = doc.get("signature_image")
+    if signature_image_path:
+        try:
+            signature_flow.append(Image(signature_image_path, width=35 * mm, height=18 * mm, kind="proportional"))
+        except Exception:
+            signature_flow.append(Spacer(1, 18 * mm))
+    else:
+        signature_flow.append(Spacer(1, 18 * mm))
 
-    # ============================================================
-    # DIGITAL APPROVAL
-    # Template mengikuti desain approval internal:
-    #
-    # DIGITALLY APPROVED
-    # Aripin Manager
-    # SALES_MANAGER
-    # ============================================================
-
-    digital_approved_style = ParagraphStyle(
-        "DigitalApproved",
-        parent=small,
-        fontName="Helvetica-Bold",
-        fontSize=8.5,
-        leading=11,
-        alignment=TA_LEFT,
-        textColor=colors.HexColor("#444444"),
-        spaceAfter=1,
+    signature_flow.extend(
+        [
+            Paragraph(f"<b>{signature_name}</b>", normal),
+            Paragraph(signature_title, small),
+        ]
     )
-
-    digital_approved_name_style = ParagraphStyle(
-        "DigitalApprovedName",
-        parent=small,
-        fontName="Helvetica-Bold",
-        fontSize=10,
-        leading=12,
-        alignment=TA_LEFT,
-        textColor=colors.HexColor("#444444"),
-        spaceAfter=1,
-    )
-
-    digital_approved_role_style = ParagraphStyle(
-        "DigitalApprovedRole",
-        parent=small,
-        fontName="Helvetica-Bold",
-        fontSize=9,
-        leading=11,
-        alignment=TA_LEFT,
-        textColor=colors.HexColor("#444444"),
-    )
-
-    signature_data = [[
-        Paragraph(
-            "DIGITALLY APPROVED",
-            digital_approved_style,
-        )
-    ], [
-        Paragraph(
-            str(signature_name),
-            digital_approved_name_style,
-        )
-    ], [
-        Paragraph(
-            str(signature_title),
-            digital_approved_role_style,
-        )
-    ]]
 
     signature_table = Table(
-        signature_data,
-        colWidths=[70 * mm],
-        hAlign="RIGHT",
+        [[terms, signature_flow]],
+        colWidths=[100 * mm, 80 * mm],
     )
-
     signature_table.setStyle(
         TableStyle(
             [
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 0),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 0),
                 ("TOPPADDING", (0, 0), (-1, -1), 0),
@@ -804,264 +643,60 @@ async def download_quotation_pdf(
     )
 
     story.append(signature_table)
-
-    story.append(Spacer(1, 5 * mm))
+    story.append(Spacer(1, 4 * mm))
 
     # ============================================================
     # FOOTER
     # ============================================================
 
-    story.append(
-        Table(
-            [[
-                Paragraph(
-                    f"Quotation {doc.get('quotation_number') or quotation_id}",
-                    small,
-                ),
-                Paragraph(
-                    "This document is digitally generated.",
-                    ParagraphStyle(
-                        "FooterRight",
-                        parent=small,
-                        alignment=TA_RIGHT,
-                    ),
-                ),
-            ]],
-            colWidths=[90 * mm, 90 * mm],
-            style=TableStyle(
-                [
-                    ("LINEABOVE", (0, 0), (-1, 0), 0.5, colors.HexColor("#555555")),
-                    ("TOPPADDING", (0, 0), (-1, -1), 4),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-                ]
-            ),
+    footer = Table(
+        [[
+            Paragraph(f"Quotation {doc.get('quotation_number') or '-'}", small),
+            Paragraph("This document is digitally generated.", ParagraphStyle("FooterRight", parent=small, alignment=TA_RIGHT)),
+        ]],
+        colWidths=[90 * mm, 90 * mm],
+    )
+    footer.setStyle(
+        TableStyle(
+            [
+                ("LINEABOVE", (0, 0), (-1, 0), 0.5, colors.HexColor("#9CA3AF")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]
         )
     )
 
-    def add_page_number(canvas, document):
+    story.append(footer)
+
+    def draw_page_number(canvas, doc_obj):
         canvas.saveState()
         canvas.setFont("Helvetica", 7)
-        canvas.drawRightString(
-            A4[0] - 10 * mm,
-            6 * mm,
-            f"Page {document.page}",
-        )
+        canvas.setFillColor(colors.HexColor("#6B7280"))
+        canvas.drawRightString(A4[0] - 15 * mm, 8 * mm, f"Page {doc_obj.page}")
         canvas.restoreState()
 
-    pdf = SimpleDocTemplate(
+    pdf_doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
         rightMargin=15 * mm,
         leftMargin=15 * mm,
         topMargin=12 * mm,
         bottomMargin=12 * mm,
-        title=f"Quotation {quotation_number}",
+        title=f"Quotation {doc.get('quotation_number') or '-'}",
         author=company_name,
     )
 
-    pdf.build(
-        story,
-        onFirstPage=add_page_number,
-        onLaterPages=add_page_number,
-    )
+    pdf_doc.build(story, onFirstPage=draw_page_number, onLaterPages=draw_page_number)
 
     buffer.seek(0)
+
+    filename = f"Quotation_{quotation_number}.pdf"
 
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
-        headers={
-            "Content-Disposition": (
-                f'attachment; filename="{quotation_number}.pdf"'
-            )
-        },
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
-
-
-@router.get("/{quotation_id}", response_model=QuotationDetail)
-async def get_quotation(quotation_id: str, user: dict = Depends(current_user)):
-    scope = await scope_filter(user)
-    doc = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    return QuotationDetail(**await _decorate(doc))
-
-
-async def _decorate(doc: dict) -> dict:
-    """Attach the customer contact block and the sales user's saved digital signature."""
-    cust = await db.customers.find_one(
-        {"customer_id": doc.get("customer_id")},
-        {"_id": 0, "company": 1, "pic_name": 1, "email": 1, "phone": 1},
-    )
-    signer = await db.users.find_one(
-        {"user_id": doc.get("sales_id")},
-        {"_id": 0, "name": 1, "role": 1, "signature_image": 1, "signature_title": 1},
-    )
-    return {
-        **doc,
-        "customer_company": (cust or {}).get("company"),
-        "customer_pic_name": (cust or {}).get("pic_name"),
-        "customer_email": (cust or {}).get("email"),
-        "customer_phone": (cust or {}).get("phone"),
-        "signature_image": (signer or {}).get("signature_image"),
-        "signature_name": (signer or {}).get("name"),
-        "signature_title": (signer or {}).get("signature_title") or (signer or {}).get("role"),
-    }
-
-
-
-@router.post("", response_model=QuotationDetail)
-async def create_quotation(payload: QuotationIn, user: dict = Depends(current_user)):
-    cust = await db.customers.find_one({"customer_id": payload.customer_id}, {"_id": 0, "customer_name": 1})
-    if not cust:
-        raise HTTPException(status_code=400, detail="Customer tidak ditemukan")
-    sales_id = user["user_id"] if user["role"] == SALES else (payload.sales_id or user["user_id"])
-    sales = await db.users.find_one({"user_id": sales_id}, {"_id": 0, "name": 1})
-    totals = _compute(payload.items, payload.discount, payload.tax_percent)
-    now = datetime.now(timezone.utc)
-    doc = payload.model_dump()
-    doc.update(totals)
-    doc.update(
-        {
-            "quotation_id": await next_code("QTN"),
-            "quotation_number": await next_quotation_number(sales["name"] if sales else None),
-            "quotation_date": payload.quotation_date or today_iso(),
-            "sales_id": sales_id,
-            "sales_name": sales["name"] if sales else None,
-            "customer_name": cust["customer_name"],
-            "created_date": now,
-            "updated_date": now,
-        }
-    )
-    await db.quotations.insert_one(dict(doc))
-    await write_audit(user, "CREATE", "Quotation", doc["quotation_number"], None, doc["grand_total"])
-    return QuotationDetail(**await _decorate(doc))
-
-
-@router.put("/{quotation_id}", response_model=QuotationDetail)
-async def update_quotation(quotation_id: str, payload: QuotationIn, user: dict = Depends(current_user)):
-    scope = await scope_filter(user)
-    existing = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    updates = payload.model_dump()
-    updates.update(_compute(payload.items, payload.discount, payload.tax_percent))
-    if user["role"] == SALES:
-        updates.pop("sales_id", None)
-    cust = await db.customers.find_one({"customer_id": payload.customer_id}, {"_id": 0, "customer_name": 1})
-    updates["customer_name"] = cust["customer_name"] if cust else existing.get("customer_name")
-    updates["updated_date"] = datetime.now(timezone.utc)
-    await db.quotations.update_one({"quotation_id": quotation_id}, {"$set": updates})
-    await write_audit(user, "UPDATE", "Quotation", existing.get("quotation_number", quotation_id),
-                      existing.get("grand_total"), updates.get("grand_total"))
-    return QuotationDetail(**await _decorate({**existing, **updates}))
-
-
-@router.patch("/{quotation_id}/status", response_model=QuotationDetail)
-async def change_status(quotation_id: str, payload: StatusChange, user: dict = Depends(current_user)):
-    if payload.status not in STATUSES:
-        raise HTTPException(status_code=400, detail="Status tidak valid")
-    scope = await scope_filter(user)
-    existing = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    updates = {"status": payload.status, "updated_date": datetime.now(timezone.utc)}
-    await db.quotations.update_one({"quotation_id": quotation_id}, {"$set": updates})
-    await write_audit(user, "UPDATE", "Quotation", existing.get("quotation_number", quotation_id),
-                      f"Status: {existing.get('status')}", f"Status: {payload.status}")
-    return QuotationDetail(**await _decorate({**existing, **updates}))
-
-
-@router.post("/{quotation_id}/duplicate", response_model=QuotationDetail)
-async def duplicate_quotation(quotation_id: str, user: dict = Depends(current_user)):
-    scope = await scope_filter(user)
-    src = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
-    if not src:
-        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    now = datetime.now(timezone.utc)
-    doc = {
-        **src,
-        "quotation_id": await next_code("QTN"),
-        "quotation_number": await next_quotation_number(src.get("sales_name")),
-        "status": "Draft",
-        "quotation_date": today_iso(),
-        "created_date": now,
-        "updated_date": now,
-    }
-    await db.quotations.insert_one(dict(doc))
-    await write_audit(user, "DUPLICATE", "Quotation", doc["quotation_number"], quotation_id, doc["quotation_id"])
-    return QuotationDetail(**await _decorate(doc))
-
-
-@router.post("/{quotation_id}/convert-to-po", response_model=ConvertResponse)
-async def convert_to_po(quotation_id: str, payload: ConvertRequest, user: dict = Depends(current_user)):
-    """Records the customer's PO against this quotation.
-
-    Reuses the quotation's customer_id / sales_id / product_ids — never creates new master records.
-    The PO number is the number printed on the CUSTOMER's own purchase order document.
-    """
-    scope = await scope_filter(user)
-    qt = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
-    if not qt:
-        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    if qt.get("status") == "Converted":
-        raise HTTPException(status_code=400, detail="Quotation ini sudah dikonversi menjadi PO")
-    po_number = (payload.po_number or "").strip()
-    if not po_number:
-        raise HTTPException(status_code=400, detail="Nomor PO customer wajib diisi")
-    if await db.purchase_orders.find_one(
-        {"customer_id": qt["customer_id"], "po_number": po_number}, {"_id": 1}
-    ):
-        raise HTTPException(
-            status_code=400, detail=f"Nomor PO '{po_number}' sudah terdaftar untuk customer ini"
-        )
-    now = datetime.now(timezone.utc)
-    po_items = [
-        {
-            "po_item_id": f"POI-{i:03d}",
-            "product_id": it.get("product_id"),
-            "description": it.get("description"),
-            "qty": it.get("qty", 0),
-            "unit": it.get("unit", "Unit"),
-            "unit_price": it.get("unit_price", 0),
-            "subtotal": it.get("subtotal", 0),
-        }
-        for i, it in enumerate(qt.get("items", []), start=1)
-    ]
-    po = {
-        "po_id": await next_code("POR"),
-        "po_number": po_number,
-        "po_date": payload.po_date or today_iso(),
-        "customer_id": qt["customer_id"],
-        "customer_name": qt.get("customer_name"),
-        "quotation_id": qt["quotation_id"],
-        "quotation_number": qt.get("quotation_number"),
-        "sales_id": qt.get("sales_id"),
-        "sales_name": qt.get("sales_name"),
-        "po_value": qt.get("grand_total", 0),
-        "delivery_address": None,
-        "payment_term": qt.get("payment_term"),
-        "notes": f"PO customer atas quotation {qt.get('quotation_number')}",
-        "status": "Received",
-        "items": po_items,
-        "document_name": None,
-        "created_date": now,
-        "updated_date": now,
-    }
-    await db.purchase_orders.insert_one(dict(po))
-    await db.quotations.update_one(
-        {"quotation_id": quotation_id}, {"$set": {"status": "Converted", "updated_date": now}}
-    )
-    await write_audit(user, "CONVERT", "Quotation", qt.get("quotation_number", quotation_id),
-                      qt.get("status"), f"PO {po['po_number']}")
-    return ConvertResponse(po_id=po["po_id"], po_number=po["po_number"])
-
-
-@router.delete("/{quotation_id}")
-async def delete_quotation(quotation_id: str, user: dict = Depends(current_user)):
-    scope = await scope_filter(user)
-    res = await db.quotations.delete_one({"quotation_id": quotation_id, **scope})
-    if res.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    await write_audit(user, "DELETE", "Quotation", quotation_id)
-    return {"ok": True}
