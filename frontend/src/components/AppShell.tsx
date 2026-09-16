@@ -59,7 +59,7 @@ const GROUPS: { group: string; items: NavItem[] }[] = [
         path: "/users",
         icon: UserCog,
         testId: "nav-users",
-        roles: ["SUPER_ADMIN"],
+        roles: ["SUPER_ADMIN", "SALES_MANAGER"],
       },
       { label: "Products", path: "/products", icon: Package, testId: "nav-products" },
       { label: "Settings", path: "/settings", icon: Settings, testId: "nav-settings" },
@@ -95,7 +95,6 @@ export default function AppShell() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-200 lg:translate-x-0",
@@ -105,20 +104,13 @@ export default function AppShell() {
       >
         <div className="flex items-center justify-between px-5 py-5">
           <Link to="/" className="flex items-center gap-2.5" data-testid="sidebar-brand">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">
-              C
-            </span>
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 font-bold text-white">C</span>
             <span>
               <span className="block text-sm font-bold tracking-tight text-white">CRM Sales</span>
               <span className="block text-[10px] tracking-widest text-slate-400 uppercase">Management</span>
             </span>
           </Link>
-          <button
-            className="text-slate-400 lg:hidden"
-            onClick={() => setOpen(false)}
-            data-testid="btn-close-sidebar"
-            aria-label="Tutup menu"
-          >
+          <button className="text-slate-400 lg:hidden" onClick={() => setOpen(false)} data-testid="btn-close-sidebar" aria-label="Tutup menu">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -126,9 +118,7 @@ export default function AppShell() {
         <nav className="flex-1 overflow-y-auto px-3 pb-4">
           {visible.map((g) => (
             <div key={g.group} className="mb-5">
-              <p className="px-3 pb-2 text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase">
-                {g.group}
-              </p>
+              <p className="px-3 pb-2 text-[10px] font-bold tracking-[0.14em] text-slate-500 uppercase">{g.group}</p>
               <ul className="space-y-0.5">
                 {g.items.map((item) => (
                   <li key={item.path}>
@@ -137,14 +127,10 @@ export default function AppShell() {
                       end={item.path === "/"}
                       data-testid={item.testId}
                       onClick={() => setOpen(false)}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors duration-150",
-                          isActive
-                            ? "bg-sidebar-primary font-semibold text-sidebar-primary-foreground"
-                            : "text-slate-300 hover:bg-sidebar-accent hover:text-white",
-                        )
-                      }
+                      className={({ isActive }) => cn(
+                        "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors duration-150",
+                        isActive ? "bg-sidebar-primary font-semibold text-sidebar-primary-foreground" : "text-slate-300 hover:bg-sidebar-accent hover:text-white",
+                      )}
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {item.label}
@@ -158,45 +144,24 @@ export default function AppShell() {
 
         <div className="border-t border-sidebar-border p-4">
           <div className="mb-3">
-            <p className="truncate text-sm font-semibold text-white" data-testid="sidebar-user-name">
-              {user.name}
-            </p>
+            <p className="truncate text-sm font-semibold text-white" data-testid="sidebar-user-name">{user.name}</p>
             <p className="truncate text-xs text-slate-400">{user.email}</p>
-            <div className="mt-2">
-              <RoleBadge role={user.role} />
-            </div>
+            <div className="mt-2"><RoleBadge role={user.role} /></div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white"
-            onClick={logout}
-            data-testid="btn-logout"
-          >
+          <Button variant="outline" size="sm" className="w-full border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800 hover:text-white" onClick={logout} data-testid="btn-logout">
             <LogOut className="mr-2 h-4 w-4" /> Logout
           </Button>
         </div>
       </aside>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
-          onClick={() => setOpen(false)}
-          data-testid="sidebar-overlay"
-        />
-      )}
+      {open && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setOpen(false)} data-testid="sidebar-overlay" />}
 
-      {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-card/90 px-4 backdrop-blur lg:hidden">
-          <button onClick={() => setOpen(true)} data-testid="btn-open-sidebar" aria-label="Buka menu">
-            <Menu className="h-5 w-5" />
-          </button>
+          <button onClick={() => setOpen(true)} data-testid="btn-open-sidebar" aria-label="Buka menu"><Menu className="h-5 w-5" /></button>
           <span className="text-sm font-semibold">CRM Sales Management</span>
         </header>
-        <main className="animate-rise flex-1 px-4 py-6 lg:px-8">
-          <Outlet />
-        </main>
+        <main className="animate-rise flex-1 px-4 py-6 lg:px-8"><Outlet /></main>
       </div>
     </div>
   );
