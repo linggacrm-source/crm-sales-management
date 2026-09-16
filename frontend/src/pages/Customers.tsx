@@ -34,6 +34,7 @@ import type { CustomerRow, Paginated, SalesOption } from "@/lib/types";
 
 const INDUSTRIES = ["Manufaktur", "Oil & Gas", "Pertambangan", "Otomotif", "FMCG", "Telekomunikasi", "Konstruksi"];
 const SOURCES = ["Referral", "Website", "Pameran", "Cold Call", "Partner"];
+const OTHER_INDUSTRY = "Lainnya";
 
 type FormState = {
   customer_id?: string;
@@ -361,7 +362,34 @@ export default function Customers() {
           <div className="grid gap-4 sm:grid-cols-2">
             {field("customer_name", "Nama Customer")}
             {field("company", "Perusahaan")}
-            {field("industry", "Industri", "select", INDUSTRIES)}
+            <div>
+              <Label htmlFor="cust-industry">Industri</Label>
+              <select
+                id="cust-industry"
+                value={INDUSTRIES.includes(form.industry) ? form.industry : OTHER_INDUSTRY}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setForm({ ...form, industry: value === OTHER_INDUSTRY ? "" : value });
+                }}
+                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                data-testid="input-customer-industry"
+              >
+                {INDUSTRIES.map((i) => (
+                  <option key={i} value={i}>{i}</option>
+                ))}
+                <option value={OTHER_INDUSTRY}>{OTHER_INDUSTRY}</option>
+              </select>
+              {!INDUSTRIES.includes(form.industry) && (
+                <Input
+                  id="cust-industry-other"
+                  value={form.industry}
+                  onChange={(e) => setForm({ ...form, industry: e.target.value })}
+                  placeholder="Tulis industri lainnya..."
+                  className="mt-1.5"
+                  data-testid="input-customer-industry-other"
+                />
+              )}
+            </div>
             {field("source", "Sumber", "select", SOURCES)}
             {field("city", "Kota")}
             {field("province", "Provinsi")}
@@ -382,9 +410,7 @@ export default function Customers() {
                 >
                   <option value="">— Pilih sales —</option>
                   {(salesOptions ?? []).map((s) => (
-                    <option key={s.user_id} value={s.user_id}>
-                      {s.name}
-                    </option>
+                    <option key={s.user_id} value={s.user_id}>{s.name}</option>
                   ))}
                 </select>
               </div>
@@ -393,12 +419,10 @@ export default function Customers() {
             <div className="sm:col-span-2">{field("notes", "Catatan", "textarea")}</div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-customer">
-              Batal
-            </Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-customer">Batal</Button>
             <Button
               onClick={() => save.mutate(form)}
-              disabled={!form.customer_name || save.isPending}
+              disabled={!form.customer_name || !form.industry.trim() || save.isPending}
               data-testid="btn-save-customer"
             >
               {save.isPending ? "Menyimpan..." : "Simpan"}
