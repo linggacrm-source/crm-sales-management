@@ -40,6 +40,30 @@ export interface SalesOption {
   role: string;
 }
 
+export interface TargetRow {
+  target_id: string;
+  year: number;
+  target_type: "TEAM" | "PERSONAL";
+  owner_id: string;
+  owner_name: string;
+  manager_name?: string | null;
+  target_value: number;
+  notes?: string | null;
+  updated_date?: string | null;
+}
+
+export interface TargetOptionPerson {
+  user_id: string;
+  name: string;
+  manager_id?: string | null;
+  manager_name?: string | null;
+}
+
+export interface TargetOptions {
+  managers: SalesOption[];
+  sales: TargetOptionPerson[];
+}
+
 export interface CustomerRow {
   customer_id: string;
   customer_name: string;
