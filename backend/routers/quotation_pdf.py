@@ -127,9 +127,18 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     else:
         signature_flow.append(Spacer(1, 18 * mm))
     signature_flow.extend([Paragraph(f"<b>{signature_name}</b>", normal), Paragraph(signature_title, small)])
-    signature_table = Table([[terms, signature_flow]], colWidths=[100 * mm, 80 * mm])
-    signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
-    story += [signature_table, Spacer(1, 4 * mm)]
+
+    # Terms and digital approval are intentionally stacked vertically.
+    terms_signature = Table([[terms], [signature_flow]], colWidths=[180 * mm])
+    terms_signature.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 1), (0, 1), 4 * mm),
+    ]))
+    story += [terms_signature, Spacer(1, 4 * mm)]
 
     def draw_page_number(canvas, doc_obj):
         canvas.saveState()
