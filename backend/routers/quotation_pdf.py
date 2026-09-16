@@ -131,11 +131,13 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
     story += [signature_table, Spacer(1, 4 * mm)]
 
-    # Intentionally no bottom quotation footer and no footer separator line.
     def draw_page_number(canvas, doc_obj):
         canvas.saveState()
-        canvas.setFont("Helvetica", 7)
+        canvas.setFont("Helvetica", 6.7)
         canvas.setFillColor(colors.HexColor("#6B7280"))
+        canvas.drawCentredString(A4[0] / 2, 11.5 * mm, "Jakarta : Gedung Epicentrum Walk A707 Jl. Hr Rasuna Said Kuningan Jakarta Selatan")
+        canvas.drawCentredString(A4[0] / 2, 8.2 * mm, "Surabaya : Jl. Bratang Binangun 83 Jawa Timur")
+        canvas.setFont("Helvetica", 7)
         canvas.drawRightString(A4[0] - 15 * mm, 8 * mm, f"Page {doc_obj.page}")
         canvas.restoreState()
 
