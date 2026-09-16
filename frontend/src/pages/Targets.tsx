@@ -24,11 +24,12 @@ const errorMessage = (e: unknown) =>
   e instanceof ApiError ? ((e.body as { detail?: string } | null)?.detail ?? "Terjadi kesalahan") : "Terjadi kesalahan";
 
 export default function Targets() {
-  const { isAdmin, isManager } = useAuth();
+  const { isAdmin, isManager, isSales } = useAuth();
   const qc = useQueryClient();
-  const canAccess = isAdmin || isManager;
+  const canManage = isAdmin || isManager;
+  const canAccess = canManage || isSales;
   const [year, setYear] = useState(currentYear);
-  const [type, setType] = useState<TargetType>("TEAM");
+  const [type, setType] = useState<TargetType>(isSales ? "PERSONAL" : "TEAM");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
 
@@ -41,7 +42,7 @@ export default function Targets() {
   const { data: options } = useQuery<TargetOptions>({
     queryKey: ["target-options"],
     queryFn: () => apiGet<TargetOptions>("/targets/options"),
-    enabled: canAccess,
+    enabled: canManage,
     staleTime: 5 * 60_000,
   });
 
@@ -81,50 +82,45 @@ export default function Targets() {
 
   const edit = (row: TargetRow) => {
     setType(row.target_type);
-    setForm({
-      target_type: row.target_type,
-      owner_id: row.owner_id,
-      target_value: String(row.target_value),
-      notes: row.notes ?? "",
-    });
+    setForm({ target_type: row.target_type, owner_id: row.owner_id, target_value: String(row.target_value), notes: row.notes ?? "" });
     setDialogOpen(true);
   };
 
   if (!canAccess) {
-    return <div><PageHeader title="Target Penjualan" /><Card className="p-12 text-center"><p className="font-semibold">Akses ditolak</p><p className="mt-1 text-sm text-muted-foreground">Modul target hanya tersedia untuk Super Admin dan Sales Manager.</p></Card></div>;
+    return <div><PageHeader title="Target Penjualan" /><Card className="p-12 text-center"><p className="font-semibold">Akses ditolak</p></Card></div>;
   }
 
   return (
     <div>
-      <PageHeader title="Target Penjualan" subtitle="Tetapkan target omzet tahunan untuk tim dan masing-masing sales.">
+      <PageHeader title="Target Penjualan" subtitle={canManage ? "Tetapkan target omzet tahunan untuk tim dan masing-masing sales." : "Lihat target omzet tahunan Anda."}>
         <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="h-9 rounded-md border border-input bg-background px-3 text-sm" data-testid="target-year">
           {years.map((y) => <option key={y} value={y}>{y}</option>)}
         </select>
-        <Button onClick={() => openCreate()} data-testid="btn-add-target"><Plus className="mr-2 h-4 w-4" /> Tambah Target</Button>
+        {canManage && <Button onClick={() => openCreate()} data-testid="btn-add-target"><Plus className="mr-2 h-4 w-4" /> Tambah Target</Button>}
       </PageHeader>
 
-      <div className="mb-5 grid gap-3 md:grid-cols-2">
+      {canManage && <div className="mb-5 grid gap-3 md:grid-cols-2">
         <button onClick={() => setType("TEAM")} className={`rounded-xl border p-4 text-left transition ${type === "TEAM" ? "border-blue-300 bg-blue-50 ring-2 ring-blue-100" : "border-border bg-white hover:bg-muted/40"}`} data-testid="target-tab-team">
           <div className="flex items-center gap-3"><span className="rounded-lg bg-blue-100 p-2 text-blue-700"><UsersRound className="h-5 w-5" /></span><div><p className="font-semibold">Target Tim</p><p className="text-xs text-muted-foreground">Target tahunan per Sales Manager / team.</p></div></div>
         </button>
         <button onClick={() => setType("PERSONAL")} className={`rounded-xl border p-4 text-left transition ${type === "PERSONAL" ? "border-violet-300 bg-violet-50 ring-2 ring-violet-100" : "border-border bg-white hover:bg-muted/40"}`} data-testid="target-tab-personal">
           <div className="flex items-center gap-3"><span className="rounded-lg bg-violet-100 p-2 text-violet-700"><TargetIcon className="h-5 w-5" /></span><div><p className="font-semibold">Target Personal</p><p className="text-xs text-muted-foreground">Target tahunan masing-masing Sales Executive.</p></div></div>
         </button>
-      </div>
+      </div>}
 
       <Card className="overflow-hidden p-0">
         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3"><div><p className="text-sm font-semibold">{type === "TEAM" ? "Target Tim" : "Target Personal"} — {year}</p><p className="text-xs text-muted-foreground">{visibleRows.length} target terdaftar</p></div></div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="border-b bg-muted/20"><th className="px-4 py-3 text-left font-semibold">Pemilik Target</th>{type === "PERSONAL" && <th className="px-4 py-3 text-left font-semibold">Manager</th>}<th className="px-4 py-3 text-right font-semibold">Target Tahunan</th><th className="px-4 py-3 text-left font-semibold">Catatan</th><th className="px-4 py-3 text-right font-semibold">Aksi</th></tr></thead>
+            <thead><tr className="border-b bg-muted/20"><th className="px-4 py-3 text-left font-semibold">Pemilik Target</th>{type === "PERSONAL" && <th className="px-4 py-3 text-left font-semibold">Manager</th>}<th className="px-4 py-3 text-right font-semibold">Target Tahunan</th><th className="px-4 py-3 text-left font-semibold">Catatan</th>{canManage && <th className="px-4 py-3 text-right font-semibold">Aksi</th>}</tr></thead>
             <tbody>
-              {isLoading ? <TableSkeleton cols={type === "PERSONAL" ? 5 : 4} /> : isError ? <ErrorRow colSpan={type === "PERSONAL" ? 5 : 4} /> : visibleRows.length === 0 ? <EmptyRow colSpan={type === "PERSONAL" ? 5 : 4} message={`Belum ada target ${type === "TEAM" ? "tim" : "personal"} untuk ${year}.`} /> : visibleRows.map((row) => (
+              {isLoading ? <TableSkeleton cols={type === "PERSONAL" ? (canManage ? 5 : 4) : (canManage ? 4 : 3)} /> : isError ? <ErrorRow colSpan={type === "PERSONAL" ? (canManage ? 5 : 4) : (canManage ? 4 : 3)} /> : visibleRows.length === 0 ? <EmptyRow colSpan={type === "PERSONAL" ? (canManage ? 5 : 4) : (canManage ? 4 : 3)} message={`Belum ada target ${type === "TEAM" ? "tim" : "personal"} untuk ${year}.`} /> : visibleRows.map((row) => (
                 <tr key={row.target_id} className="border-b last:border-0 hover:bg-muted/20" data-testid={`target-row-${row.target_id}`}>
                   <td className="px-4 py-3"><p className="font-semibold">{row.owner_name}</p><p className="font-mono text-[11px] text-muted-foreground">{row.owner_id}</p></td>
                   {type === "PERSONAL" && <td className="px-4 py-3 text-xs text-muted-foreground">{row.manager_name ?? "-"}</td>}
                   <td className="px-4 py-3 text-right font-mono font-semibold">{formatIDR(row.target_value)}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{row.notes ?? "-"}</td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap"><Button variant="ghost" size="sm" onClick={() => edit(row)} data-testid={`btn-edit-target-${row.target_id}`}><Pencil className="mr-1 h-3.5 w-3.5" /> Edit</Button><Button variant="ghost" size="icon-sm" onClick={() => remove.mutate(row.target_id)} title="Hapus" data-testid={`btn-delete-target-${row.target_id}`}><Trash2 className="h-4 w-4" /></Button></td>
+                  {canManage && <td className="px-4 py-3 text-right whitespace-nowrap"><Button variant="ghost" size="sm" onClick={() => edit(row)} data-testid={`btn-edit-target-${row.target_id}`}><Pencil className="mr-1 h-3.5 w-3.5" /> Edit</Button><Button variant="ghost" size="icon-sm" onClick={() => remove.mutate(row.target_id)} title="Hapus" data-testid={`btn-delete-target-${row.target_id}`}><Trash2 className="h-4 w-4" /></Button></td>}
                 </tr>
               ))}
             </tbody>
@@ -132,7 +128,7 @@ export default function Targets() {
         </div>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {canManage && <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>{form.target_type === "TEAM" ? "Target Tim" : "Target Personal"} — {year}</DialogTitle></DialogHeader>
           <div className="grid gap-4">
@@ -143,7 +139,7 @@ export default function Targets() {
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setDialogOpen(false)}>Batal</Button><Button onClick={() => save.mutate()} disabled={!form.owner_id || !form.target_value || save.isPending} data-testid="btn-save-target">{save.isPending ? "Menyimpan..." : "Simpan Target"}</Button></DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
     </div>
   );
 }
