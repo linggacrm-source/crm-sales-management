@@ -7,310 +7,176 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
-    --font-heading: var(--font-sans);
-    --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
-    --animate-rise: rise 0.22s ease-out both;
-    --animate-slide-in: slide-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
-    --animate-soft-pulse: soft-pulse 2.2s ease-in-out infinite;
-    --animate-shimmer: shimmer 1.6s ease-in-out infinite;
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+  --font-sans: 'Plus Jakarta Sans Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+  --animate-rise: rise 0.22s ease-out both;
+  --animate-slide-in: slide-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-soft-pulse: soft-pulse 2.2s ease-in-out infinite;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.65);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.75);
+  --radius-3xl: calc(var(--radius) * 2.1);
 }
 
-@keyframes rise {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes slide-in {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
-}
-@keyframes soft-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.45; }
-}
-@keyframes shimmer {
-    0%, 100% { opacity: 0.55; }
-    50% { opacity: 1; }
-}
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slide-in { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes soft-pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+@keyframes shimmer { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
 
 :root {
-    --background: #F8FAFC;
-    --foreground: #0F172A;
-    --card: #FFFFFF;
-    --card-foreground: #0F172A;
-    --popover: #FFFFFF;
-    --popover-foreground: #0F172A;
-    --primary: #0B4A9B;
-    --primary-foreground: #FFFFFF;
-    --secondary: #F1F5F9;
-    --secondary-foreground: #0F172A;
-    --muted: #F1F5F9;
-    --muted-foreground: #556377;
-    --accent: #E8F1FC;
-    --accent-foreground: #0B4A9B;
-    --destructive: #DC2626;
-    --border: #E2E8F0;
-    --input: #E2E8F0;
-    --ring: #2563EB;
-    --chart-1: #2563EB;
-    --chart-2: #0284C7;
-    --chart-3: #7E22CE;
-    --chart-4: #D97706;
-    --chart-5: #16A34A;
-    --radius: 0.5rem;
-    --sidebar: #0B132B;
-    --sidebar-foreground: #E2E8F0;
-    --sidebar-primary: #1C2541;
-    --sidebar-primary-foreground: #60A5FA;
-    --sidebar-accent: #1E293B;
-    --sidebar-accent-foreground: #FFFFFF;
-    --sidebar-border: #1E293B;
-    --sidebar-ring: #3B82F6;
+  --background: #f6f9fd;
+  --foreground: #172554;
+  --card: #ffffff;
+  --card-foreground: #172554;
+  --popover: #ffffff;
+  --popover-foreground: #172554;
+  --primary: #1677ff;
+  --primary-foreground: #ffffff;
+  --secondary: #eff6ff;
+  --secondary-foreground: #1e3a8a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eaf4ff;
+  --accent-foreground: #1264d6;
+  --destructive: #ef4444;
+  --border: #e2eaf4;
+  --input: #dbe5f0;
+  --ring: #60a5fa;
+  --chart-1: #1677ff;
+  --chart-2: #38bdf8;
+  --chart-3: #8b5cf6;
+  --chart-4: #f59e0b;
+  --chart-5: #34d399;
+  --radius: .75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #475569;
+  --sidebar-primary: #1677ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff6ff;
+  --sidebar-accent-foreground: #1264d6;
+  --sidebar-border: #e8eef6;
+  --sidebar-ring: #60a5fa;
 }
 
 .dark {
-    --background: #0B1120;
-    --foreground: #F1F5F9;
-    --card: #111827;
-    --card-foreground: #F9FAFB;
-    --popover: #111827;
-    --popover-foreground: #F9FAFB;
-    --primary: #3B82F6;
-    --primary-foreground: #061024;
-    --secondary: #1F2937;
-    --secondary-foreground: #F9FAFB;
-    --muted: #1F2937;
-    --muted-foreground: #9CA3AF;
-    --accent: #172554;
-    --accent-foreground: #93C5FD;
-    --destructive: #F87171;
-    --border: #1F2937;
-    --input: #26303F;
-    --ring: #60A5FA;
-    --sidebar: #070C18;
-    --sidebar-foreground: #CBD5E1;
-    --sidebar-primary: #172554;
-    --sidebar-primary-foreground: #93C5FD;
-    --sidebar-accent: #131C2E;
-    --sidebar-accent-foreground: #FFFFFF;
-    --sidebar-border: #16202F;
-    --sidebar-ring: #3B82F6;
+  --background: #0b1220;
+  --foreground: #e5eefb;
+  --card: #111b2d;
+  --card-foreground: #f8fafc;
+  --popover: #111b2d;
+  --popover-foreground: #f8fafc;
+  --primary: #4da3ff;
+  --primary-foreground: #071426;
+  --secondary: #17243a;
+  --secondary-foreground: #dbeafe;
+  --muted: #17243a;
+  --muted-foreground: #94a3b8;
+  --accent: #122b4f;
+  --accent-foreground: #93c5fd;
+  --destructive: #f87171;
+  --border: #223149;
+  --input: #293952;
+  --ring: #60a5fa;
+  --sidebar: #0d1728;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #1677ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #13243d;
+  --sidebar-accent-foreground: #dbeafe;
+  --sidebar-border: #1c2b41;
+  --sidebar-ring: #60a5fa;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-    }
-  body {
-    @apply bg-background text-foreground;
-    }
-  html {
-    @apply font-sans;
-    }
+  * { @apply border-border outline-ring/50; }
+  html { @apply font-sans; }
+  body { @apply bg-background text-foreground antialiased; margin: 0; }
+  button, input, select, textarea { font: inherit; }
 }
+
+/* Modern CRM visual language */
+.card, [data-slot="card"] { box-shadow: 0 1px 2px rgba(15, 23, 42, .03), 0 8px 30px rgba(59, 130, 246, .035); }
+button, a, input, select, textarea { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: 150ms; }
+select { color: #334155; }
+select:focus, input:focus, textarea:focus { outline: none; }
+::selection { background: #dbeafe; color: #0f3d8a; }
+
+/* Softer scrollbar for desktop data-heavy CRM screens */
+* { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+*::-webkit-scrollbar { width: 7px; height: 7px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+*::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Tables */
+thead tr { background: #f8fbff; }
+tbody tr { border-color: #edf2f7; }
+tbody tr:hover { background: #f8fbff; }
+
+/* Dashboard-friendly helpers */
+.crm-gradient { background: linear-gradient(135deg, #eff7ff 0%, #ffffff 48%, #ecfeff 100%); }
+.crm-blue-gradient { background: linear-gradient(135deg, #1677ff 0%, #2494ff 55%, #38bdf8 100%); }
+.crm-glass { background: rgba(255,255,255,.78); backdrop-filter: blur(16px); border: 1px solid rgba(226,234,244,.9); }
 
 @media print {
   .no-print { display: none !important; }
   .print-area { box-shadow: none !important; border: none !important; }
   body { background: #fff !important; }
+  @page { size: A4 portrait; margin: 10mm 10mm 12mm 10mm; }
+  html, body { background: white !important; margin: 0 !important; padding: 0 !important; }
+  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .print-area { width: 100% !important; max-width: none !important; margin: 0 !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+  .print-area table, .print-area tr, .print-area td, .print-area th, .print-area img, .quotation-terms, .quotation-signature, .quotation-footer, .quotation-totals { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .quotation-header { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .quotation-items tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .quotation-document { overflow: visible !important; height: auto !important; min-height: 0 !important; }
+  .quotation-signature, .quotation-footer { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .quotation-print-section { break-inside: avoid; }
 }
 
-
-
-/* =========================================================
-   QUOTATION PRINT / PDF
-   ========================================================= */
-
+.quotation-document { background: white; }
+.quotation-items { width: 100%; border-collapse: collapse; }
+.quotation-items th, .quotation-items td { vertical-align: top; }
+.quotation-items td { word-break: normal; overflow-wrap: break-word; }
+.quotation-signature, .quotation-terms, .quotation-totals, .quotation-footer { break-inside: avoid; page-break-inside: avoid; }
+.quotation-qr { break-inside: avoid; page-break-inside: avoid; }
+.quotation-qr img { display: block; width: 80px; height: 80px; object-fit: contain; }
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 10mm 10mm 12mm 10mm;
-  }
-
-  html,
-  body {
-    background: white !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  .print-area {
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-  }
-
-  /*
-   * Jangan pernah memotong elemen penting.
-   */
-  .print-area table,
-  .print-area tr,
-  .print-area td,
-  .print-area th,
-  .print-area img,
-  .quotation-terms,
-  .quotation-signature,
-  .quotation-footer,
-  .quotation-totals {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /*
-   * Header quotation tidak boleh terpisah.
-   */
-  .quotation-header {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /*
-   * Baris item boleh berpindah ke halaman berikutnya,
-   * tetapi satu baris tidak boleh terpotong.
-   */
-  .quotation-items tr {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /*
-   * Jangan memaksa seluruh quotation menjadi satu halaman.
-   * Jika konten melebihi tinggi A4, browser akan otomatis
-   * melanjutkan ke halaman berikutnya.
-   */
-  .quotation-document {
-    overflow: visible !important;
-    height: auto !important;
-    min-height: 0 !important;
-  }
-
-  /*
-   * Footer/signature hanya pindah utuh jika tidak cukup ruang.
-   */
-  .quotation-signature {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .quotation-footer {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /*
-   * Hindari margin/padding berlebihan saat print.
-   */
-  .quotation-print-section {
-    break-inside: avoid;
-  }
-}
-
-/* =========================================================
-   QUOTATION SCREEN
-   ========================================================= */
-
-.quotation-document {
-  background: white;
-}
-
-.quotation-items {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.quotation-items th,
-.quotation-items td {
-  vertical-align: top;
-}
-
-.quotation-items td {
-  word-break: normal;
-  overflow-wrap: break-word;
-}
-
-.quotation-signature,
-.quotation-terms,
-.quotation-totals,
-.quotation-footer {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-
-/* =========================================================
-   DIGITAL QUOTATION VERIFICATION QR
-   ========================================================= */
-
-.quotation-qr {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-.quotation-qr img {
-  display: block;
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-}
-
-@media print {
-  .quotation-qr {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .quotation-qr img {
-    width: 80px !important;
-    height: 80px !important;
-  }
+  .quotation-qr { break-inside: avoid !important; page-break-inside: avoid !important; }
+  .quotation-qr img { width: 80px !important; height: 80px !important; }
 }
