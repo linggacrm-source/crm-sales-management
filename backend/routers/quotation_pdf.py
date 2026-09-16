@@ -127,16 +127,14 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     else:
         signature_flow.append(Spacer(1, 18 * mm))
     signature_flow.extend([Paragraph(f"<b>{signature_name}</b>", normal), Paragraph(signature_title, small)])
-    signature_table = Table([[terms, signature_flow]], colWidths=[100 * mm, 80 * mm])
-    signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
+
+    # Keep the digital approval directly below Terms & Conditions, aligned to the left.
+    signature_table = Table([[terms], [signature_flow]], colWidths=[180 * mm])
+    signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 1), (0, 1), 3 * mm)]))
     story += [signature_table, Spacer(1, 4 * mm)]
 
     def draw_page_footer(canvas, doc_obj):
         canvas.saveState()
-        footer_height = 18 * mm
-        footer_y = 0
-        canvas.setFillColor(colors.HexColor("#EEB53C"))
-        canvas.rect(0, footer_y, A4[0], footer_height, fill=1, stroke=0)
         canvas.setFillColor(colors.HexColor("#111111"))
         canvas.setFont("Helvetica-Bold", 8.8)
         canvas.drawString(15 * mm, 13.5 * mm, "Surabaya Office :")
