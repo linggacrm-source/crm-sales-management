@@ -1,0 +1,130 @@
+/* Modern, compact dashboard presentation layer. Data/API logic remains unchanged. */
+body:has([data-testid="filter-period"]) {
+  --dash-ink: #0f172a;
+  --dash-muted: #64748b;
+  --dash-border: #e6edf5;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 {
+  gap: 18px !important;
+  padding-bottom: 28px !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:first-child {
+  gap: 12px !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:first-child h1 {
+  font-size: 26px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.035em !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:first-child p {
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:first-child > div:last-child {
+  gap: 4px !important;
+  padding: 5px !important;
+  border-radius: 13px !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, .05) !important;
+}
+
+body:has([data-testid="filter-period"]) [data-testid^="filter-"] {
+  min-height: 32px !important;
+  height: 32px !important;
+  font-size: 11px !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:nth-of-type(2) {
+  min-height: 0 !important;
+  padding: 20px 22px !important;
+  border-radius: 20px !important;
+  border-color: #dbeafe !important;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, .08) !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:nth-of-type(2) h2 {
+  font-size: 19px !important;
+  line-height: 1.25 !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:nth-of-type(2) .grid.grid-cols-2 {
+  gap: 6px !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:nth-of-type(2) .grid.grid-cols-2 > div {
+  padding: 9px 11px !important;
+  border-radius: 11px !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:nth-of-type(2) .grid.grid-cols-2 > div p:last-child {
+  font-size: 16px !important;
+  line-height: 1.1 !important;
+}
+
+/* KPI cards: tighter, executive-style metrics. */
+body:has([data-testid="filter-period"]) [data-testid^="kpi-"] {
+  padding: 15px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 5px 20px rgba(15, 23, 42, .045) !important;
+}
+
+body:has([data-testid="filter-period"]) [data-testid^="kpi-"] p:nth-child(2) {
+  font-size: 23px !important;
+  line-height: 1.05 !important;
+}
+
+body:has([data-testid="filter-period"]) [data-testid^="kpi-"] .h-11.w-11 {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+}
+
+/* Chart cards: compact headers and stronger visual hierarchy. */
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 [class*="rounded-2xl"][class*="bg-white"] {
+  box-shadow: 0 5px 24px rgba(15, 23, 42, .045) !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 [class*="rounded-2xl"][class*="bg-white"] h3,
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 [class*="rounded-2xl"][class*="bg-white"] p {
+  letter-spacing: -.01em;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 .h-2\.5.overflow-hidden.rounded-full {
+  height: 7px !important;
+  background: #eef2f7 !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 .h-2\.5.overflow-hidden.rounded-full > div {
+  box-shadow: 0 2px 7px rgba(37, 99, 235, .18);
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 .h-40.w-40 {
+  width: 150px !important;
+  height: 150px !important;
+}
+
+body:has([data-testid="filter-period"]) .space-y-6.pb-10 .h-40.w-40 svg circle {
+  stroke-linecap: round;
+}
+
+@media (max-width: 1024px) {
+  body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:first-child > div:last-child {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  body:has([data-testid="filter-period"]) .space-y-6.pb-10 {
+    gap: 12px !important;
+  }
+  body:has([data-testid="filter-period"]) .space-y-6.pb-10 > section:nth-of-type(2) {
+    padding: 16px !important;
+  }
+  body:has([data-testid="filter-period"]) [data-testid^="kpi-"] {
+    padding: 12px !important;
+  }
+}
