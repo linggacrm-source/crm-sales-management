@@ -38,6 +38,16 @@ async def login(payload: LoginRequest, response: Response):
     user = await db.users.find_one({"email": payload.email.strip().lower()})
     if not user or not verify_password(payload.password, user.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Email atau password salah")
+
+    # Recovery for the designated production Super Admin account: after the
+    # password is successfully verified, ensure USR-0001 is active in DB.
+    if user.get("user_id") == "USR-0001" and user.get("status") != "Active":
+        await db.users.update_one(
+            {"user_id": "USR-0001"},
+            {"$set": {"status": "Active", "updated_date": datetime.now(timezone.utc)}},
+        )
+        user["status"] = "Active"
+
     if user.get("status") != "Active":
         raise HTTPException(status_code=403, detail="Akun tidak aktif, hubungi administrator")
     await db.users.update_one(
