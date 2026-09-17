@@ -19,6 +19,11 @@ class DashboardKPI(BaseModel):
     open_pipeline: float
     weighted_pipeline: float
     won_value: float
+    target_value: float
+    achievement_value: float
+    achievement_pct: float
+    target_remaining: float
+    target_year: int
     total_quotations: int
     total_po: int
     po_value: float
@@ -91,8 +96,25 @@ async def dashboard(
 
     opp_open = {**base, "stage": stage} if stage else {**base, "stage": {"$in": OPEN_STAGES}}
     today = today_iso()
+    target_year = datetime.now(timezone.utc).year
+    visible_ids = await visible_sales_ids(user)
 
-    # All KPI queries are independent → fire them concurrently instead of awaiting in series.
+    target_query = {"year": target_year, "target_type": "PERSONAL"}
+    if sales_id:
+        target_query["owner_id"] = sales_id
+    elif visible_ids is not None:
+        target_query["owner_id"] = {"$in": visible_ids}
+
+    # Achievement is the PO value recorded in the target year, not opportunity/won value.
+    po_year_match = {
+        **scope,
+        "po_date": {"$gte": f"{target_year}-01-01", "$lt": f"{target_year + 1}-01-01"},
+    }
+    if sales_id:
+        po_year_match["sales_id"] = sales_id
+    if customer_id:
+        po_year_match["customer_id"] = customer_id
+
     (
         pipeline_customer_ids,
         open_pipeline,
@@ -101,14 +123,14 @@ async def dashboard(
         total_quotations,
         total_po,
         po_value,
+        achievement_value,
+        target_rows,
         activities,
         open_orders,
         completed_orders,
         overdue_orders,
         agg,
     ) = await asyncio.gather(
-        # Customer KPI is based on unique customers that currently have an open pipeline deal,
-        # not the total number of customers stored in the CRM database.
         db.opportunities.distinct("customer_id", opp_open),
         _sum(db.opportunities, opp_open, "value"),
         _sum(db.opportunities, opp_open, "weighted_value"),
@@ -116,6 +138,8 @@ async def dashboard(
         db.quotations.count_documents(base),
         db.purchase_orders.count_documents(base),
         _sum(db.purchase_orders, base, "po_value"),
+        _sum(db.purchase_orders, po_year_match, "po_value"),
+        db.targets.find(target_query, {"_id": 0, "target_value": 1}).to_list(1000),
         db.activities.count_documents(base),
         db.order_monitoring.count_documents({**base, "status": {"$nin": ["Completed", "Cancelled"]}}),
         db.order_monitoring.count_documents({**base, "status": "Completed"}),
@@ -126,12 +150,21 @@ async def dashboard(
             [{"$match": base}, {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"}}}]
         ).to_list(20),
     )
-    total_customers = sum(1 for customer in pipeline_customer_ids if customer)
+    total_customers = len({customer for customer in pipeline_customer_ids if customer})
+    target_value = round(sum(row.get("target_value", 0) or 0 for row in target_rows), 2)
+    achievement_value = round(achievement_value, 2)
+    achievement_pct = round((achievement_value / target_value) * 100, 1) if target_value > 0 else 0.0
+    target_remaining = round(max(target_value - achievement_value, 0), 2)
     kpi = DashboardKPI(
         total_customers=total_customers,
         open_pipeline=open_pipeline,
         weighted_pipeline=weighted_pipeline,
         won_value=won_value,
+        target_value=target_value,
+        achievement_value=achievement_value,
+        achievement_pct=achievement_pct,
+        target_remaining=target_remaining,
+        target_year=target_year,
         total_quotations=total_quotations,
         total_po=total_po,
         po_value=po_value,
