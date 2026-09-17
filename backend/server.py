@@ -23,6 +23,7 @@ from routers import (  # noqa: E402
     pipeline,
     products,
     purchase_orders,
+    quotation_email,
     quotation_pdf,
     quotations,
     targets,
@@ -94,6 +95,7 @@ app.include_router(pipeline.router, prefix="/api")
 # Register the clean PDF route first so it takes precedence over the legacy PDF route.
 app.include_router(quotation_pdf.router, prefix="/api")
 app.include_router(quotations.router, prefix="/api")
+app.include_router(quotation_email.router, prefix="/api")
 app.include_router(purchase_orders.router, prefix="/api")
 app.include_router(order_monitoring.router, prefix="/api")
 app.include_router(activities.router, prefix="/api")
