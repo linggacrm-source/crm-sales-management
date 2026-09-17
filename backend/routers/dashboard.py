@@ -107,7 +107,9 @@ async def dashboard(
         overdue_orders,
         agg,
     ) = await asyncio.gather(
-        db.opportunities.distinct("customer_id", base),
+        # Customer KPI is based on unique customers that currently have an open pipeline deal,
+        # not the total number of customers stored in the CRM database.
+        db.opportunities.distinct("customer_id", opp_open),
         _sum(db.opportunities, opp_open, "value"),
         _sum(db.opportunities, opp_open, "weighted_value"),
         _sum(db.opportunities, {**base, "stage": "Won"}, "value"),
