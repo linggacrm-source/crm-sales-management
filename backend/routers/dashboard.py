@@ -92,9 +92,9 @@ async def dashboard(
     opp_open = {**base, "stage": stage} if stage else {**base, "stage": {"$in": OPEN_STAGES}}
     today = today_iso()
 
-    # All 11 KPI queries are independent → fire them concurrently instead of awaiting in series.
+    # All KPI queries are independent → fire them concurrently instead of awaiting in series.
     (
-        total_customers,
+        pipeline_customer_ids,
         open_pipeline,
         weighted_pipeline,
         won_value,
@@ -107,7 +107,7 @@ async def dashboard(
         overdue_orders,
         agg,
     ) = await asyncio.gather(
-        db.customers.count_documents({**base, "status": "Active"}),
+        db.opportunities.distinct("customer_id", base),
         _sum(db.opportunities, opp_open, "value"),
         _sum(db.opportunities, opp_open, "weighted_value"),
         _sum(db.opportunities, {**base, "stage": "Won"}, "value"),
@@ -124,6 +124,7 @@ async def dashboard(
             [{"$match": base}, {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"}}}]
         ).to_list(20),
     )
+    total_customers = sum(1 for customer in pipeline_customer_ids if customer)
     kpi = DashboardKPI(
         total_customers=total_customers,
         open_pipeline=open_pipeline,
