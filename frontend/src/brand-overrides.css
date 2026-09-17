@@ -21,6 +21,35 @@
   margin-left: 10px;
 }
 
+/* Dashboard: use the unused right-side space for larger target cards. */
+@media (min-width: 1025px) {
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div {
+    grid-template-columns: minmax(0, .82fr) minmax(620px, 1.18fr) !important;
+    gap: 24px !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) {
+    width: 100% !important;
+    max-width: none !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(1),
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(2),
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(4) {
+    min-width: 0 !important;
+    min-height: 76px !important;
+    padding: 14px 18px !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div p:last-child {
+    margin-top: 7px !important;
+    font-size: 18px !important;
+    line-height: 1.05 !important;
+  }
+}
+
 @media (max-width: 1023px) {
   header img[src$="wellracom-logo.png"] {
     content: url("/logo well.jpg");
