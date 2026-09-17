@@ -263,6 +263,11 @@ export interface DashboardKPI {
   open_pipeline: number;
   weighted_pipeline: number;
   won_value: number;
+  target_value: number;
+  achievement_value: number;
+  achievement_pct: number;
+  target_remaining: number;
+  target_year: number;
   total_quotations: number;
   total_po: number;
   po_value: number;
