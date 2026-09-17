@@ -7,8 +7,10 @@ from lib.auth import (
     clear_session_cookie,
     create_token,
     current_user,
+    hash_password,
     set_session_cookie,
     verify_password,
+    write_audit,
 )
 from lib.db import db
 
@@ -18,6 +20,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
 
 
 class MeResponse(BaseModel):
@@ -55,6 +63,42 @@ async def login(payload: LoginRequest, response: Response):
     )
     set_session_cookie(response, create_token(user["user_id"]))
     return MeResponse(**user)
+
+
+@router.post("/change-password")
+async def change_password(
+    payload: ChangePasswordRequest,
+    response: Response,
+    user: dict = Depends(current_user),
+):
+    current_password = payload.current_password
+    new_password = payload.new_password
+
+    if not verify_password(current_password, user.get("password_hash", "")):
+        raise HTTPException(status_code=400, detail="Password saat ini salah")
+    if len(new_password) < 8:
+        raise HTTPException(status_code=400, detail="Password baru minimal 8 karakter")
+    if new_password != payload.confirm_password:
+        raise HTTPException(status_code=400, detail="Konfirmasi password baru tidak cocok")
+    if new_password == current_password:
+        raise HTTPException(status_code=400, detail="Password baru harus berbeda dari password saat ini")
+
+    await db.users.update_one(
+        {"user_id": user["user_id"]},
+        {
+            "$set": {
+                "password_hash": hash_password(new_password),
+                "must_change_password": False,
+                "updated_date": datetime.now(timezone.utc),
+            }
+        },
+    )
+    await write_audit(user, "CHANGE_PASSWORD", "User", user["user_id"])
+
+    # End the current session so the new password takes effect immediately and
+    # any previously issued session cannot remain active after a credential change.
+    clear_session_cookie(response)
+    return {"ok": True, "message": "Password berhasil diubah. Silakan login kembali."}
 
 
 @router.post("/logout")
