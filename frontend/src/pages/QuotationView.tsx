@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Printer, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Mail, Printer, ShoppingBag } from "lucide-react";
 import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StatusBadge } from "@/components/Shared";
+import { QuotationEmailDialog } from "@/components/QuotationEmailDialog";
 import { ApiError, apiGet, apiPost } from "@/lib/api";
 import { COMPANY, DEFAULT_TERMS } from "@/lib/company";
 import { formatDate, formatIDR } from "@/lib/format";
@@ -21,6 +22,7 @@ export default function QuotationView() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [convertOpen, setConvertOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
   const [poNumber, setPoNumber] = useState("");
   const [poDate, setPoDate] = useState(new Date().toISOString().slice(0, 10));
   const [qrCode, setQrCode] = useState<string>("");
@@ -88,7 +90,11 @@ export default function QuotationView() {
     <div className="mx-auto max-w-4xl">
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2">
         <Link to="/quotations" className={buttonVariants({ variant: "ghost", size: "sm" })} data-testid="link-back-quotations"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Link>
-        <div className="flex gap-2"><Button variant="outline" onClick={handleDownloadPDF} data-testid="btn-print-quotation"><Printer className="mr-2 h-4 w-4" /> Cetak / Simpan PDF</Button><Button disabled={data?.status === "Converted"} onClick={() => setConvertOpen(true)} data-testid="btn-convert-to-po"><ShoppingBag className="mr-2 h-4 w-4" /> Catat PO Customer</Button></div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={handleDownloadPDF} data-testid="btn-print-quotation"><Printer className="mr-2 h-4 w-4" /> Cetak / Simpan PDF</Button>
+          <Button variant="outline" onClick={() => setEmailOpen(true)} disabled={!data?.customer_email} data-testid="btn-send-quotation-email"><Mail className="mr-2 h-4 w-4" /> Send Email</Button>
+          <Button disabled={data?.status === "Converted"} onClick={() => setConvertOpen(true)} data-testid="btn-convert-to-po"><ShoppingBag className="mr-2 h-4 w-4" /> Catat PO Customer</Button>
+        </div>
       </div>
 
       {isError ? <Card className="p-10 text-center"><p className="text-sm text-muted-foreground" data-testid="quotation-error">Quotation belum dapat dimuat.</p></Card> : isLoading ? <Card className="space-y-3 p-10">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-4 animate-shimmer rounded bg-muted" />)}</Card> : data ? (
@@ -108,6 +114,8 @@ export default function QuotationView() {
           <div className="quotation-footer grid gap-4 border-t border-neutral-900 bg-neutral-50 px-8 py-4 text-[10px] text-neutral-600 sm:grid-cols-2">{COMPANY.offices.map((o) => <div key={o.city}><p className="font-bold tracking-widest text-neutral-800">{o.city.toUpperCase()} OFFICE</p><p>{o.address}</p><p>T. {o.phone}</p></div>)}</div>
         </Card>
       ) : null}
+
+      {data && <QuotationEmailDialog quotationId={data.quotation_id} quotationNumber={data.quotation_number} customerEmail={data.customer_email} customerName={data.customer_company || data.customer_name} open={emailOpen} onOpenChange={setEmailOpen} />}
 
       <Dialog open={convertOpen} onOpenChange={setConvertOpen}><DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Catat Purchase Order Customer</DialogTitle></DialogHeader><p className="text-sm text-muted-foreground">Masukkan nomor PO yang tertera pada dokumen PO dari customer (bukan nomor internal).</p><div className="space-y-4"><div><Label htmlFor="conv-po-number">Nomor PO Customer</Label><Input id="conv-po-number" value={poNumber} onChange={(e) => setPoNumber(e.target.value)} placeholder="mis. PO/ELSI/2026/0088" className="mt-1.5" data-testid="input-convert-po-number"/></div><div><Label htmlFor="conv-po-date">Tanggal PO Customer</Label><Input id="conv-po-date" type="date" value={poDate} onChange={(e) => setPoDate(e.target.value)} className="mt-1.5" data-testid="input-convert-po-date"/></div></div><DialogFooter><Button variant="outline" onClick={() => setConvertOpen(false)} data-testid="btn-cancel-convert">Batal</Button><Button disabled={!poNumber.trim() || convert.isPending} onClick={() => convert.mutate()} data-testid="btn-confirm-convert">{convert.isPending ? "Menyimpan..." : "Simpan PO"}</Button></DialogFooter></DialogContent></Dialog>
     </div>
