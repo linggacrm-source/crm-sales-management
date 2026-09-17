@@ -17,6 +17,7 @@ from routers import (  # noqa: E402
     audit,
     auth,
     customers,
+    customer_import,
     dashboard,
     order_monitoring,
     pipeline,
@@ -36,7 +37,7 @@ INDEXES: dict[str, list] = {
     "products": [[("product_id", 1)], [("product_code", 1)], [("category", 1)], [("status", 1)], [("product_name", 1)]],
     "opportunities": [[("opportunity_id", 1)], [("customer_id", 1)], [("sales_id", 1)], [("stage", 1)], [("value", -1)], [("created_date", -1)], [("sales_id", 1), ("stage", 1)], [("sales_id", 1), ("created_date", -1)], [("customer_id", 1), ("created_date", -1)]],
     "quotations": [[("quotation_id", 1)], [("quotation_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("created_date", -1)], [("sales_id", 1), ("created_date", -1)], [("sales_id", 1), ("status", 1)], [("customer_id", 1), ("created_date", -1)]],
-    "purchase_orders": [[("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("quotation_id", 1)], [("status", 1)], [("created_date", -1)], [("customer_id", 1), ("po_number", 1)], [("sales_id", 1), ("created_date", -1)], [("sales_id", 1), ("status", 1)]],
+    "purchase_orders": [[("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("customer_id", 1), ("po_number", 1)], [("sales_id", 1)], [("quotation_id", 1)], [("status", 1)], [("created_date", -1)], [("sales_id", 1), ("created_date", -1)], [("sales_id", 1), ("status", 1)]],
     "order_monitoring": [[("monitoring_id", 1)], [("po_id", 1)], [("po_number", 1)], [("customer_id", 1)], [("sales_id", 1)], [("status", 1)], [("eta", 1)], [("created_date", -1)], [("sales_id", 1), ("eta", 1)], [("sales_id", 1), ("status", 1)], [("status", 1), ("eta", 1)]],
     "activities": [[("activity_id", 1)], [("sales_id", 1)], [("customer_id", 1)], [("status", 1)], [("activity_date", -1)], [("next_followup", 1)], [("sales_id", 1), ("activity_date", -1)], [("sales_id", 1), ("status", 1)], [("customer_id", 1), ("created_date", -1)]],
     "audit_logs": [[("timestamp", -1)], [("module", 1)], [("user_id", 1)]],
@@ -87,6 +88,7 @@ app.include_router(api_router)
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(customers.router, prefix="/api")
+app.include_router(customer_import.router, prefix="/api")
 app.include_router(products.router, prefix="/api")
 app.include_router(pipeline.router, prefix="/api")
 # Register the clean PDF route first so it takes precedence over the legacy PDF route.
