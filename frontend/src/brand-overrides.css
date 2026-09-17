@@ -1,8 +1,35 @@
 @import "./dashboard-target-inline.css";
 
-/* CRM brand lockup: use the supplied WELLRACOM emblem and CRM SALES MANAGEMENT text. */
+/* Use the exact supplied Wellracom emblem from the existing public asset. */
 [data-testid="sidebar-brand"] > img,
-[data-testid="sidebar-brand"] img[src$="wellracom-logo.png"] { content: url("/wellracom-crm-brand.svg"); width: 208px; height: 48px; object-fit: contain; }
+[data-testid="sidebar-brand"] img[src$="wellracom-logo.png"] {
+  content: url("/logo well.jpg");
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex: 0 0 44px;
+}
+
+[data-testid="sidebar-brand"]::after {
+  content: "CRM SALES\A MANAGEMENT";
+  white-space: pre;
+  line-height: 1.05;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: #0f172a;
+}
+
+[data-testid="sidebar-brand"]::after {
+  color: #0f172a;
+}
+
 @media (max-width: 1023px) {
-  header a img[src$="wellracom-logo.png"] { content: url("/wellracom-crm-brand.svg"); width: 208px; height: 42px; object-fit: contain; }
+  header img[src$="wellracom-logo.png"] {
+    content: url("/logo well.jpg");
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    flex: 0 0 32px;
+  }
 }
