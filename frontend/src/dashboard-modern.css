@@ -279,7 +279,8 @@ body:has([data-testid="filter-period"]) .space-y-6.pb-10 .rounded-xl {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 10px !important;
-    width: auto !important;
+    width: min(100%, 560px) !important;
+    min-width: 0 !important;
   }
 
   /* Keep Target, Pencapaian PO and Remaining; Achievement is shown beside progress. */
@@ -287,26 +288,34 @@ body:has([data-testid="filter-period"]) .space-y-6.pb-10 .rounded-xl {
     display: none !important;
   }
 
+  /* Larger target / achievement tiles: use the available right-side space. */
   body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div {
-    min-height: 58px !important;
-    padding: 10px 13px !important;
-    border-radius: 11px !important;
-    background: rgba(255,255,255,.68) !important;
-    box-shadow: none !important;
+    min-height: 70px !important;
+    padding: 13px 17px !important;
+    border-radius: 12px !important;
+    background: rgba(255,255,255,.78) !important;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .035) !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(1),
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(2) {
+    min-width: 170px !important;
   }
 
   body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(2) {
-    background: rgba(236, 253, 245, .72) !important;
-    border-color: rgba(167, 243, 208, .85) !important;
+    background: rgba(236, 253, 245, .82) !important;
+    border-color: rgba(167, 243, 208, .9) !important;
   }
 
   body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(3) {
-    background: rgba(255, 251, 235, .72) !important;
-    border-color: rgba(253, 230, 138, .85) !important;
+    background: rgba(255, 251, 235, .82) !important;
+    border-color: rgba(253, 230, 138, .9) !important;
   }
 
   body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid > div p:last-child {
-    font-size: 15px !important;
+    margin-top: 5px !important;
+    font-size: 17px !important;
+    line-height: 1.05 !important;
   }
 }
 
@@ -340,9 +349,5 @@ body:has([data-testid="filter-period"]) .space-y-6.pb-10 .rounded-xl {
 
   body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] {
     padding: 13px !important;
-  }
-
-  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid > div p:last-child {
-    font-size: 13px !important;
   }
 }
