@@ -1,0 +1,82 @@
+/* Inline target achievement panel for the dashboard hero. */
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] {
+  margin-top: -14px !important;
+  border-top: 0 !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-color: #dbeafe !important;
+  background: rgba(255,255,255,.96) !important;
+  box-shadow: 0 10px 28px rgba(37,99,235,.06) !important;
+  padding: 12px 18px 14px !important;
+}
+
+/* Visually join it to the Business Performance hero above. */
+body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > section:nth-child(2) {
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 20px !important;
+  box-shadow: 0 0 0 rgba(0,0,0,0) !important;
+}
+
+/* Remove the duplicate section title; the hero already establishes the context. */
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] h2,
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] h2 + p {
+  display: none !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div {
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:first-child {
+  min-width: 220px !important;
+  flex: 1 1 42% !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="target-progress"] {
+  height: 8px !important;
+  border-radius: 999px !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid {
+  flex: 0 1 560px !important;
+  width: 100% !important;
+  gap: 6px !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid > div {
+  min-height: 48px !important;
+  padding: 7px 10px !important;
+  background: #f8fbff !important;
+  border-color: #e5edf8 !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid > div:nth-child(2) {
+  background: #f0fdf8 !important;
+  border-color: #d1fae5 !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid > div:nth-child(3) {
+  background: #eff6ff !important;
+  border-color: #dbeafe !important;
+}
+
+body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid > div:nth-child(4) {
+  background: #fffbeb !important;
+  border-color: #fef3c7 !important;
+}
+
+@media (max-width: 1024px) {
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] {
+    margin-top: -10px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] {
+    margin-top: -8px !important;
+    padding: 10px 12px 12px !important;
+  }
+}
