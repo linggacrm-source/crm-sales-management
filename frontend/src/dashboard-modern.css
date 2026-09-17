@@ -194,6 +194,122 @@ body:has([data-testid="filter-period"]) .space-y-6.pb-10 .rounded-xl {
   border-radius: 11px !important;
 }
 
+/* -------------------------------------------------------------------------
+   Business Performance + Target: one visual surface, like the reference.
+   The target component remains in the DOM so its existing data/API logic is
+   untouched; CSS folds it into the bottom-right of the hero card.
+   ------------------------------------------------------------------------- */
+@media (min-width: 1025px) {
+  body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > section:has(+ [data-testid="sales-target-achievement"]) {
+    min-height: 246px !important;
+    padding: 28px 32px 108px !important;
+    border-radius: 20px !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > section:has(+ [data-testid="sales-target-achievement"]) > div.relative.grid {
+    display: block !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > section:has(+ [data-testid="sales-target-achievement"]) > div.relative.grid > div:first-child {
+    max-width: 62% !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > section:has(+ [data-testid="sales-target-achievement"]) > div.relative.grid > div:last-child {
+    position: absolute !important;
+    left: 32px !important;
+    bottom: 24px !important;
+    width: calc(58% - 32px) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > section:has(+ [data-testid="sales-target-achievement"]) > div.relative.grid > div:last-child > div {
+    min-height: 58px !important;
+    padding: 10px 14px !important;
+    border-color: rgba(191, 219, 254, .75) !important;
+    background: rgba(255,255,255,.58) !important;
+    box-shadow: none !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > [data-testid="sales-target-achievement"] {
+    position: relative !important;
+    z-index: 3 !important;
+    margin-top: -106px !important;
+    margin-bottom: 0 !important;
+    padding: 0 32px 22px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) .space-y-6.pb-10 > [data-testid="sales-target-achievement"] > div {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(440px, 1.12fr) !important;
+    align-items: end !important;
+    gap: 22px !important;
+  }
+
+  /* Remove the standalone title/description/icon. */
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:first-child > div:first-child {
+    display: none !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:first-child {
+    min-width: 0 !important;
+    width: auto !important;
+    padding-bottom: 5px !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .mt-5 {
+    margin-top: 0 !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="target-progress"] {
+    height: 9px !important;
+    border-radius: 999px !important;
+    background: #1677ff !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:first-child > div:last-child {
+    margin-top: 7px !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: auto !important;
+  }
+
+  /* Keep Target, Pencapaian PO and Remaining; Achievement is shown beside progress. */
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(3) {
+    display: none !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div {
+    min-height: 58px !important;
+    padding: 10px 13px !important;
+    border-radius: 11px !important;
+    background: rgba(255,255,255,.68) !important;
+    box-shadow: none !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(2) {
+    background: rgba(236, 253, 245, .72) !important;
+    border-color: rgba(167, 243, 208, .85) !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] > div > div:nth-child(2) > div:nth-child(3) {
+    background: rgba(255, 251, 235, .72) !important;
+    border-color: rgba(253, 230, 138, .85) !important;
+  }
+
+  body:has([data-testid="sales-target-achievement"]) [data-testid="sales-target-achievement"] .grid > div p:last-child {
+    font-size: 15px !important;
+  }
+}
+
 @media (max-width: 1280px) {
   body:has([data-testid="filter-period"]) .space-y-6.pb-10 [data-testid="sales-target-achievement"] > div {
     align-items: stretch !important;
