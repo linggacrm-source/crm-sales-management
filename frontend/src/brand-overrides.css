@@ -18,10 +18,7 @@
   font-weight: 800;
   letter-spacing: -.02em;
   color: #0f172a;
-}
-
-[data-testid="sidebar-brand"]::after {
-  color: #0f172a;
+  margin-left: 10px;
 }
 
 @media (max-width: 1023px) {
