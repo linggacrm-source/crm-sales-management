@@ -18,13 +18,26 @@ const TEMPLATE_SAMPLE = [
 ];
 
 function downloadTemplate() {
-  const csv = `${TEMPLATE_HEADERS.join(",")}\n${TEMPLATE_SAMPLE.map((value) => `"${value.replaceAll('"', '""')}"`).join(",")}\n`;
-  const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8;" });
+  // Generate an Excel-compatible workbook without relying on the user's
+  // regional CSV separator settings (which can make all columns appear in A).
+  const escapeHtml = (value: string) =>
+    value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  const headerCells = TEMPLATE_HEADERS.map((header) => `<th>${escapeHtml(header)}</th>`).join("");
+  const sampleCells = TEMPLATE_SAMPLE.map((value) => `<td>${escapeHtml(value)}</td>`).join("");
+  const html = `<html><head><meta charset="UTF-8"></head><body>
+    <table border="1">
+      <thead><tr>${headerCells}</tr></thead>
+      <tbody><tr>${sampleCells}</tr></tbody>
+    </table>
+  </body></html>`;
+  const blob = new Blob(["\\uFEFF", html], { type: "application/vnd.ms-excel;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "customer_import_template.csv";
+  anchor.download = "customer_import_template.xls";
+  document.body.appendChild(anchor);
   anchor.click();
+  anchor.remove();
   URL.revokeObjectURL(url);
 }
 
@@ -152,9 +165,9 @@ export default function CustomerImport() {
 
         <Card className="p-6">
           <h2 className="text-sm font-semibold">Format kolom</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Gunakan template agar nama kolom langsung terbaca sistem.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Gunakan template Excel agar setiap field berada di kolom terpisah dan langsung terbaca sistem.</p>
           <Button variant="outline" className="mt-4 w-full" onClick={downloadTemplate} data-testid="btn-download-customer-template">
-            <Download className="mr-2 h-4 w-4" /> Download Template CSV
+            <Download className="mr-2 h-4 w-4" /> Download Template Excel
           </Button>
           <div className="mt-5 space-y-3 text-xs">
             <div className="rounded-lg bg-muted/40 p-3">
