@@ -39,17 +39,17 @@ export default function Login() {
         </div>
         <div className="max-w-lg">
           <h1 className="text-4xl leading-tight font-bold tracking-tight">
-            Kendalikan pipeline, quotation, dan pengiriman order dalam satu tempat.
+            Kelola seluruh proses penjualan lebih cepat, terstruktur, dan terukur.
           </h1>
           <p className="mt-4 text-slate-400">
-            Server-side pagination, agregasi dashboard, dan monitoring ETA per PO — dibangun untuk tim
-            sales yang bergerak cepat.
+            CRM Sales Management membantu tim sales mengelola customer, peluang, quotation, hingga purchase order
+            dalam satu sistem terintegrasi — sehingga setiap aktivitas dan proses penjualan lebih mudah dipantau.
           </p>
           <div className="mt-10 grid grid-cols-3 gap-4">
             {[
-              ["Modul", "11"],
-              ["Peran", "3"],
-              ["Tahap Order", "6"],
+              ["Customer", "Database"],
+              ["Sales", "Pipeline"],
+              ["Order", "Monitoring"],
             ].map(([k, v]) => (
               <div key={k} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
                 <p className="font-mono text-2xl font-bold text-blue-400">{v}</p>
