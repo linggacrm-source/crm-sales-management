@@ -125,6 +125,10 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     delivery_term = doc.get("delivery_term") or "-"
     validity_date = doc.get("validity_date") or "-"
     terms = [Paragraph("<b>TERMS &amp; CONDITIONS</b>", section), Paragraph(f"• Payment: {payment_term}", small), Paragraph(f"• Pengiriman: {delivery_term}", small), Paragraph(f"• Validitas: s/d {format_date(validity_date)}", small)]
+    notes_text = str(doc.get("notes") or "").strip()
+    if notes_text:
+        notes_html = notes_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
+        terms.append(Paragraph(f"• Catatan: {notes_html}", small))
     signature_flow = [Paragraph("<b>DIGITALLY APPROVED</b>", section)]
     signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"
     signature_title = doc.get("signature_title") or "Sales"
