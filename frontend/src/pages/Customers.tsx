@@ -127,9 +127,9 @@ export default function Customers() {
   return (
     <div>
       <PageHeader title="Customers" subtitle="Database pelanggan — pencarian & filter dijalankan di server">
-        <Button variant="outline" asChild data-testid="btn-import-customers">
-          <Link to="/customers/import"><Upload className="mr-2 h-4 w-4" /> Import Customer</Link>
-        </Button>
+        <Link to="/customers/import" data-testid="btn-import-customers" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground">
+          <Upload className="h-4 w-4" /> Import Customer
+        </Link>
         <Button variant="outline" onClick={() => exportCsv("customers.csv", rows as unknown as Record<string, unknown>[])} data-testid="btn-export-customers">
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
