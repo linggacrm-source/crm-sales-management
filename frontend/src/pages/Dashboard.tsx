@@ -140,7 +140,7 @@ export default function Dashboard() {
   if (stage) params.set("stage", stage);
   if (customerId) params.set("customer_id", customerId);
   const qs = params.toString();
-  const { data, isLoading, isError, refetch, isFetching } = useQuery<DashboardResponse>({ queryKey: ["dashboard", qs], queryFn: () => apiGet<DashboardResponse>(`/dashboard${qs ? `?${qs}` : ""}`), staleTime: 60_000 });
+  const { data, isLoading, isError, refetch, isFetching } = useQuery<DashboardResponse>({ queryKey: ["dashboard", qs], queryFn: () => apiGet<DashboardResponse>(`/dashboard${qs ? `?${qs}` : ""}`), staleTime: 15_000, refetchOnWindowFocus: true, refetchOnMount: "always" });
   const { data: salesOptions } = useQuery<SalesOption[]>({ queryKey: ["user-options"], queryFn: () => apiGet<SalesOption[]>("/users/options"), staleTime: 10 * 60_000 });
   const { data: customerOptions } = useQuery<CustomerOption[]>({ queryKey: ["customer-options"], queryFn: () => apiGet<CustomerOption[]>("/customers/options"), staleTime: 10 * 60_000 });
   const kpi = isError ? null : data?.kpi;
