@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -134,6 +134,11 @@ export default function Products() {
         >
           <Download className="mr-2 h-4 w-4" /> Export CSV
         </Button>
+        {isAdmin && (
+          <Button variant="outline" onClick={() => window.location.assign("/products/import")} data-testid="btn-import-products">
+            <Upload className="mr-2 h-4 w-4" /> Import Excel
+          </Button>
+        )}
         {isAdmin && (
           <Button
             onClick={() => {
