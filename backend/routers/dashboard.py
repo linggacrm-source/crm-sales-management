@@ -138,7 +138,7 @@ async def dashboard(
         overdue_orders,
         agg,
     ) = await asyncio.gather(
-        db.customers.count_documents({**scope, **({ "customer_id": customer_id } if customer_id else {})}),
+        db.customers.count_documents(base),
         _sum(db.opportunities, opp_open, "value"),
         _sum(db.opportunities, opp_open, "weighted_value"),
         _sum(db.opportunities, {**base, "stage": "Won"}, "value"),
