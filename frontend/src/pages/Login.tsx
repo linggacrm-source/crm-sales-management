@@ -11,11 +11,6 @@ import { ApiError, apiPost } from "@/lib/api";
 import { beginSession } from "@/lib/session";
 import type { Me } from "@/lib/types";
 
-const DEMO = [
-  { label: "Super Admin", email: "admin@crm.co.id" },
-  { label: "Sales Manager", email: "manager@crm.co.id" },
-  { label: "Sales", email: "sales1@crm.co.id" },
-];
 
 export default function Login() {
   const navigate = useNavigate();
