@@ -138,7 +138,8 @@ async def pipeline_summary(
         {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"},
                     "weighted_value": {"$sum": "$weighted_value"}}},
     ]
-    rows = await db.opportunities.aggregate(pipeline).to_list(20)
+    cursor = await db.opportunities.aggregate(pipeline)
+    rows = await cursor.to_list(20)
     by_stage = {r["_id"]: r for r in rows}
     return [
         StageSummary(
@@ -163,13 +164,17 @@ async def pipeline_kanban(
     base = await _build_query(user, search, None, sales_id, customer_id)
     per_stage = min(limit_per_stage, 50)
 
+    async def aggregate_value(query: dict) -> list[dict]:
+        cursor = await db.opportunities.aggregate(
+            [{"$match": query}, {"$group": {"_id": None, "value": {"$sum": "$value"}}}]
+        )
+        return await cursor.to_list(1)
+
     async def column(stage: str) -> KanbanColumn:
         query = {**base, "stage": stage}
         count, agg, items = await asyncio.gather(
             db.opportunities.count_documents(query),
-            db.opportunities.aggregate(
-                [{"$match": query}, {"$group": {"_id": None, "value": {"$sum": "$value"}}}]
-            ).to_list(1),
+            aggregate_value(query),
             db.opportunities.find(query, LIST_PROJECTION).sort([("value", -1)]).limit(per_stage).to_list(per_stage),
         )
         return KanbanColumn(
