@@ -14,8 +14,8 @@ import type { Me } from "@/lib/types";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@crm.co.id");
-  const [password, setPassword] = useState("Password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const login = useMutation({
     mutationFn: () => apiPost<Me>("/auth/login", { email, password }),
