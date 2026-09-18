@@ -123,7 +123,7 @@ async def dashboard(
         po_year_match["customer_id"] = customer_id
 
     (
-        pipeline_customer_ids,
+        total_customers,
         open_pipeline,
         weighted_pipeline,
         won_value,
@@ -138,7 +138,7 @@ async def dashboard(
         overdue_orders,
         agg,
     ) = await asyncio.gather(
-        db.opportunities.distinct("customer_id", opp_open),
+        db.customers.count_documents({**scope, **({ "customer_id": customer_id } if customer_id else {})}),
         _sum(db.opportunities, opp_open, "value"),
         _sum(db.opportunities, opp_open, "weighted_value"),
         _sum(db.opportunities, {**base, "stage": "Won"}, "value"),
@@ -159,7 +159,7 @@ async def dashboard(
             20,
         ),
     )
-    total_customers = len({customer for customer in pipeline_customer_ids if customer})
+    total_customers = int(total_customers)
     target_value = round(sum(row.get("target_value", 0) or 0 for row in target_rows), 2)
     achievement_value = round(achievement_value, 2)
     achievement_pct = round((achievement_value / target_value) * 100, 1) if target_value > 0 else 0.0
