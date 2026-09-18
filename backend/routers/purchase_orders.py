@@ -10,11 +10,11 @@ from lib.dates import today_iso
 from lib.db import db
 from lib.ids import next_code
 from lib.query import paginate, search_clause, sort_spec
-from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from gridfs.asynchronous import AsyncGridFSBucket
 from bson import ObjectId
 
 router = APIRouter(prefix="/purchase-orders", tags=["purchase-orders"])
-po_files = AsyncIOMotorGridFSBucket(db, bucket_name="po_documents")
+po_files = AsyncGridFSBucket(db, bucket_name="po_documents")
 
 MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 ALLOWED_DOCUMENT_TYPES = {
