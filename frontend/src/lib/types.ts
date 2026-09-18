@@ -209,6 +209,8 @@ export interface PODetail extends PORow {
   payment_term?: string | null;
   notes?: string | null;
   document_name?: string | null;
+  document_file_id?: string | null;
+  document_content_type?: string | null;
   items: POItem[];
 }
 
