@@ -69,6 +69,7 @@ export default function PurchaseOrders() {
   const [salesId, setSalesId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
 
   const debounced = useDebounced(search);
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
@@ -106,7 +107,7 @@ export default function PurchaseOrders() {
   };
 
   const save = useMutation({
-    mutationFn: (f: FormState) => {
+    mutationFn: async (f: FormState) => {
       const body = {
         po_number: f.po_number.trim(),
         customer_id: f.customer_id,
@@ -128,11 +129,28 @@ export default function PurchaseOrders() {
             unit_price: Number(i.unit_price) || 0,
           })),
       };
-      return f.po_id ? apiPut<PODetail>(`/purchase-orders/${f.po_id}`, body) : apiPost<PODetail>("/purchase-orders", body);
+      const po = f.po_id
+        ? await apiPut<PODetail>(`/purchase-orders/${f.po_id}`, body)
+        : await apiPost<PODetail>("/purchase-orders", body);
+      if (documentFile) {
+        const formData = new FormData();
+        formData.append("file", documentFile);
+        const response = await fetch(`/api/purchase-orders/${po.po_id}/document`, {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        });
+        const result = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new ApiError(response.status, result);
+        }
+      }
+      return po;
     },
     onSuccess: (po) => {
       toast.success(`PO ${po.po_number} tersimpan`);
       setDialogOpen(false);
+      setDocumentFile(null);
       invalidate();
     },
     onError: (e) =>
@@ -160,6 +178,7 @@ export default function PurchaseOrders() {
 
   const openEdit = async (id: string) => {
     const d = await apiGet<PODetail>(`/purchase-orders/${id}`);
+    setDocumentFile(null);
     setForm({
       po_id: d.po_id,
       po_number: d.po_number,
@@ -201,6 +220,7 @@ export default function PurchaseOrders() {
         </Button>
         <Button
           onClick={() => {
+            setDocumentFile(null);
             setForm({ ...EMPTY, items: [{ ...EMPTY_ITEM }] });
             setDialogOpen(true);
           }}
@@ -432,7 +452,7 @@ export default function PurchaseOrders() {
                 type="file"
                 className="mt-1.5"
                 data-testid="input-po-document"
-                onChange={(e) => setForm({ ...form, document_name: e.target.files?.[0]?.name ?? "" })}
+                onChange={(e) => { const selected = e.target.files?.[0] ?? null; setDocumentFile(selected); setForm({ ...form, document_name: selected?.name ?? "" }); }}
               />
               {form.document_name && (
                 <p className="mt-1 text-xs text-muted-foreground" data-testid="po-document-name">
