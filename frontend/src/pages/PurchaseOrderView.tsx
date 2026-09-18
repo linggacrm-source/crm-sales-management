@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, Printer, Truck } from "lucide-react";
+import { ArrowLeft, Download, Eye, Printer, Truck } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -57,10 +57,42 @@ export default function PurchaseOrderView() {
         <Button variant="outline" onClick={() => window.print()} data-testid="btn-print-po">
           <Printer className="mr-2 h-4 w-4" /> Cetak
         </Button>
-        {data?.document_name && (
-          <Button variant="outline" data-testid="btn-download-po-document">
-            <Download className="mr-2 h-4 w-4" /> {data.document_name}
-          </Button>
+        {data?.document_name && data?.document_file_id && (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => window.open(`/api/purchase-orders/${poId}/document`, "_blank", "noopener,noreferrer")}
+              data-testid="btn-view-po-document"
+            >
+              <Eye className="mr-2 h-4 w-4" /> Lihat PO
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  const response = await fetch(`/api/purchase-orders/${poId}/document`, { credentials: "include" });
+                  if (!response.ok) throw new Error("Gagal mengambil dokumen");
+                  const blob = await response.blob();
+                  const url = URL.createObjectURL(blob);
+                  const anchor = document.createElement("a");
+                  anchor.href = url;
+                  anchor.download = data.document_name ?? "purchase-order";
+                  document.body.appendChild(anchor);
+                  anchor.click();
+                  anchor.remove();
+                  setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } catch {
+                  toast.error("Dokumen PO tidak dapat diunduh");
+                }
+              }}
+              data-testid="btn-download-po-document"
+            >
+              <Download className="mr-2 h-4 w-4" /> Download
+            </Button>
+          </>
+        )}
+        {data?.document_name && !data?.document_file_id && (
+          <span className="text-xs text-muted-foreground">Dokumen: {data.document_name} (file belum tersedia)</span>
         )}
         <Button
           onClick={() => createMonitoring.mutate()}
