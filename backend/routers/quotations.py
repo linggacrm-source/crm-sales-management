@@ -234,6 +234,10 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm]); totals_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")), ("TEXTCOLOR", (0, -1), (-1, -1), colors.white)]))
     totals_wrapper = Table([["", totals_table]], colWidths=[110 * mm, 70 * mm]); totals_wrapper.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)])); story.append(totals_wrapper); story.append(Spacer(1, 4 * mm))
     terms = [Paragraph("<b>TERMS &amp; CONDITIONS</b>", section)]; payment_term = doc.get("payment_term") or "-"; delivery_term = doc.get("delivery_term") or "-"; validity_date = doc.get("validity_date") or "-"; terms.extend([Paragraph(f"• Payment: {payment_term}", small), Paragraph(f"• Pengiriman: {delivery_term}", small), Paragraph(f"• Validitas: s/d {validity_date}", small)])
+    notes_text = str(doc.get("notes") or "").strip()
+    if notes_text:
+        notes_html = notes_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
+        terms.append(Paragraph(f"• Catatan: {notes_html}", small))
     signature_flow = [Paragraph("<b>DIGITALLY APPROVED</b>", section)]; signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"; signature_title = doc.get("signature_title") or "Sales"; signature_image_path = doc.get("signature_image")
     if signature_image_path:
         try: signature_flow.append(Image(signature_image_path, width=35 * mm, height=18 * mm, kind="proportional"))
