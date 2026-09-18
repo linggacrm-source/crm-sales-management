@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from lib.auth import SALES, current_user, scope_filter, write_audit
@@ -9,8 +10,22 @@ from lib.dates import today_iso
 from lib.db import db
 from lib.ids import next_code
 from lib.query import paginate, search_clause, sort_spec
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
+from bson import ObjectId
 
 router = APIRouter(prefix="/purchase-orders", tags=["purchase-orders"])
+po_files = AsyncIOMotorGridFSBucket(db, bucket_name="po_documents")
+
+MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
+ALLOWED_DOCUMENT_TYPES = {
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "image/jpeg",
+    "image/png",
+}
 
 STATUSES = ["Draft", "Received", "Confirmed", "Processing", "Completed", "Cancelled"]
 
@@ -291,6 +306,87 @@ async def create_monitoring(po_id: str, user: dict = Depends(current_user)):
     await db.purchase_orders.update_one({"po_id": po_id}, {"$set": {"status": "Processing", "updated_date": now}})
     await write_audit(user, "CREATE", "Order Monitoring", po["po_number"], None, f"{len(docs)} item")
     return MonitoringCreated(created=len(docs), monitoring_ids=ids)
+
+
+@router.post("/{po_id}/document")
+async def upload_po_document(
+    po_id: str,
+    file: UploadFile = File(...),
+    user: dict = Depends(current_user),
+):
+    scope = await scope_filter(user)
+    po = await db.purchase_orders.find_one(
+        {"po_id": po_id, **scope},
+        {"_id": 0, "document_file_id": 1, "document_name": 1},
+    )
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase Order tidak ditemukan")
+    filename = (file.filename or "").strip()
+    if not filename:
+        raise HTTPException(status_code=400, detail="Nama file tidak ditemukan")
+    content_type = file.content_type or "application/octet-stream"
+    if content_type not in ALLOWED_DOCUMENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Format dokumen tidak didukung. Gunakan PDF, Word, Excel, JPG, atau PNG",
+        )
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="File kosong")
+    if len(content) > MAX_DOCUMENT_BYTES:
+        raise HTTPException(status_code=400, detail="Ukuran dokumen maksimal 20 MB")
+
+    file_id = await po_files.upload_from_stream(
+        filename,
+        content,
+        metadata={"po_id": po_id, "content_type": content_type, "uploaded_by": user["user_id"]},
+    )
+    old_id = po.get("document_file_id")
+    await db.purchase_orders.update_one(
+        {"po_id": po_id},
+        {
+            "$set": {
+                "document_name": filename,
+                "document_file_id": str(file_id),
+                "document_content_type": content_type,
+                "updated_date": datetime.now(timezone.utc),
+            }
+        },
+    )
+    if old_id:
+        try:
+            await po_files.delete(ObjectId(str(old_id)))
+        except Exception:
+            pass
+    await write_audit(user, "UPLOAD", "PO Document", po_id, None, filename)
+    return {"ok": True, "document_name": filename, "document_file_id": str(file_id)}
+
+
+@router.get("/{po_id}/document")
+async def get_po_document(po_id: str, user: dict = Depends(current_user)):
+    scope = await scope_filter(user)
+    po = await db.purchase_orders.find_one(
+        {"po_id": po_id, **scope},
+        {"_id": 0, "document_file_id": 1, "document_name": 1, "document_content_type": 1},
+    )
+    if not po or not po.get("document_file_id"):
+        raise HTTPException(status_code=404, detail="Dokumen PO belum tersedia")
+    try:
+        grid_out = await po_files.open_download_stream(ObjectId(str(po["document_file_id"])))
+        content = await grid_out.read()
+    except Exception:
+        raise HTTPException(status_code=404, detail="File dokumen PO tidak ditemukan")
+    media_type = po.get("document_content_type") or "application/octet-stream"
+    filename = po.get("document_name") or "purchase-order-document"
+    safe_filename = filename.replace('"', "")
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'inline; filename="{safe_filename}"',
+            "Cache-Control": "private, max-age=300",
+        },
+    )
 
 
 @router.delete("/{po_id}")
