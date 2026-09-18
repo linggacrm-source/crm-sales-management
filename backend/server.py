@@ -12,7 +12,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 from lib.db import client, db, mongo_url  # noqa: E402
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 from routers import (  # noqa: E402
     activities,
     audit,
@@ -51,7 +51,7 @@ INDEXES: dict[str, list] = {
 async def lifespan(app: FastAPI):
     # Do not bind the shared Motor client to the lifespan event loop.
     # Railway/Uvicorn can use a different asyncio loop for HTTP requests.
-    index_client = AsyncIOMotorClient(mongo_url)
+    index_client = AsyncMongoClient(mongo_url)
     try:
         index_db = index_client[os.environ["DB_NAME"]]
         for coll, specs in INDEXES.items():
