@@ -11,7 +11,8 @@ from fastapi.staticfiles import StaticFiles
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-from lib.db import client, db  # noqa: E402
+from lib.db import client, db, mongo_url  # noqa: E402
+from motor.motor_asyncio import AsyncIOMotorClient
 from routers import (  # noqa: E402
     activities,
     audit,
@@ -48,14 +49,20 @@ INDEXES: dict[str, list] = {
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    for coll, specs in INDEXES.items():
-        for spec in specs:
-            try:
-                await db[coll].create_index(spec)
-            except Exception as exc:
-                logger.warning("index %s on %s failed: %s", spec, coll, exc)
-    yield
-    client.close()
+    # Do not bind the shared Motor client to the lifespan event loop.
+    # Railway/Uvicorn can use a different asyncio loop for HTTP requests.
+    index_client = AsyncIOMotorClient(mongo_url)
+    try:
+        index_db = index_client[os.environ["DB_NAME"]]
+        for coll, specs in INDEXES.items():
+            for spec in specs:
+                try:
+                    await index_db[coll].create_index(spec)
+                except Exception as exc:
+                    logger.warning("index %s on %s failed: %s", spec, coll, exc)
+        yield
+    finally:
+        index_client.close()
 
 
 app = FastAPI(lifespan=lifespan, title="CRM Sales Management API")
