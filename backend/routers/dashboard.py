@@ -60,10 +60,17 @@ class SalesKPIRow(BaseModel):
     overdue: int = 0
 
 
+async def _aggregate_to_list(collection, pipeline: list[dict], limit: int) -> list[dict]:
+    cursor = await collection.aggregate(pipeline)
+    return await cursor.to_list(limit)
+
+
 async def _sum(collection, match: dict, field: str) -> float:
-    rows = await collection.aggregate(
-        [{"$match": match}, {"$group": {"_id": None, "v": {"$sum": f"${field}"}}}]
-    ).to_list(1)
+    rows = await _aggregate_to_list(
+        collection,
+        [{"$match": match}, {"$group": {"_id": None, "v": {"$sum": f"${field}"}}}],
+        1,
+    )
     return round(rows[0]["v"], 2) if rows else 0.0
 
 
@@ -146,9 +153,11 @@ async def dashboard(
         db.order_monitoring.count_documents(
             {**base, "status": {"$nin": ["Completed", "Cancelled"]}, "eta": {"$lt": today, "$ne": None}}
         ),
-        db.opportunities.aggregate(
-            [{"$match": base}, {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"}}}]
-        ).to_list(20),
+        _aggregate_to_list(
+            db.opportunities,
+            [{"$match": base}, {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"}}}],
+            20,
+        ),
     )
     total_customers = len({customer for customer in pipeline_customer_ids if customer})
     target_value = round(sum(row.get("target_value", 0) or 0 for row in target_rows), 2)
@@ -204,7 +213,11 @@ async def sales_team(user: dict = Depends(current_user)):
         stage: dict = {"_id": "$sales_id", "count": {"$sum": 1}}
         if sum_field:
             stage["value"] = {"$sum": f"${sum_field}"}
-        rows = await collection.aggregate([{"$match": {**match, **extra}}, {"$group": stage}]).to_list(500)
+        rows = await _aggregate_to_list(
+            collection,
+            [{"$match": {**match, **extra}}, {"$group": stage}],
+            500,
+        )
         return {r["_id"]: r for r in rows}
 
     open_pipe, weighted, won, qt, po, acts, indent, overdue = await asyncio.gather(
