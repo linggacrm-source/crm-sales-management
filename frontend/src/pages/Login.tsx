@@ -106,27 +106,6 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 border-t border-border pt-5">
-            <p className="mb-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-              Akun demo (password: Password123)
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {DEMO.map((d) => (
-                <button
-                  key={d.email}
-                  type="button"
-                  onClick={() => {
-                    setEmail(d.email);
-                    setPassword("Password123");
-                  }}
-                  data-testid={`btn-demo-${d.email.split("@")[0]}`}
-                  className="rounded-md border border-border px-2.5 py-1 text-xs transition-colors duration-150 hover:border-ring hover:bg-accent"
-                >
-                  {d.label}
-                </button>
-              ))}
-            </div>
-          </div>
         </Card>
       </div>
     </div>
