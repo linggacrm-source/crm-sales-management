@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Printer, ShoppingBag } from "lucide-react";
-import QRCode from "qrcode";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -25,7 +24,6 @@ export default function QuotationView() {
   const [emailOpen, setEmailOpen] = useState(false);
   const [poNumber, setPoNumber] = useState("");
   const [poDate, setPoDate] = useState(new Date().toISOString().slice(0, 10));
-  const [qrCode, setQrCode] = useState<string>("");
 
   const { data, isLoading, isError } = useQuery<QuotationDetail>({
     queryKey: ["quotation", quotationId],
@@ -84,12 +82,7 @@ export default function QuotationView() {
       : []),
   ];
 
-  useEffect(() => {
-    if (!data) return;
-    const verificationUrl = `${window.location.origin}/quotations/${encodeURIComponent(data.quotation_id)}`;
-    const verificationData = [`DIGITAL QUOTATION`, `Quotation No: ${data.quotation_number}`, `Date: ${data.quotation_date ?? "-"}`, `Customer: ${data.customer_company || data.customer_name || "-"}`, `Total: ${data.grand_total}`, `Issued by: ${COMPANY.name}`, `Verify: ${verificationUrl}`].join("\n");
-    QRCode.toDataURL(verificationData, { width: 180, margin: 1, errorCorrectionLevel: "M" }).then(setQrCode).catch(() => setQrCode(""));
-  }, [data]);
+
 
   return (
     <div className="mx-auto max-w-4xl">
