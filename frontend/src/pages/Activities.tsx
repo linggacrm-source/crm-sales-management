@@ -17,6 +17,7 @@ import {
   PageHeader,
   Pagination,
   SearchBox,
+  SearchableCustomerSelect,
   StatusBadge,
   TableSkeleton,
 } from "@/components/Shared";
@@ -373,20 +374,12 @@ export default function Activities() {
             </div>
             <div>
               <Label htmlFor="act-cust">Customer</Label>
-              <select
-                id="act-cust"
+              <SearchableCustomerSelect
                 value={form.customer_id}
-                onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
-                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                data-testid="input-activity-customer"
-              >
-                <option value="">— Pilih customer —</option>
-                {(customerOptions ?? []).map((c) => (
-                  <option key={c.customer_id} value={c.customer_id}>
-                    {c.customer_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(customer_id) => setForm({ ...form, customer_id })}
+                options={customerOptions ?? []}
+                testId="input-activity-customer"
+              />
             </div>
             <div>
               <Label htmlFor="act-follow">Next Follow-up</Label>
