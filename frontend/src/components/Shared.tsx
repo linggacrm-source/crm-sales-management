@@ -1,4 +1,5 @@
 import { AlertCircle, ChevronLeft, ChevronRight, Inbox, Search, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { badgeClass, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { apiGet } from "@/lib/api";
 import type { CustomerOption } from "@/lib/types";
 
 export function PageHeader({
@@ -63,11 +65,14 @@ export function SearchableCustomerSelect({
   const [search, setSearch] = useState("");
 
   const selected = options.find((c) => c.customer_id === value);
-  const q = search.trim().toLowerCase();
-  const filtered = (q
-    ? options.filter((c) => `${c.customer_name} ${c.company ?? ""}`.toLowerCase().includes(q))
-    : options
-  ).slice(0, 100);
+  const q = search.trim();
+  const { data: remoteOptions, isFetching: isSearching } = useQuery<CustomerOption[]>({
+    queryKey: ["customer-options-search", q],
+    queryFn: () => apiGet<CustomerOption[]>(`/customers/options?search=${encodeURIComponent(q)}`),
+    enabled: open && q.length > 0,
+    staleTime: 30_000,
+  });
+  const filtered = (q ? (remoteOptions ?? []) : options).slice(0, 100);
 
   return (
     <div className="relative mt-1.5">
@@ -122,7 +127,10 @@ export function SearchableCustomerSelect({
             >
               {placeholder}
             </button>
-            {filtered.map((c) => (
+            {isSearching && q && (
+              <p className="px-3 py-3 text-center text-sm text-muted-foreground">Mencari customer...</p>
+            )}
+            {!isSearching && filtered.map((c) => (
               <button
                 type="button"
                 key={c.customer_id}
@@ -142,12 +150,12 @@ export function SearchableCustomerSelect({
                 )}
               </button>
             ))}
-            {filtered.length === 0 && (
+            {!isSearching && filtered.length === 0 && (
               <p className="px-3 py-5 text-center text-sm text-muted-foreground">
                 Customer tidak ditemukan.
               </p>
             )}
-            {q && filtered.length === 100 && (
+            {!isSearching && q && filtered.length === 100 && (
               <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">
                 Tampilkan 100 hasil pertama. Persempit pencarian untuk hasil lainnya.
               </p>
