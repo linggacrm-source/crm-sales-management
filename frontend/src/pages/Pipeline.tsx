@@ -277,13 +277,13 @@ export default function Pipeline() {
               testId="filter-pipeline-sales"
             />
           )}
-          <FilterSelect
+          <SearchableCustomerSelect
             value={customerId}
             onChange={(v) => {
               setCustomerId(v);
               setPage(1);
             }}
-            options={(customerOptions ?? []).map((c) => ({ value: c.customer_id, label: c.customer_name }))}
+            options={customerOptions ?? []}
             placeholder="Semua customer"
             testId="filter-pipeline-customer"
           />
@@ -458,20 +458,12 @@ export default function Pipeline() {
             </div>
             <div className="sm:col-span-2">
               <Label htmlFor="opp-cust">Customer</Label>
-              <select
-                id="opp-cust"
+              <SearchableCustomerSelect
                 value={form.customer_id}
-                onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
-                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                data-testid="input-opportunity-customer"
-              >
-                <option value="">— Pilih customer —</option>
-                {(customerOptions ?? []).map((c) => (
-                  <option key={c.customer_id} value={c.customer_id}>
-                    {c.customer_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(customer_id) => setForm({ ...form, customer_id })}
+                options={customerOptions ?? []}
+                testId="input-opportunity-customer"
+              />
             </div>
             <div>
               <Label htmlFor="opp-value">Value (Rp)</Label>
