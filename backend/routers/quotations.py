@@ -238,11 +238,24 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
     payment_term = doc.get("payment_term") or "-"
     delivery_term = doc.get("delivery_term") or "-"
     validity_date = doc.get("validity_date") or "-"
-    terms = [Paragraph("<b>TERMS &amp; CONDITIONS</b>", section), Paragraph(f"• Payment: {payment_term}", small), Paragraph(f"• Pengiriman: {delivery_term}", small), Paragraph(f"• Validitas: s/d {validity_date}", small)]
+    terms = [
+        Paragraph("<b>TERMS &amp; CONDITIONS</b>", section),
+        Paragraph(f"• Payment: {payment_term}", small),
+        Paragraph(f"• Pengiriman: {delivery_term}", small),
+        Paragraph(f"• Validitas: s/d {validity_date}", small),
+    ]
     notes_text = str(doc.get("notes") or "").strip()
     if notes_text:
-        notes_html = notes_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
-        terms.append(Paragraph(f"• Catatan: {notes_html}", small))
+        note_lines = notes_text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        for note_line in note_lines:
+            note_line = note_line.strip()
+            if not note_line:
+                continue
+            note_line = re.sub(r"^catatan\s*:\s*", "", note_line, flags=re.IGNORECASE)
+            note_line = re.sub(r"^[•\-]\s*", "", note_line).strip()
+            if note_line:
+                note_html = note_line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                terms.append(Paragraph(f"• {note_html}", small))
 
     signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"
     signature_title = doc.get("signature_title") or "Sales"
@@ -258,13 +271,18 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
 
     signature_flow = [
         Paragraph("<b>Hormat Kami,</b>", section),
+        Spacer(1, 4 * mm),
         signature_image if signature_image is not None else Spacer(1, 18 * mm),
         Paragraph(f"<b>{signature_name}</b>", normal),
         Paragraph(signature_title, small),
     ]
-    signature_table = Table([[terms], [signature_flow]], colWidths=[100 * mm])
+    signature_table = Table([[terms]], colWidths=[180 * mm])
     signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
+    signature_content = Table([[signature_flow]], colWidths=[180 * mm])
+    signature_content.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
     story.append(signature_table)
+    story.append(Spacer(1, 3 * mm))
+    story.append(signature_content)
     story.append(Spacer(1, 4 * mm))
 
     footer = Table([[Paragraph(f"Quotation {doc.get('quotation_number') or '-'}", small), Paragraph("This document is digitally generated.", ParagraphStyle("FooterRight", parent=small, alignment=TA_RIGHT))]], colWidths=[90 * mm, 90 * mm]); footer.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 0.5, colors.HexColor("#9CA3AF")), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)])); story.append(footer)
