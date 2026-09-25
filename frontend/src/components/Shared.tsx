@@ -64,14 +64,7 @@ export function SearchableCustomerSelect({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const selectedFromOptions = options.find((c) => c.customer_id === value);
-  const { data: selectedCustomer } = useQuery<CustomerOption | null>({
-    queryKey: ["customer-option-selected", value],
-    queryFn: () => apiGet<CustomerOption>(`/customers/${encodeURIComponent(value)}`),
-    enabled: open && Boolean(value) && !selectedFromOptions,
-    staleTime: 60_000,
-  });
-  const selected = selectedFromOptions ?? selectedCustomer ?? undefined;
+  const selected = options.find((c) => c.customer_id === value);
   const q = search.trim();
   const { data: remoteOptions, isFetching: isSearching } = useQuery<CustomerOption[]>({
     queryKey: ["customer-options-search", q],
