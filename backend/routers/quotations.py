@@ -73,6 +73,7 @@ class QuotationIn(BaseModel):
     delivery_term: Optional[str] = None
     notes: Optional[str] = None
     discount: float = 0
+    discount_type: str = "amount"
     tax_percent: float = 11
     status: str = "Draft"
     items: list[QuotationItemIn] = []
@@ -131,16 +132,17 @@ class ConvertRequest(BaseModel):
     po_date: Optional[str] = None
 
 
-def _compute(items: list[QuotationItemIn], discount: float, tax_percent: float) -> dict:
+def _compute(items: list[QuotationItemIn], discount: float, discount_type: str, tax_percent: float) -> dict:
     built: list[dict] = []
     subtotal = 0.0
     for idx, it in enumerate(items, start=1):
         line = round(it.qty * it.unit_price - it.discount, 2)
         subtotal += line
         built.append({**it.model_dump(), "quotation_item_id": f"QTI-{idx:03d}", "subtotal": line})
-    after_disc = subtotal - discount
+    discount_amount = round(subtotal * discount / 100, 2) if discount_type == "percent" else round(discount, 2)
+    after_disc = max(0.0, subtotal - discount_amount)
     tax = round(after_disc * tax_percent / 100, 2)
-    return {"items": built, "subtotal": round(subtotal, 2), "tax": tax, "grand_total": round(after_disc + tax, 2)}
+    return {"items": built, "subtotal": round(subtotal, 2), "discount": discount_amount, "tax": tax, "grand_total": round(after_disc + tax, 2)}
 
 
 @router.get("", response_model=QuotationListResponse)
@@ -231,7 +233,11 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
     story.append(item_table); story.append(Spacer(1, 4 * mm))
     subtotal_value = float(doc.get("subtotal") or 0); discount_value = float(doc.get("discount") or 0); tax_value = float(doc.get("tax") or 0); grand_total = float(doc.get("grand_total") or 0)
     totals_rows = [[Paragraph("SUBTOTAL", right), Paragraph(money(subtotal_value), right)]]
-    if discount_value > 0: totals_rows.append([Paragraph("DISCOUNT", right), Paragraph(money(discount_value), right)])
+    if discount_value > 0:
+        discount_type = str(doc.get("discount_type") or "amount")
+        discount_input = float(doc.get("discount_input") or discount_value)
+        discount_label = f"DISCOUNT {discount_input:g}%" if discount_type == "percent" else "DISCOUNT"
+        totals_rows.append([Paragraph(discount_label, right), Paragraph(money(discount_value), right)])
     totals_rows.extend([[Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right), Paragraph(money(tax_value), right)], [Paragraph("<b>GRAND TOTAL</b>", right), Paragraph(f"<b>{money(grand_total)}</b>", right)]])
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm]); totals_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")), ("TEXTCOLOR", (0, -1), (-1, -1), colors.white)]))
     totals_wrapper = Table([["", totals_table]], colWidths=[110 * mm, 70 * mm]); totals_wrapper.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)])); story.append(totals_wrapper); story.append(Spacer(1, 4 * mm))
@@ -312,7 +318,7 @@ async def create_quotation(payload: QuotationIn, user: dict = Depends(current_us
     if not cust: raise HTTPException(status_code=400, detail="Customer tidak ditemukan")
     sales_id = user["user_id"] if user["role"] == SALES else (payload.sales_id or user["user_id"])
     sales = await db.users.find_one({"user_id": sales_id}, {"_id": 0, "name": 1})
-    totals = _compute(payload.items, payload.discount, payload.tax_percent); now = datetime.now(timezone.utc); doc = payload.model_dump(); doc.update(totals); doc.update({"quotation_id": await next_code("QTN"), "quotation_number": await next_quotation_number(sales["name"] if sales else None), "quotation_date": payload.quotation_date or today_iso(), "sales_id": sales_id, "sales_name": sales["name"] if sales else None, "customer_name": cust["customer_name"], "created_date": now, "updated_date": now})
+    totals = _compute(payload.items, payload.discount, payload.discount_type, payload.tax_percent); now = datetime.now(timezone.utc); doc = payload.model_dump(); doc["discount_input"] = payload.discount; doc.update(totals); doc.update({"quotation_id": await next_code("QTN"), "quotation_number": await next_quotation_number(sales["name"] if sales else None), "quotation_date": payload.quotation_date or today_iso(), "sales_id": sales_id, "sales_name": sales["name"] if sales else None, "customer_name": cust["customer_name"], "created_date": now, "updated_date": now})
     await db.quotations.insert_one(dict(doc)); await write_audit(user, "CREATE", "Quotation", doc["quotation_number"], None, doc["grand_total"])
     return QuotationDetail(**await _decorate(doc))
 
