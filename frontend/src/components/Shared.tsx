@@ -1,4 +1,5 @@
-import { AlertCircle, ChevronLeft, ChevronRight, Inbox, Search } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Inbox, Search, X } from "lucide-react";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { badgeClass, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import type { CustomerOption } from "@/lib/types";
 
 export function PageHeader({
   title,
@@ -41,6 +43,119 @@ export function StatusBadge({ value, label, testId }: { value?: string | null; l
     >
       {label ?? value ?? "-"}
     </span>
+  );
+}
+
+export function SearchableCustomerSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "— Pilih customer —",
+  testId,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: CustomerOption[];
+  placeholder?: string;
+  testId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selected = options.find((c) => c.customer_id === value);
+  const q = search.trim().toLowerCase();
+  const filtered = (q
+    ? options.filter((c) => `${c.customer_name} ${c.company ?? ""}`.toLowerCase().includes(q))
+    : options
+  ).slice(0, 100);
+
+  return (
+    <div className="relative mt-1.5">
+      <button
+        type="button"
+        data-testid={testId}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-left text-sm transition-colors hover:border-ring focus:outline-none focus:ring-2 focus:ring-ring/40"
+      >
+        <span className={cn("truncate", !selected && "text-muted-foreground")}>
+          {selected?.customer_name ?? placeholder}
+        </span>
+        <Search className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 z-[80] mt-1 overflow-hidden rounded-md border border-border bg-popover shadow-lg">
+          <div className="border-b border-border p-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Ketik nama customer / perusahaan..."
+                className="h-9 pl-8 pr-8"
+                data-testid={`${testId}-search`}
+              />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="max-h-64 overflow-y-auto p-1">
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setSearch("");
+                setOpen(false);
+              }}
+              className={cn(
+                "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                !value && "bg-accent",
+              )}
+            >
+              {placeholder}
+            </button>
+            {filtered.map((c) => (
+              <button
+                type="button"
+                key={c.customer_id}
+                onClick={() => {
+                  onChange(c.customer_id);
+                  setSearch("");
+                  setOpen(false);
+                }}
+                className={cn(
+                  "w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent",
+                  c.customer_id === value && "bg-accent",
+                )}
+              >
+                <span className="block truncate font-medium">{c.customer_name}</span>
+                {c.company && c.company !== c.customer_name && (
+                  <span className="block truncate text-xs text-muted-foreground">{c.company}</span>
+                )}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="px-3 py-5 text-center text-sm text-muted-foreground">
+                Customer tidak ditemukan.
+              </p>
+            )}
+            {q && filtered.length === 100 && (
+              <p className="px-3 py-2 text-center text-[11px] text-muted-foreground">
+                Tampilkan 100 hasil pertama. Persempit pencarian untuk hasil lainnya.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
