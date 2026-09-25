@@ -135,7 +135,7 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
         try:
             match = re.match(r"^data:image/(png|jpeg|jpg);base64,(.+)$", signature_data, re.IGNORECASE | re.DOTALL)
             if match:
-                signature_image = Image(BytesIO(base64.b64decode(match.group(2))), width=45 * mm, height=23 * mm, kind="proportional")
+                signature_image = Image(BytesIO(base64.b64decode(match.group(2))), width=55 * mm, height=28 * mm, kind="proportional")
         except Exception:
             signature_image = None
 
@@ -168,8 +168,8 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
             if match:
                 signature_image = Image(
                     BytesIO(base64.b64decode(match.group(2))),
-                    width=45 * mm,
-                    height=23 * mm,
+                    width=55 * mm,
+                    height=28 * mm,
                     kind="proportional",
                 )
         except Exception:
