@@ -17,6 +17,7 @@ import {
   PageHeader,
   Pagination,
   SearchBox,
+  SearchableCustomerSelect,
   TableSkeleton,
 } from "@/components/Shared";
 import { useAuth } from "@/hooks/useAuth";
@@ -427,20 +428,12 @@ export default function Quotations() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="qt-cust">Customer</Label>
-              <select
-                id="qt-cust"
+              <SearchableCustomerSelect
                 value={form.customer_id}
-                onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
-                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                data-testid="input-quotation-customer"
-              >
-                <option value="">— Pilih customer —</option>
-                {(customerOptions ?? []).map((c) => (
-                  <option key={c.customer_id} value={c.customer_id}>
-                    {c.customer_name}
-                  </option>
-                ))}
-              </select>
+                onChange={(customer_id) => setForm({ ...form, customer_id })}
+                options={customerOptions ?? []}
+                testId="input-quotation-customer"
+              />
             </div>
             {!isSales && (
               <div>
