@@ -613,6 +613,7 @@ export default function Quotations() {
             <div className="space-y-3">
               <div>
                 <Label htmlFor="qt-disc">Diskon</Label>
+                <p className="mt-1 text-xs text-muted-foreground">Pilih jenis diskon: nominal atau persentase.</p>
                 <div className="mt-1.5 flex gap-2">
                   <select
                     value={form.discount_type}
