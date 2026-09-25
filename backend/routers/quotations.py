@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 from io import BytesIO
+import base64
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -233,18 +235,38 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
     totals_rows.extend([[Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right), Paragraph(money(tax_value), right)], [Paragraph("<b>GRAND TOTAL</b>", right), Paragraph(f"<b>{money(grand_total)}</b>", right)]])
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm]); totals_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")), ("TEXTCOLOR", (0, -1), (-1, -1), colors.white)]))
     totals_wrapper = Table([["", totals_table]], colWidths=[110 * mm, 70 * mm]); totals_wrapper.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)])); story.append(totals_wrapper); story.append(Spacer(1, 4 * mm))
-    terms = [Paragraph("<b>TERMS &amp; CONDITIONS</b>", section)]; payment_term = doc.get("payment_term") or "-"; delivery_term = doc.get("delivery_term") or "-"; validity_date = doc.get("validity_date") or "-"; terms.extend([Paragraph(f"• Payment: {payment_term}", small), Paragraph(f"• Pengiriman: {delivery_term}", small), Paragraph(f"• Validitas: s/d {validity_date}", small)])
+    payment_term = doc.get("payment_term") or "-"
+    delivery_term = doc.get("delivery_term") or "-"
+    validity_date = doc.get("validity_date") or "-"
+    terms = [Paragraph("<b>TERMS &amp; CONDITIONS</b>", section), Paragraph(f"• Payment: {payment_term}", small), Paragraph(f"• Pengiriman: {delivery_term}", small), Paragraph(f"• Validitas: s/d {validity_date}", small)]
     notes_text = str(doc.get("notes") or "").strip()
     if notes_text:
         notes_html = notes_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
         terms.append(Paragraph(f"• Catatan: {notes_html}", small))
-    signature_flow = [Paragraph("<b>DIGITALLY APPROVED</b>", section)]; signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"; signature_title = doc.get("signature_title") or "Sales"; signature_image_path = doc.get("signature_image")
-    if signature_image_path:
-        try: signature_flow.append(Image(signature_image_path, width=35 * mm, height=18 * mm, kind="proportional"))
-        except Exception: signature_flow.append(Spacer(1, 18 * mm))
-    else: signature_flow.append(Spacer(1, 18 * mm))
-    signature_flow.extend([Paragraph(f"<b>{signature_name}</b>", normal), Paragraph(signature_title, small)])
-    signature_table = Table([[terms, signature_flow]], colWidths=[100 * mm, 80 * mm]); signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)])); story.append(signature_table); story.append(Spacer(1, 4 * mm))
+
+    signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"
+    signature_title = doc.get("signature_title") or "Sales"
+    signature_data = str(doc.get("signature_image") or "").strip()
+    signature_image = None
+    if signature_data.startswith("data:image/"):
+        try:
+            match = re.match(r"^data:image/(png|jpeg|jpg);base64,(.+)$", signature_data, re.IGNORECASE | re.DOTALL)
+            if match:
+                signature_image = Image(BytesIO(base64.b64decode(match.group(2))), width=35 * mm, height=18 * mm, kind="proportional")
+        except Exception:
+            signature_image = None
+
+    signature_flow = [
+        Paragraph("<b>Hormat Kami,</b>", section),
+        signature_image if signature_image is not None else Spacer(1, 18 * mm),
+        Paragraph(f"<b>{signature_name}</b>", normal),
+        Paragraph(signature_title, small),
+    ]
+    signature_table = Table([[terms], [signature_flow]], colWidths=[100 * mm])
+    signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
+    story.append(signature_table)
+    story.append(Spacer(1, 4 * mm))
+
     footer = Table([[Paragraph(f"Quotation {doc.get('quotation_number') or '-'}", small), Paragraph("This document is digitally generated.", ParagraphStyle("FooterRight", parent=small, alignment=TA_RIGHT))]], colWidths=[90 * mm, 90 * mm]); footer.setStyle(TableStyle([("LINEABOVE", (0, 0), (-1, 0), 0.5, colors.HexColor("#9CA3AF")), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 2), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)])); story.append(footer)
     def draw_page_number(canvas, doc_obj):
         canvas.saveState(); canvas.setFont("Helvetica", 7); canvas.setFillColor(colors.HexColor("#6B7280")); canvas.drawRightString(A4[0] - 15 * mm, 8 * mm, f"Page {doc_obj.page}"); canvas.restoreState()
