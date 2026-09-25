@@ -145,6 +145,7 @@ export default function Quotations() {
         delivery_term: f.delivery_term,
         notes: f.notes,
         discount: Number(f.discount) || 0,
+        discount_type: f.discount_type,
         tax_percent: Number(f.tax_percent) || 0,
         status: f.status,
         items: f.items
