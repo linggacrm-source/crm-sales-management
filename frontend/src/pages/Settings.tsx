@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, KeyRound, PenLine, Upload, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -101,9 +101,9 @@ export default function Settings() {
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     void loadSignature();
-  });
+  }, []);
 
   const changePassword = useMutation({
     mutationFn: () =>
