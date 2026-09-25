@@ -72,11 +72,16 @@ export default function QuotationView() {
     }
   };
 
-  const terms = data?.notes ? data.notes.split("\n").filter(Boolean) : [
+  const terms = [
     `Payment: ${data?.payment_term ?? DEFAULT_TERMS[0]}`,
     `Pengiriman: ${data?.delivery_term ?? DEFAULT_TERMS[2]}`,
-    ...DEFAULT_TERMS.slice(1, 2),
     `Validitas: s/d ${formatDate(data?.validity_date)}`,
+    ...(data?.notes
+      ? data.notes
+          .split("\n")
+          .map((line) => line.replace(/^\\s*(?:catatan\\s*:\\s*|[•-]\\s*)/i, "").trim())
+          .filter(Boolean)
+      : []),
   ];
 
   useEffect(() => {
@@ -110,7 +115,24 @@ export default function QuotationView() {
           <div className="px-8 pb-5"><p className="mb-1 text-[11px] font-bold tracking-widest text-neutral-500">TO:</p><p className="font-bold" data-testid="quotation-customer-name">{data.customer_company || data.customer_name}</p><div className="mt-1 space-y-0.5 text-xs text-neutral-700">{data.customer_pic_name && <p>ATTN: {data.customer_pic_name}</p>}{data.customer_email && <p>EMAIL: {data.customer_email}</p>}{data.customer_phone && <p>PHONE: {data.customer_phone}</p>}</div></div>
           <div className="px-8"><table className="w-full border border-neutral-400 text-xs"><thead><tr className="border-b border-neutral-400 bg-neutral-900 text-[10px] tracking-widest text-white"><th className="w-10 border-r border-neutral-500 px-2 py-2 text-center font-bold">NO</th><th className="border-r border-neutral-500 px-2 py-2 text-left font-bold">ITEMS / SPECIFICATION</th><th className="w-32 border-r border-neutral-500 px-2 py-2 text-right font-bold">UNIT PRICE</th><th className="w-20 border-r border-neutral-500 px-2 py-2 text-center font-bold">QTY</th>{data.items.some((it) => Number(it.discount ?? 0) > 0) && <th className="w-28 border-r border-neutral-500 px-2 py-2 text-right font-bold">DISCOUNT</th>}<th className="w-36 px-2 py-2 text-right font-bold">AMOUNT</th></tr></thead><tbody>{data.items.map((it, i) => { const hasDiscount = data.items.some((item) => Number(item.discount ?? 0) > 0); return <tr key={it.quotation_item_id} className="border-b border-neutral-300 align-top" data-testid={`quotation-item-${i}`}><td className="border-r border-neutral-200 px-2 py-2 text-center font-mono">{i + 1}</td><td className="border-r border-neutral-200 px-2 py-2"><span className="whitespace-pre-line" data-testid={`quotation-item-spec-${i}`}>{it.description}</span></td><td className="border-r border-neutral-200 px-2 py-2 text-right font-mono">{formatIDR(it.unit_price)}</td><td className="border-r border-neutral-200 px-2 py-2 text-center font-mono">{it.qty} {it.unit}</td>{hasDiscount && <td className="border-r border-neutral-200 px-2 py-2 text-right font-mono">{Number(it.discount ?? 0) > 0 ? formatIDR(it.discount) : "-"}</td>}<td className="px-2 py-2 text-right font-mono font-semibold">{formatIDR(it.subtotal)}</td></tr>})}</tbody></table></div>
           <div className="quotation-totals flex justify-end px-8 pt-4"><table className="w-[85mm] text-xs"><tbody><tr><th className="px-1 py-1 text-left font-normal">SUBTOTAL</th><td className="px-1 py-1 text-right font-mono">{formatIDR(data.subtotal)}</td></tr>{data.discount > 0 && <tr><th className="px-1 py-1 text-left font-normal">DISCOUNT</th><td className="px-1 py-1 text-right font-mono">-{formatIDR(data.discount)}</td></tr>}<tr><th className="px-1 py-1 text-left font-normal">PPN {data.tax_percent}%</th><td className="px-1 py-1 text-right font-mono">{formatIDR(data.tax)}</td></tr><tr className="bg-neutral-900 text-white"><th className="px-2 py-2 text-left font-bold tracking-wider">GRAND TOTAL</th><td className="px-2 py-2 text-right font-mono font-bold" data-testid="quotation-grand-total-view">{formatIDR(data.grand_total)}</td></tr></tbody></table></div>
-          <div className="quotation-signature grid gap-8 px-8 py-6 sm:grid-cols-2"><div><p className="mb-2 text-[11px] font-bold tracking-widest">TERMS AND CONDITIONS:</p><ol className="list-inside list-decimal space-y-1 text-xs text-neutral-700">{terms.map((t, i) => <li key={i}>{t}</li>)}</ol></div><div className="sm:text-right"><p className="mb-1 text-[11px] text-neutral-600">Hormat kami, {COMPANY.name.replace("PT ", "PT ")}</p>{data.signature_image ? <div data-testid="quotation-signature-block"><img src={data.signature_image} alt="Tanda tangan digital" className="mb-1 h-20 object-contain sm:ml-auto" data-testid="quotation-signature-image"/><p className="inline-block border-t border-neutral-900 pt-1 text-xs font-bold">{data.signature_name ?? data.sales_name}</p><p className="text-[11px] text-neutral-600">{data.signature_title ?? "Sales"}</p><p className="mt-1 text-[10px] font-semibold tracking-widest text-emerald-700">DIGITALLY SIGNED — tidak memerlukan tanda tangan basah</p></div> : <div data-testid="quotation-signature-block"><div className="mb-1 h-20"/><p className="inline-block border-t border-neutral-900 pt-1 text-xs font-bold">{data.sales_name ?? "Sales Executive"}</p><p className="text-[11px] text-neutral-600">Belum ada tanda tangan digital — unggah di menu Settings</p></div>}{qrCode && <div className="quotation-qr mt-4 flex items-center justify-end gap-3" data-testid="quotation-qr-block"><div className="text-right"><p className="text-[10px] font-bold tracking-widest text-neutral-800">DIGITAL DOCUMENT</p><p className="text-[9px] text-neutral-500">Scan untuk informasi dokumen</p><p className="mt-1 text-[9px] font-mono text-neutral-600">{data.quotation_number}</p></div><img src={qrCode} alt="QR Code verifikasi quotation" className="h-20 w-20" data-testid="quotation-qr-code"/></div>}</div></div>
+          <div className="quotation-signature px-8 py-6">
+            <div className="quotation-terms-block">
+              <p className="mb-2 text-[11px] font-bold tracking-widest">TERMS &amp; CONDITIONS</p>
+              <ul className="quotation-terms-list space-y-1 text-xs text-neutral-700">
+                {terms.map((t, i) => <li key={i}>{t}</li>)}
+              </ul>
+            </div>
+            <div className="quotation-signature-block mt-4" data-testid="quotation-signature-block">
+              <p className="quotation-hormat text-[11px] font-bold">Hormat Kami,</p>
+              {data.signature_image ? (
+                <img src={data.signature_image} alt="Tanda tangan digital" className="quotation-signature-image mt-1 h-20 object-contain object-left" data-testid="quotation-signature-image" />
+              ) : (
+                <div className="quotation-signature-placeholder h-20" />
+              )}
+              <p className="quotation-signature-name text-xs font-bold">{data.signature_name ?? data.sales_name ?? "Sales"}</p>
+              <p className="quotation-signature-title text-[11px] text-neutral-600">{data.signature_title ?? "Sales"}</p>
+            </div>
+          </div>
           <div className="quotation-footer grid gap-4 border-t border-neutral-900 bg-neutral-50 px-8 py-4 text-[10px] text-neutral-600 sm:grid-cols-2">{COMPANY.offices.map((o) => <div key={o.city}><p className="font-bold tracking-widest text-neutral-800">{o.city.toUpperCase()} OFFICE</p><p>{o.address}</p><p>T. {o.phone}</p></div>)}</div>
         </Card>
       ) : null}
