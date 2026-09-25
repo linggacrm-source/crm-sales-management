@@ -80,7 +80,7 @@
   display:block!important;
   width:55mm!important;
   height:28mm!important;
-  margin:0!important;
+  margin:0 0 0 -5mm!important;
   object-fit:contain!important;
   object-position:left center!important;
 }
