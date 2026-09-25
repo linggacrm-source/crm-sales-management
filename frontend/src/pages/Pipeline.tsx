@@ -17,6 +17,7 @@ import {
   PageHeader,
   Pagination,
   SearchBox,
+  SearchableCustomerSelect,
   TableSkeleton,
 } from "@/components/Shared";
 import { useAuth } from "@/hooks/useAuth";
