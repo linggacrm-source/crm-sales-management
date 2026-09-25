@@ -54,6 +54,7 @@ type FormState = {
   delivery_term: string;
   notes: string;
   discount: string;
+  discount_type: "amount" | "percent";
   tax_percent: string;
   status: string;
   items: ItemForm[];
@@ -77,6 +78,7 @@ const EMPTY: FormState = {
   delivery_term: "4-6 minggu setelah PO",
   notes: "",
   discount: "0",
+  discount_type: "amount",
   tax_percent: "11",
   status: "Draft",
   items: [{ ...EMPTY_ITEM }],
@@ -247,7 +249,8 @@ export default function Quotations() {
     (a, i) => a + (Number(i.qty) || 0) * (Number(i.unit_price) || 0) - (Number(i.discount) || 0),
     0,
   );
-  const afterDisc = subtotal - (Number(form.discount) || 0);
+  const discountAmount = form.discount_type === "percent" ? (subtotal * (Number(form.discount) || 0)) / 100 : (Number(form.discount) || 0);
+  const afterDisc = Math.max(0, subtotal - discountAmount);
   const tax = (afterDisc * (Number(form.tax_percent) || 0)) / 100;
 
   return (
@@ -609,15 +612,28 @@ export default function Quotations() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-3">
               <div>
-                <Label htmlFor="qt-disc">Diskon Total (Rp)</Label>
-                <Input
-                  id="qt-disc"
-                  type="number"
-                  value={form.discount}
-                  onChange={(e) => setForm({ ...form, discount: e.target.value })}
-                  className="mt-1.5"
-                  data-testid="input-quotation-discount"
-                />
+                <Label htmlFor="qt-disc">Diskon</Label>
+                <div className="mt-1.5 flex gap-2">
+                  <select
+                    value={form.discount_type}
+                    onChange={(e) => setForm({ ...form, discount_type: e.target.value as "amount" | "percent" })}
+                    className="h-9 w-36 rounded-md border border-input bg-background px-3 text-sm"
+                    data-testid="select-quotation-discount-type"
+                  >
+                    <option value="amount">Nominal (Rp)</option>
+                    <option value="percent">Persentase (%)</option>
+                  </select>
+                  <Input
+                    id="qt-disc"
+                    type="number"
+                    min="0"
+                    max={form.discount_type === "percent" ? 100 : undefined}
+                    value={form.discount}
+                    onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                    placeholder={form.discount_type === "percent" ? "25" : "0"}
+                    data-testid="input-quotation-discount"
+                  />
+                </div>
               </div>
               <div>
                 <Label htmlFor="qt-tax">Pajak (%)</Label>
@@ -649,7 +665,7 @@ export default function Quotations() {
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Diskon</dt>
-                  <dd className="font-mono">-{formatIDR(Number(form.discount) || 0)}</dd>
+                  <dd className="font-mono">-{formatIDR(discountAmount)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Pajak</dt>
