@@ -84,6 +84,7 @@ const EMPTY: FormState = {
   items: [{ ...EMPTY_ITEM }],
 };
 
+// Discount mode: amount or percent; persisted for quotation create/edit flows.
 export default function Quotations() {
   const qc = useQueryClient();
   const navigate = useNavigate();
