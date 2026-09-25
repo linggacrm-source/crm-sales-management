@@ -1,4 +1,6 @@
 from io import BytesIO
+import base64
+import re
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from reportlab.lib import colors
@@ -121,30 +123,33 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     totals_wrapper.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
     story += [totals_wrapper, Spacer(1, 4 * mm)]
 
-    payment_term = doc.get("payment_term") or "-"
-    delivery_term = doc.get("delivery_term") or "-"
-    validity_date = doc.get("validity_date") or "-"
+    signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"
+    signature_title = doc.get("signature_title") or "Sales"
+    signature_data = str(doc.get("signature_image") or "").strip()
+    signature_image = None
+    if signature_data.startswith("data:image/"):
+        try:
+            match = re.match(r"^data:image/(png|jpeg|jpg);base64,(.+)$", signature_data, re.IGNORECASE | re.DOTALL)
+            if match:
+                signature_image = Image(BytesIO(base64.b64decode(match.group(2))), width=35 * mm, height=18 * mm, kind="proportional")
+        except Exception:
+            signature_image = None
+
     terms = [Paragraph("<b>TERMS &amp; CONDITIONS</b>", section), Paragraph(f"• Payment: {payment_term}", small), Paragraph(f"• Pengiriman: {delivery_term}", small), Paragraph(f"• Validitas: s/d {format_date(validity_date)}", small)]
     notes_text = str(doc.get("notes") or "").strip()
     if notes_text:
         notes_html = notes_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br/>")
         terms.append(Paragraph(f"• Catatan: {notes_html}", small))
-    signature_flow = [Paragraph("<b>DIGITALLY APPROVED</b>", section)]
-    signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"
-    signature_title = doc.get("signature_title") or "Sales"
-    signature_image_path = doc.get("signature_image")
-    if signature_image_path:
-        try:
-            signature_flow.append(Image(signature_image_path, width=35 * mm, height=18 * mm, kind="proportional"))
-        except Exception:
-            signature_flow.append(Spacer(1, 18 * mm))
-    else:
-        signature_flow.append(Spacer(1, 18 * mm))
-    signature_flow.extend([Paragraph(f"<b>{signature_name}</b>", normal), Paragraph(signature_title, small)])
-    signature_table = Table([[terms, signature_flow]], colWidths=[100 * mm, 80 * mm])
+
+    signature_flow = [
+        Paragraph("<b>Hormat Kami,</b>", section),
+        signature_image if signature_image is not None else Spacer(1, 18 * mm),
+        Paragraph(f"<b>{signature_name}</b>", normal),
+        Paragraph(signature_title, small),
+    ]
+    signature_table = Table([[terms], [signature_flow]], colWidths=[100 * mm])
     signature_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
     story += [signature_table, Spacer(1, 4 * mm)]
-
     def draw_page_footer(canvas, doc_obj):
         canvas.saveState()
         canvas.setFillColor(colors.white)
