@@ -103,6 +103,8 @@ class QuotationDetail(QuotationRow):
     notes: Optional[str] = None
     subtotal: float = 0
     discount: float = 0
+    discount_type: str = "amount"
+    discount_input: Optional[float] = None
     tax_percent: float = 11
     tax: float = 0
     items: list[QuotationItem] = []
@@ -327,7 +329,7 @@ async def create_quotation(payload: QuotationIn, user: dict = Depends(current_us
 async def update_quotation(quotation_id: str, payload: QuotationIn, user: dict = Depends(current_user)):
     scope = await scope_filter(user); existing = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
     if not existing: raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
-    updates = payload.model_dump(); updates.update(_compute(payload.items, payload.discount, payload.tax_percent))
+    updates = payload.model_dump(); updates["discount_input"] = payload.discount; updates.update(_compute(payload.items, payload.discount, payload.discount_type, payload.tax_percent))
     if user["role"] == SALES: updates.pop("sales_id", None)
     cust = await db.customers.find_one({"customer_id": payload.customer_id}, {"_id": 0, "customer_name": 1}); updates["customer_name"] = cust["customer_name"] if cust else existing.get("customer_name"); updates["updated_date"] = datetime.now(timezone.utc)
     await db.quotations.update_one({"quotation_id": quotation_id}, {"$set": updates}); await write_audit(user, "UPDATE", "Quotation", existing.get("quotation_number", quotation_id), existing.get("grand_total"), updates.get("grand_total"))
