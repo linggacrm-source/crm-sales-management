@@ -123,6 +123,10 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     totals_wrapper.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]))
     story += [totals_wrapper, Spacer(1, 4 * mm)]
 
+    payment_term = doc.get("payment_term") or "-"
+    delivery_term = doc.get("delivery_term") or "-"
+    validity_date = doc.get("validity_date") or "-"
+
     signature_name = doc.get("signature_name") or doc.get("sales_name") or "Sales"
     signature_title = doc.get("signature_title") or "Sales"
     signature_data = str(doc.get("signature_image") or "").strip()
