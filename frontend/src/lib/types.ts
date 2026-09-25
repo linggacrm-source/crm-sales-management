@@ -168,6 +168,8 @@ export interface QuotationDetail extends QuotationRow {
   notes?: string | null;
   subtotal: number;
   discount: number;
+  discount_type?: "amount" | "percent" | string | null;
+  discount_input?: number | null;
   tax_percent: number;
   tax: number;
   items: QuotationItem[];
