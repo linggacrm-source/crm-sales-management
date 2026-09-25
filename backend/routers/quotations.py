@@ -265,7 +265,7 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
         try:
             match = re.match(r"^data:image/(png|jpeg|jpg);base64,(.+)$", signature_data, re.IGNORECASE | re.DOTALL)
             if match:
-                signature_image = Image(BytesIO(base64.b64decode(match.group(2))), width=35 * mm, height=18 * mm, kind="proportional")
+                signature_image = Image(BytesIO(base64.b64decode(match.group(2))), width=45 * mm, height=23 * mm, kind="proportional")
         except Exception:
             signature_image = None
 
