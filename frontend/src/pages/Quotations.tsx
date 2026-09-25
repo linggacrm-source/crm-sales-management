@@ -230,7 +230,8 @@ export default function Quotations() {
       payment_term: d.payment_term ?? "",
       delivery_term: d.delivery_term ?? "",
       notes: d.notes ?? "",
-      discount: String(d.discount ?? 0),
+      discount: String(d.discount_input ?? d.discount ?? 0),
+      discount_type: d.discount_type === "percent" ? "percent" : "amount",
       tax_percent: String(d.tax_percent ?? 11),
       status: d.status,
       items: d.items.map((i) => ({
