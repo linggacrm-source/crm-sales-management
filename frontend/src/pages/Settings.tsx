@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { Eye, EyeOff, KeyRound } from "lucide-react";
+import { Eye, EyeOff, KeyRound, PenLine, Upload, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader, RoleBadge } from "@/components/Shared";
 import { useAuth } from "@/hooks/useAuth";
-import { ApiError, apiPost } from "@/lib/api";
+import { ApiError, apiGet, apiPost, apiPut } from "@/lib/api";
 import { endSession } from "@/lib/session";
 
 const MATRIX: { module: string; admin: string; manager: string; sales: string }[] = [
@@ -87,6 +87,23 @@ export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [signatureImage, setSignatureImage] = useState<string>("");
+  const [signatureTitle, setSignatureTitle] = useState<string>(user?.role ?? "Sales");
+  const [savingSignature, setSavingSignature] = useState(false);
+
+  const loadSignature = async () => {
+    try {
+      const me = await apiGet<{ signature_image?: string; signature_title?: string }>("/auth/me");
+      setSignatureImage(me.signature_image ?? "");
+      setSignatureTitle(me.signature_title ?? (user?.role ?? "Sales"));
+    } catch {
+      // Keep the profile form usable even when the optional signature profile is unavailable.
+    }
+  };
+
+  useState(() => {
+    void loadSignature();
+  });
 
   const changePassword = useMutation({
     mutationFn: () =>
@@ -154,6 +171,135 @@ export default function Settings() {
               <dd className="font-mono">{user?.manager_id ?? "-"}</dd>
             </div>
           </dl>
+        </Card>
+
+        <Card className="p-5" data-testid="card-signature">
+          <div className="mb-4 flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+              <PenLine className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold">Tanda Tangan Digital</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tanda tangan ini akan otomatis digunakan pada PDF quotation yang dibuat atas nama Anda.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="signature-title">Jabatan pada Quotation</Label>
+              <Input
+                id="signature-title"
+                value={signatureTitle}
+                onChange={(e) => setSignatureTitle(e.target.value)}
+                className="mt-1.5"
+                placeholder="Sales"
+                data-testid="input-signature-title"
+              />
+            </div>
+
+            <div>
+              <Label>Gambar Tanda Tangan</Label>
+              <div className="mt-1.5 rounded-lg border border-dashed border-border p-3">
+                {signatureImage ? (
+                  <div className="space-y-3">
+                    <div className="flex min-h-28 items-center justify-center rounded-md bg-muted/30 p-4">
+                      <img
+                        src={signatureImage}
+                        alt="Preview tanda tangan"
+                        className="max-h-24 max-w-full object-contain"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <label className="inline-flex cursor-pointer items-center rounded-md border border-input bg-background px-3 py-2 text-sm hover:bg-accent">
+                        <Upload className="mr-2 h-4 w-4" />
+                        Ganti
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg"
+                          className="hidden"
+                          data-testid="input-signature-file"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 300 * 1024) {
+                              toast.error("Ukuran gambar maksimal 300 KB");
+                              e.currentTarget.value = "";
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => setSignatureImage(String(reader.result ?? ""));
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setSignatureImage("")}
+                        data-testid="btn-remove-signature"
+                      >
+                        <X className="mr-2 h-4 w-4" /> Hapus
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center text-center text-sm text-muted-foreground hover:bg-muted/30">
+                    <Upload className="mb-2 h-5 w-5" />
+                    <span className="font-medium text-foreground">Upload gambar tanda tangan</span>
+                    <span className="mt-1 text-xs">PNG atau JPG, maksimal 300 KB</span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg"
+                      className="hidden"
+                      data-testid="input-signature-file"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 300 * 1024) {
+                          toast.error("Ukuran gambar maksimal 300 KB");
+                          e.currentTarget.value = "";
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => setSignatureImage(String(reader.result ?? ""));
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              className="w-full"
+              disabled={savingSignature}
+              onClick={async () => {
+                if (signatureImage && !signatureImage.startsWith("data:image/")) {
+                  toast.error("Format tanda tangan tidak valid");
+                  return;
+                }
+                setSavingSignature(true);
+                try {
+                  await apiPut("/users/me/signature", {
+                    signature_image: signatureImage || null,
+                    signature_title: signatureTitle || "Sales",
+                  });
+                  toast.success("Tanda tangan berhasil disimpan");
+                } catch (err) {
+                  const detail = err instanceof ApiError ? (err.body as { detail?: string })?.detail : null;
+                  toast.error(detail ?? "Gagal menyimpan tanda tangan");
+                } finally {
+                  setSavingSignature(false);
+                }
+              }}
+              data-testid="btn-save-signature"
+            >
+              {savingSignature ? "Menyimpan..." : "Simpan Tanda Tangan"}
+            </Button>
+          </div>
         </Card>
 
         <Card className="p-5 lg:col-span-2" data-testid="card-change-password">
