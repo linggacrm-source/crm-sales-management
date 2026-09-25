@@ -269,10 +269,21 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
         except Exception:
             signature_image = None
 
+    signature_visual = Table(
+        [[signature_image if signature_image is not None else Spacer(1, 18 * mm)]],
+        colWidths=[55 * mm],
+    )
+    signature_visual.setStyle(TableStyle([
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+    ]))
     signature_flow = [
         Paragraph("<b>Hormat Kami,</b>", section),
         Spacer(1, 4 * mm),
-        signature_image if signature_image is not None else Spacer(1, 18 * mm),
+        signature_visual,
         Paragraph(f"<b>{signature_name}</b>", normal),
         Paragraph(signature_title, small),
     ]
