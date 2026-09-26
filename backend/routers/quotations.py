@@ -247,7 +247,10 @@ async def start_desktop_email(
 @router.get("/desktop-email/{token}")
 async def desktop_email_package(token: str):
     record = await db.quotation_email_tokens.find_one({"token": token}, {"_id": 0})
-    if not record or record.get("expires_at") < datetime.now(timezone.utc):
+    expires_at = record.get("expires_at") if record else None
+    if isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if not record or not expires_at or expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=404, detail="Link email sudah tidak berlaku")
     quotation_id = record["quotation_id"]
     user = await db.users.find_one({"user_id": record["user_id"], "status": "Active"}, {"_id": 0, "password_hash": 0})
@@ -269,7 +272,10 @@ async def desktop_email_package(token: str):
 @router.get("/desktop-email/{token}/pdf")
 async def desktop_email_pdf(token: str, request: Request):
     record = await db.quotation_email_tokens.find_one({"token": token}, {"_id": 0})
-    if not record or record.get("expires_at") < datetime.now(timezone.utc):
+    expires_at = record.get("expires_at") if record else None
+    if isinstance(expires_at, datetime) and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if not record or not expires_at or expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=404, detail="Link email sudah tidak berlaku")
     user = await db.users.find_one({"user_id": record["user_id"], "status": "Active"}, {"_id": 0, "password_hash": 0})
     if not user:
