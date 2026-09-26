@@ -9,6 +9,7 @@ from lib.auth import current_user, scope_filter, write_audit
 from lib.dates import today_iso
 from lib.db import db
 from lib.query import paginate, search_clause, sort_spec
+from routers.purchase_orders import _create_monitoring_for_po
 
 router = APIRouter(prefix="/order-monitoring", tags=["order-monitoring"])
 
@@ -72,6 +73,15 @@ class MonitoringSummary(BaseModel):
     overdue: int
 
 
+async def _ensure_monitoring_for_existing_pos(scope: dict) -> None:
+    existing_po_ids = await db.order_monitoring.distinct("po_id", scope)
+    query = dict(scope)
+    if existing_po_ids:
+        query["po_id"] = {"$nin": [x for x in existing_po_ids if x]}
+    async for po in db.purchase_orders.find(query, {"_id": 0}).limit(5000):
+        await _create_monitoring_for_po(po)
+
+
 def _eta_flag(row: dict, today: str, soon: str) -> str:
     if row.get("status") in ("Completed", "Cancelled"):
         return "COMPLETED"
@@ -129,6 +139,7 @@ async def list_monitoring(
 ):
     """One indexed query straight to the table shape — no client-side joins."""
     query = await scope_filter(user)
+    await _ensure_monitoring_for_existing_pos(query)
     query.update(search_clause(search, ["po_number", "customer_name", "product_name", "monitoring_id"]))
     if status:
         query["status"] = status
@@ -176,13 +187,20 @@ async def update_monitoring(monitoring_id: str, payload: MonitoringUpdate, user:
     if updates.get("status"):
         await write_audit(user, "UPDATE", "Order Monitoring", monitoring_id,
                           f"Status: {existing.get('status')}", f"Status: {updates['status']}")
-        if updates["status"] == "Completed":
-            remaining = await db.order_monitoring.count_documents(
-                {"po_id": existing.get("po_id"), "status": {"$nin": ["Completed", "Cancelled"]}}
-            )
-            if remaining == 0 and existing.get("po_id"):
+        po_id = existing.get("po_id")
+        if po_id:
+            po_status = {
+                "Waiting Order": "Received",
+                "Processing": "Processing",
+                "Indent": "Processing",
+                "Ready Stock": "Processing",
+                "Delivery": "Processing",
+                "Completed": "Completed",
+                "Cancelled": "Cancelled",
+            }.get(updates["status"])
+            if po_status:
                 await db.purchase_orders.update_one(
-                    {"po_id": existing["po_id"]}, {"$set": {"status": "Completed", "updated_date": now}}
+                    {"po_id": po_id}, {"$set": {"status": po_status, "updated_date": now}}
                 )
     merged = {**existing, **updates}
     return MonitoringRow(**{k: v for k, v in merged.items() if k in MonitoringRow.model_fields},
