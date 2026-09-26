@@ -44,6 +44,7 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     left = ParagraphStyle("QuotationLeftClean", parent=normal, alignment=0)
     center = ParagraphStyle("QuotationCenterClean", parent=normal, alignment=TA_CENTER)
     white_right = ParagraphStyle("QuotationWhiteRightClean", parent=right, textColor=colors.white)
+    white_left = ParagraphStyle("QuotationWhiteLeftClean", parent=left, textColor=colors.white)
     item_header = ParagraphStyle("QuotationItemHeaderClean", parent=normal, fontName="Helvetica-Bold", fontSize=7.5, leading=9, alignment=TA_CENTER, textColor=colors.HexColor("#111827"))
     story = []
 
@@ -119,7 +120,7 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
         totals_rows.append([Paragraph(discount_label, left), Paragraph(money(discount_value), right)])
     totals_rows.extend([
         [Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", left), Paragraph(money(tax_value), right)],
-        [Paragraph("<b>GRAND TOTAL</b>", white_right), Paragraph(f"<b>{money(grand_total)}</b>", white_right)],
+        [Paragraph("<b>GRAND TOTAL</b>", white_left), Paragraph(f"<b>{money(grand_total)}</b>", white_right)],
     ])
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm])
     totals_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")), ("TEXTCOLOR", (0, -1), (-1, -1), colors.white)]))
