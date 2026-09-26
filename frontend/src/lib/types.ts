@@ -247,6 +247,7 @@ export interface ActivityRow {
   customer_id?: string | null;
   customer_name?: string | null;
   opportunity_id?: string | null;
+  opportunity_name?: string | null;
   activity_type: string;
   activity_date?: string | null;
   subject: string;
