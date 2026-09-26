@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$BaseUrl = "https://crmsales.up.railway.app"
+$BaseUrl = "https://crmsales.my.id"
 
 try {
   $uri = [System.Uri]$ProtocolUrl
