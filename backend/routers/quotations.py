@@ -306,7 +306,7 @@ async def desktop_email_pdf(token: str, request: Request):
     user = await db.users.find_one({"user_id": record["user_id"], "status": "Active"}, {"_id": 0, "password_hash": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan")
-    return await download_quotation_pdf(record["quotation_id"], request, user)
+    # Keep the Thunderbird/email attachment on the exact same PDF renderer as the\n    # normal Download PDF action. The legacy renderer could produce a dark\n    # GRAND TOTAL bar with black text, making the total unreadable.\n    from routers.quotation_pdf import download_quotation_pdf_clean\n    return await download_quotation_pdf_clean(record["quotation_id"], request, user)
 
 
 @router.get("/{quotation_id}/email-draft", response_model=QuotationEmailDraft)
