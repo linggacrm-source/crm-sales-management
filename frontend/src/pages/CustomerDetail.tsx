@@ -165,7 +165,7 @@ function RelatedTable({ customerId, tab }: { customerId: string; tab: (typeof TA
         )}
       </TableBody>
     </Table>
-
+  );
 }
 
 export default function CustomerDetailPage() {
