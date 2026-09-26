@@ -241,7 +241,7 @@ RELATED = {
     "activities": (
         "activities",
         {"_id": 0, "activity_id": 1, "activity_type": 1, "activity_date": 1, "subject": 1,
-         "status": 1, "next_followup": 1, "sales_name": 1, "opportunity_id": 1, "opportunity_name": 1},
+         "status": 1, "next_followup": 1, "sales_name": 1, "description": 1, "opportunity_id": 1, "opportunity_name": 1},
     ),
     "order-monitoring": (
         "order_monitoring",
