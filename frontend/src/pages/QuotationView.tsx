@@ -15,6 +15,7 @@ import { COMPANY, DEFAULT_TERMS } from "@/lib/company";
 import { formatDate, formatIDR } from "@/lib/format";
 import type { QuotationDetail } from "@/lib/types";
 import "@/quotation-pdf-match.css";
+import "@/quotation-screen.css";
 
 export default function QuotationView() {
   const { quotationId = "" } = useParams();
@@ -86,7 +87,7 @@ export default function QuotationView() {
   const discountLabel = discountType === "percent" ? "DISCOUNT " + discountInput + "%" : "DISCOUNT";
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="quotation-page-shell mx-auto max-w-5xl">
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2">
         <Link to="/quotations" className={buttonVariants({ variant: "ghost", size: "sm" })} data-testid="link-back-quotations"><ArrowLeft className="mr-2 h-4 w-4" /> Kembali</Link>
         <div className="flex flex-wrap gap-2">
@@ -97,7 +98,7 @@ export default function QuotationView() {
       </div>
 
       {isError ? <Card className="p-10 text-center"><p className="text-sm text-muted-foreground" data-testid="quotation-error">Quotation belum dapat dimuat.</p></Card> : isLoading ? <Card className="space-y-3 p-10">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-4 animate-shimmer rounded bg-muted" />)}</Card> : data ? (
-        <Card className="print-area quotation-document bg-white p-0 text-neutral-900" data-testid="quotation-document" data-quotation-number={data.quotation_number}>
+        <Card className="print-area quotation-document quotation-screen-preview bg-white p-0 text-neutral-900" data-testid="quotation-document" data-quotation-number={data.quotation_number}>
           <div className="quotation-header flex items-center gap-4 border-b-2 border-neutral-900 px-8 py-5">
             <img src={COMPANY.logo} alt="Logo Wellracom" className="h-16 w-16 shrink-0 object-contain" data-testid="quotation-logo" />
             <div className="min-w-0"><h2 className="text-lg leading-tight font-extrabold tracking-tight" data-testid="quotation-company-name">{COMPANY.name}</h2><p className="text-xs text-neutral-600">{COMPANY.tagline}</p><p className="mt-0.5 text-[11px] text-neutral-500">{COMPANY.website} · {COMPANY.email}</p></div>
