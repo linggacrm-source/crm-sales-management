@@ -175,7 +175,6 @@ export interface QuotationDetail extends QuotationRow {
   tax_percent: number;
   tax: number;
   items: QuotationItem[];
-  customer_company?: string | null;
   customer_pic_name?: string | null;
   customer_email?: string | null;
   customer_phone?: string | null;
