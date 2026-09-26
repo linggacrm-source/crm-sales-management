@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Download, Eye, Printer } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader, StatusBadge } from "@/components/Shared";
 import { apiGet } from "@/lib/api";
 import { formatDate, formatIDR } from "@/lib/format";
-import type { MonitoringRow, PODetail, Paginated } from "@/lib/types";
+import type { PODetail } from "@/lib/types";
 
 export default function PurchaseOrderView() {
   const { poId = "" } = useParams();
@@ -15,14 +16,6 @@ export default function PurchaseOrderView() {
     queryKey: ["purchase-order", poId],
     queryFn: () => apiGet<PODetail>(`/purchase-orders/${poId}`),
   });
-
-  const monitoring = useQuery<Paginated<MonitoringRow>>({
-    queryKey: ["po-monitoring", poId],
-    queryFn: () => apiGet<Paginated<MonitoringRow>>(`/order-monitoring?search=${poId}&page_size=25`),
-    enabled: false,
-  });
-
-
 
   return (
     <div className="mx-auto max-w-4xl">
