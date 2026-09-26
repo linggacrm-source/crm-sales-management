@@ -36,11 +36,12 @@ type FormState = {
   sales_id: string;
   status: string;
   notes: string;
+  products: string;
 };
 
 const EMPTY: FormState = {
   customer_name: "", company: "", industry: "Manufaktur", address: "", city: "", province: "", phone: "", email: "",
-  pic_name: "", pic_position: "", source: "Referral", sales_id: "", status: "Active", notes: "",
+  pic_name: "", pic_position: "", source: "Referral", sales_id: "", status: "Active", notes: "", products: "",
 };
 
 export default function Customers() {
@@ -170,14 +171,15 @@ export default function Customers() {
         </div>
         <Table>
           <TableHeader><TableRow>
-            <TableHead>Customer ID</TableHead><TableHead>Nama Perusahaan</TableHead>{sortHead("Nama Customer", "customer_name")}<TableHead>Industri</TableHead>{sortHead("Kota", "city")}<TableHead>PIC</TableHead><TableHead>Sales</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Aksi</TableHead>
+            <TableHead>Customer ID</TableHead><TableHead>Nama Perusahaan</TableHead>{sortHead("Nama Customer", "customer_name")}<TableHead>Produk / Solusi</TableHead><TableHead>Industri</TableHead>{sortHead("Kota", "city")}<TableHead>PIC</TableHead><TableHead>Sales</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Aksi</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {isLoading ? <TableSkeleton cols={9} /> : isError ? <ErrorRow colSpan={9} /> : rows.length === 0 ? <EmptyRow colSpan={9} message="Tidak ada customer yang cocok dengan filter." /> : rows.map((c) => (
+            {isLoading ? <TableSkeleton cols={10} /> : isError ? <ErrorRow colSpan={10} /> : rows.length === 0 ? <EmptyRow colSpan={10} message="Tidak ada customer yang cocok dengan filter." /> : rows.map((c) => (
               <TableRow key={c.customer_id} data-testid={`row-customer-${c.customer_id}`}>
                 <TableCell className="font-mono text-xs">{c.customer_id}</TableCell>
                 <TableCell className="font-medium">{c.company ?? "-"}</TableCell>
                 <TableCell><Link to={`/customers/${c.customer_id}`} className="font-semibold text-primary hover:underline" data-testid={`link-customer-${c.customer_id}`}>{c.customer_name}</Link></TableCell>
+                <TableCell className="max-w-[240px]"><span className="line-clamp-2 text-sm">{c.products ?? "-"}</span></TableCell>
                 <TableCell className="text-muted-foreground">{c.industry ?? "-"}</TableCell><TableCell>{c.city ?? "-"}</TableCell><TableCell>{c.pic_name ?? "-"}</TableCell><TableCell className="text-muted-foreground">{c.sales_name ?? "-"}</TableCell>
                 <TableCell><StatusBadge value={c.status} testId={`status-customer-${c.customer_id}`} /></TableCell>
                 <TableCell className="text-right">
@@ -199,7 +201,7 @@ export default function Customers() {
             <div><Label htmlFor="cust-industry">Industri</Label><select id="cust-industry" value={INDUSTRIES.includes(form.industry) ? form.industry : OTHER_INDUSTRY} onChange={(e) => { const value = e.target.value; setForm({ ...form, industry: value === OTHER_INDUSTRY ? "" : value }); }} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-customer-industry">{INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}<option value={OTHER_INDUSTRY}>{OTHER_INDUSTRY}</option></select>{!INDUSTRIES.includes(form.industry) && <Input id="cust-industry-other" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="Tulis industri lainnya..." className="mt-1.5" data-testid="input-customer-industry-other" />}</div>
             {field("source", "Sumber", "select", SOURCES)}{field("city", "Kota")}{field("province", "Provinsi")}{field("phone", "Telepon")}{field("email", "Email", "email")}{field("pic_name", "Nama PIC")}{field("pic_position", "Jabatan PIC")}{field("status", "Status", "select", ["Active", "Inactive", "Archived"])}
             {!isSales && <div><Label htmlFor="cust-sales">Sales Penanggung Jawab</Label><select id="cust-sales" value={form.sales_id} onChange={(e) => setForm({ ...form, sales_id: e.target.value })} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-customer-sales_id"><option value="">— Pilih sales —</option>{(salesOptions ?? []).map((s) => <option key={s.user_id} value={s.user_id}>{s.name}</option>)}</select></div>}
-            <div className="sm:col-span-2">{field("address", "Alamat", "textarea")}</div><div className="sm:col-span-2">{field("notes", "Catatan", "textarea")}</div>
+            <div className="sm:col-span-2">{field("products", "Produk / Solusi yang Ditawarkan", "textarea")}</div><div className="sm:col-span-2">{field("address", "Alamat", "textarea")}</div><div className="sm:col-span-2">{field("notes", "Catatan", "textarea")}</div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-customer">Batal</Button><Button onClick={() => save.mutate(form)} disabled={!form.customer_name || !form.industry.trim() || save.isPending} data-testid="btn-save-customer">{save.isPending ? "Menyimpan..." : "Simpan"}</Button></DialogFooter>
         </DialogContent>
