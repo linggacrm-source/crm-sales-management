@@ -118,9 +118,27 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     if discount_value > 0:
         discount_label = f"DISCOUNT {discount_input:g}%" if discount_type == "percent" else "DISCOUNT"
         totals_rows.append([Paragraph(discount_label, left), Paragraph(money(discount_value), right)])
+    grand_total_label = ParagraphStyle(
+        "QuotationGrandTotalLabelClean",
+        parent=left,
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        leading=10,
+        textColor=colors.white,
+        alignment=0,
+    )
+    grand_total_value = ParagraphStyle(
+        "QuotationGrandTotalValueClean",
+        parent=right,
+        fontName="Helvetica-Bold",
+        fontSize=8.5,
+        leading=10,
+        textColor=colors.white,
+        alignment=TA_RIGHT,
+    )
     totals_rows.extend([
         [Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", left), Paragraph(money(tax_value), right)],
-        [ "GRAND TOTAL", money(grand_total) ],
+        [Paragraph("GRAND TOTAL", grand_total_label), Paragraph(money(grand_total), grand_total_value)],
     ])
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm])
     totals_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")), ("TEXTCOLOR", (0, -1), (-1, -1), colors.white), ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"), ("FONTSIZE", (0, -1), (-1, -1), 8.5)]))
