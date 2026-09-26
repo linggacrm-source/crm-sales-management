@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from email.message import EmailMessage
 from io import BytesIO
 import base64
 import re
@@ -124,6 +125,20 @@ class QuotationListResponse(BaseModel):
     page_size: int
 
 
+class QuotationEmailRequest(BaseModel):
+    to: str
+    cc: Optional[str] = None
+    subject: str
+    body: str
+
+
+class QuotationEmailDraft(BaseModel):
+    to: str
+    subject: str
+    body: str
+    quotation_number: str
+
+
 class ConvertResponse(BaseModel):
     po_id: str
     po_number: str
@@ -180,6 +195,66 @@ async def _decorate(doc: dict) -> dict:
         "signature_name": (signer or {}).get("name"),
         "signature_title": (signer or {}).get("signature_title") or (signer or {}).get("role"),
     }
+
+
+@router.get("/{quotation_id}/email-draft", response_model=QuotationEmailDraft)
+async def quotation_email_draft(quotation_id: str, user: dict = Depends(current_user)):
+    scope = await scope_filter(user)
+    doc = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
+    quotation_number = str(doc.get("quotation_number") or quotation_id)
+    customer_name = str(doc.get("customer_company") or doc.get("customer_name") or "Customer")
+    customer_email = str(doc.get("customer_email") or "")
+    subject = f"Quotation {quotation_number} - {customer_name}"
+    body = (
+        f"Yth. Bapak/Ibu {doc.get('customer_pic_name') or customer_name},\\n\\n"
+        f"Berikut kami sampaikan quotation {quotation_number} dari PT. Wellracom Industri Komputindo.\\n\\n"
+        "Quotation terlampir dalam email ini.\\n\\n"
+        "Mohon dapat diperiksa. Apabila ada pertanyaan atau kebutuhan penyesuaian, "
+        "silakan menghubungi kami.\\n\\n"
+        "Terima kasih atas perhatian dan kerja samanya.\\n\\n"
+        f"Hormat kami,\\n{doc.get('sales_name') or 'Sales'}\\nPT. Wellracom Industri Komputindo"
+    )
+    return QuotationEmailDraft(to=customer_email, subject=subject, body=body, quotation_number=quotation_number)
+
+
+@router.post("/{quotation_id}/email-eml")
+async def quotation_email_eml(quotation_id: str, payload: QuotationEmailRequest, request: Request, user: dict = Depends(current_user)):
+    if not payload.to.strip():
+        raise HTTPException(status_code=400, detail="Alamat email tujuan wajib diisi")
+    scope = await scope_filter(user)
+    doc = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
+
+    pdf_response = await download_quotation_pdf(quotation_id, request, user)
+    chunks = []
+    if getattr(pdf_response, "body_iterator", None) is not None:
+        async for chunk in pdf_response.body_iterator:
+            chunks.append(chunk)
+    pdf_bytes = b"".join(chunks)
+    if not pdf_bytes:
+        raise HTTPException(status_code=500, detail="PDF quotation gagal dibuat")
+
+    msg = EmailMessage()
+    msg["To"] = payload.to.strip()
+    if payload.cc and payload.cc.strip():
+        msg["Cc"] = payload.cc.strip()
+    msg["Subject"] = payload.subject.strip() or f"Quotation {doc.get('quotation_number') or quotation_id}"
+    msg["From"] = "PT. Wellracom Industri Komputindo"
+    msg.set_content(payload.body or "")
+    quotation_number = str(doc.get("quotation_number") or quotation_id)
+    filename = f"Quotation_{quotation_number.replace('/', '_').replace('\\\\', '_').replace(' ', '_')}.pdf"
+    msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=filename)
+
+    eml_bytes = msg.as_bytes()
+    eml_filename = f"Quotation_{quotation_number.replace('/', '_').replace('\\\\', '_').replace(' ', '_')}.eml"
+    return StreamingResponse(
+        BytesIO(eml_bytes),
+        media_type="message/rfc822",
+        headers={"Content-Disposition": f'attachment; filename="{eml_filename}"'},
+    )
 
 
 @router.get("/{quotation_id}/pdf")
