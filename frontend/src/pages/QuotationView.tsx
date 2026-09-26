@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Mail, Printer, ShoppingBag } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -25,6 +25,51 @@ export default function QuotationView() {
   const [emailOpen, setEmailOpen] = useState(false);
   const [poNumber, setPoNumber] = useState("");
   const [poDate, setPoDate] = useState(new Date().toISOString().slice(0, 10));
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    let objectUrl: string | null = null;
+
+    const loadPreview = async () => {
+      if (!quotationId || !data?.quotation_id) {
+        setPreviewUrl(null);
+        setPreviewLoading(false);
+        return;
+      }
+
+      setPreviewLoading(true);
+      try {
+        const response = await fetch(
+          `/api/quotations/${encodeURIComponent(data.quotation_id)}/pdf`,
+          { method: "GET", credentials: "include" },
+        );
+        if (!response.ok) throw new Error(`Preview PDF gagal (${response.status})`);
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().includes("application/pdf")) {
+          throw new Error("Server tidak mengembalikan PDF.");
+        }
+        const blob = await response.blob();
+        if (!blob.size) throw new Error("PDF preview kosong.");
+
+        objectUrl = window.URL.createObjectURL(blob);
+        if (active) setPreviewUrl(objectUrl);
+      } catch (error) {
+        console.error("Quotation preview failed:", error);
+        if (active) setPreviewUrl(null);
+      } finally {
+        if (active) setPreviewLoading(false);
+      }
+    };
+
+    loadPreview();
+
+    return () => {
+      active = false;
+      if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+    };
+  }, [data?.quotation_id, quotationId]);
 
   const { data, isLoading, isError } = useQuery<QuotationDetail>({
     queryKey: ["quotation", quotationId],
@@ -71,21 +116,6 @@ export default function QuotationView() {
     }
   };
 
-  const terms = [
-    `Payment: ${data?.payment_term ?? DEFAULT_TERMS[0]}`,
-    `Pengiriman: ${data?.delivery_term ?? DEFAULT_TERMS[2]}`,
-    `Validitas: s/d ${formatDate(data?.validity_date)}`,
-    ...(data?.notes
-      ? data.notes
-          .split("\n")
-          .map((line) => line.replace(/^\\s*(?:catatan\\s*:\\s*|[•-]\\s*)/i, "").trim())
-          .filter(Boolean)
-      : []),
-  ];
-  const discountType = data?.discount_type ?? "amount";
-  const discountInput = Number(data?.discount_input ?? data?.discount ?? 0);
-  const discountLabel = discountType === "percent" ? "DISCOUNT " + discountInput + "%" : "DISCOUNT";
-
   return (
     <div className="quotation-page-shell mx-auto max-w-5xl">
       <div className="no-print mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -98,37 +128,24 @@ export default function QuotationView() {
       </div>
 
       {isError ? <Card className="p-10 text-center"><p className="text-sm text-muted-foreground" data-testid="quotation-error">Quotation belum dapat dimuat.</p></Card> : isLoading ? <Card className="space-y-3 p-10">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-4 animate-shimmer rounded bg-muted" />)}</Card> : data ? (
-        <Card className="print-area quotation-document quotation-screen-preview bg-white p-0 text-neutral-900" data-testid="quotation-document" data-quotation-number={data.quotation_number}>
-          <div className="quotation-header flex items-center gap-4 border-b-2 border-neutral-900 px-8 py-5">
-            <img src={COMPANY.logo} alt="Logo Wellracom" className="h-16 w-16 shrink-0 object-contain" data-testid="quotation-logo" />
-            <div className="min-w-0"><h2 className="text-lg leading-tight font-extrabold tracking-tight" data-testid="quotation-company-name">{COMPANY.name}</h2><p className="text-xs text-neutral-600">{COMPANY.tagline}</p><p className="mt-0.5 text-[11px] text-neutral-500">{COMPANY.website} · {COMPANY.email}</p></div>
-          </div>
-          <div className="flex flex-col gap-4 px-8 py-6 sm:flex-row sm:items-start sm:justify-between">
-            <div><h1 className="text-3xl font-black tracking-[0.12em]">QUOTATION</h1><div className="mt-2"><StatusBadge value={data.status} testId="quotation-status-badge" /></div></div>
-            <table className="border border-neutral-900 text-xs"><tbody><tr className="border-b border-neutral-300"><th className="bg-neutral-100 px-3 py-1.5 text-left font-semibold tracking-wider">DATE</th><td className="px-3 py-1.5">{formatDate(data.quotation_date)}</td></tr><tr className="border-b border-neutral-300"><th className="bg-neutral-100 px-3 py-1.5 text-left font-semibold tracking-wider">QUOTE NO</th><td className="px-3 py-1.5 font-mono font-bold" data-testid="quotation-number">{data.quotation_number}</td></tr><tr><th className="bg-neutral-100 px-3 py-1.5 text-left font-semibold tracking-wider">EXPIRATION DATE</th><td className="px-3 py-1.5">{formatDate(data.validity_date)}</td></tr></tbody></table>
-          </div>
-          <div className="px-8 pb-5"><p className="mb-1 text-[11px] font-bold tracking-widest text-neutral-500">TO:</p><p className="font-bold" data-testid="quotation-customer-name">{data.customer_company || data.customer_name}</p><div className="mt-1 space-y-0.5 text-xs text-neutral-700">{data.customer_pic_name && <p>ATTN: {data.customer_pic_name}</p>}{data.customer_email && <p>EMAIL: {data.customer_email}</p>}{data.customer_phone && <p>PHONE: {data.customer_phone}</p>}</div></div>
-          <div className="px-8"><table className="w-full border border-neutral-400 text-xs"><thead><tr className="border-b border-neutral-400 bg-neutral-900 text-[10px] tracking-widest text-white"><th className="w-10 border-r border-neutral-500 px-2 py-2 text-center font-bold">NO</th><th className="border-r border-neutral-500 px-2 py-2 text-left font-bold">ITEMS / SPECIFICATION</th><th className="w-32 border-r border-neutral-500 px-2 py-2 text-right font-bold">UNIT PRICE</th><th className="w-20 border-r border-neutral-500 px-2 py-2 text-center font-bold">QTY</th>{data.items.some((it) => Number(it.discount ?? 0) > 0) && <th className="w-28 border-r border-neutral-500 px-2 py-2 text-right font-bold">DISCOUNT</th>}<th className="w-36 px-2 py-2 text-right font-bold">AMOUNT</th></tr></thead><tbody>{data.items.map((it, i) => { const hasDiscount = data.items.some((item) => Number(item.discount ?? 0) > 0); return <tr key={it.quotation_item_id} className="border-b border-neutral-300 align-top" data-testid={`quotation-item-${i}`}><td className="border-r border-neutral-200 px-2 py-2 text-center font-mono">{i + 1}</td><td className="border-r border-neutral-200 px-2 py-2"><span className="whitespace-pre-line" data-testid={`quotation-item-spec-${i}`}>{it.description}</span></td><td className="border-r border-neutral-200 px-2 py-2 text-right font-mono">{formatIDR(it.unit_price)}</td><td className="border-r border-neutral-200 px-2 py-2 text-center font-mono">{it.qty} {it.unit}</td>{hasDiscount && <td className="border-r border-neutral-200 px-2 py-2 text-right font-mono">{Number(it.discount ?? 0) > 0 ? formatIDR(it.discount) : "-"}</td>}<td className="px-2 py-2 text-right font-mono font-semibold">{formatIDR(it.subtotal)}</td></tr>})}</tbody></table></div>
-          <div className="quotation-totals flex justify-end px-8 pt-4"><table className="w-[85mm] text-xs"><tbody><tr><th className="px-1 py-1 text-left font-normal">SUBTOTAL</th><td className="px-1 py-1 text-right font-mono">{formatIDR(data.subtotal)}</td></tr>{data.discount > 0 && <tr><th className="px-1 py-1 text-left font-normal">{discountLabel}</th><td className="px-1 py-1 text-right font-mono">-{formatIDR(data.discount)}</td></tr>}<tr><th className="px-1 py-1 text-left font-normal">PPN {data.tax_percent}%</th><td className="px-1 py-1 text-right font-mono">{formatIDR(data.tax)}</td></tr><tr className="bg-neutral-900 text-white"><th className="px-2 py-2 text-left font-bold tracking-wider">GRAND TOTAL</th><td className="px-2 py-2 text-right font-mono font-bold" data-testid="quotation-grand-total-view">{formatIDR(data.grand_total)}</td></tr></tbody></table></div>
-          <div className="quotation-signature px-8 py-6">
-            <div className="quotation-terms-block">
-              <p className="mb-2 text-[11px] font-bold tracking-widest">TERMS &amp; CONDITIONS</p>
-              <ul className="quotation-terms-list space-y-1 text-xs text-neutral-700">
-                {terms.map((t, i) => <li key={i}>{t}</li>)}
-              </ul>
+        <Card className="print-area quotation-document quotation-screen-preview overflow-hidden bg-white p-0" data-testid="quotation-document" data-quotation-number={data.quotation_number}>
+          {previewLoading ? (
+            <div className="flex min-h-[1123px] items-center justify-center text-sm text-muted-foreground">
+              Membuat preview quotation...
             </div>
-            <div className="quotation-signature-block mt-4" data-testid="quotation-signature-block">
-              <p className="quotation-hormat text-[11px] font-bold">Hormat Kami,</p>
-              {data.signature_image ? (
-                <img src={data.signature_image} alt="Tanda tangan digital" className="quotation-signature-image mt-1 h-20 object-contain object-left" data-testid="quotation-signature-image" />
-              ) : (
-                <div className="quotation-signature-placeholder h-20" />
-              )}
-              <p className="quotation-signature-name text-xs font-bold">{data.signature_name ?? data.sales_name ?? "Sales"}</p>
-              <p className="quotation-signature-title text-[11px] text-neutral-600">{data.signature_title ?? "Sales"}</p>
+          ) : previewUrl ? (
+            <iframe
+              src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+              title={`Quotation ${data.quotation_number}`}
+              className="block w-full border-0 bg-white"
+              style={{ height: "1123px" }}
+              data-testid="quotation-pdf-preview"
+            />
+          ) : (
+            <div className="flex min-h-[300px] items-center justify-center p-10 text-sm text-destructive">
+              Preview quotation gagal dibuat. Silakan klik "Cetak / Simpan PDF".
             </div>
-          </div>
-          <div className="quotation-footer grid gap-4 border-t border-neutral-900 bg-neutral-50 px-8 py-4 text-[10px] text-neutral-600 sm:grid-cols-2">{COMPANY.offices.map((o) => <div key={o.city}><p className="font-bold tracking-widest text-neutral-800">{o.city.toUpperCase()} OFFICE</p><p>{o.address}</p><p>T. {o.phone}</p></div>)}</div>
+          )}
         </Card>
       ) : null}
 
