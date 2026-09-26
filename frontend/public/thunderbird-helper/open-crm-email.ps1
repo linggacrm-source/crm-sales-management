@@ -20,6 +20,8 @@ try {
   $safeNumber = ($package.quotation_number -replace '[^a-zA-Z0-9_-]', '_')
   $pdfPath = Join-Path $tempDir ("Quotation_" + $safeNumber + ".pdf")
   Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl$($package.pdf_url)" -OutFile $pdfPath
+  if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal diunduh." }
+  if ((Get-Item $pdfPath).Length -le 0) { throw "PDF quotation kosong." }
 
   $programFilesX86 = [Environment]::GetEnvironmentVariable("ProgramFiles(x86)")
   $candidates = @(
@@ -36,15 +38,17 @@ try {
   $subject = ([string]$package.subject).Replace("'", "''")
   $to = ([string]$package.to).Replace("'", "''")
   $cc = ([string]$package.cc).Replace("'", "''")
-  # Thunderbird expects local attachments as file:// URIs. Keep the compose payload
-  # as one quoted command-line argument so fields are parsed correctly on Windows.
-  $pdfUri = ([System.Uri]$pdfPath).AbsoluteUri
-  $compose = "to='$to',subject='$subject',body='$body',attachment='$pdfUri'"
+
+  # Thunderbird's -compose parser accepts a normal Windows file path for attachment.
+  # Pass the complete compose payload as ONE argument to avoid Windows argument splitting.
+  $attachmentPath = $pdfPath.Replace("'", "''")
+  $compose = "to='$to',subject='$subject',body='$body',attachment='$attachmentPath'"
   if (-not [string]::IsNullOrWhiteSpace($cc)) {
-    $compose = "to='$to',cc='$cc',subject='$subject',body='$body',attachment='$pdfUri'"
+    $compose = "to='$to',cc='$cc',subject='$subject',body='$body',attachment='$attachmentPath'"
   }
 
-  Start-Process -FilePath $thunderbird -ArgumentList @("-compose", "`"$compose`"")
+  & $thunderbird "-compose" $compose
+
 }
 catch {
   Add-Type -AssemblyName PresentationFramework
