@@ -8,12 +8,12 @@ import { PageHeader } from "@/components/Shared";
 import { ApiError } from "@/lib/api";
 
 const TEMPLATE_HEADERS = [
-  "customer_id", "customer_name", "company", "industry", "address", "city", "province",
+  "customer_id", "customer_name", "company", "products", "industry", "address", "city", "province",
   "phone", "email", "pic_name", "pic_position", "source", "sales_id", "status", "notes",
 ];
 
 const TEMPLATE_SAMPLE = [
-  "", "PT Contoh Indonesia", "PT Contoh Indonesia", "Manufaktur", "Jl. Contoh No. 1", "Jakarta Selatan",
+  "", "PT Contoh Indonesia", "PT Contoh Indonesia", "Axiomtek eBOX / ICP DAS I/O", "Manufaktur", "Jl. Contoh No. 1", "Jakarta Selatan",
   "DKI Jakarta", "0211234567", "pic@contoh.co.id", "Budi", "Purchasing Manager", "Referral", "", "Active", "Customer hasil import",
 ];
 
@@ -176,7 +176,7 @@ export default function CustomerImport() {
             </div>
             <div className="rounded-lg bg-muted/40 p-3">
               <p className="font-semibold">Opsional</p>
-              <p className="mt-1 leading-5 text-muted-foreground">Company, industry, address, city, province, phone, email, PIC, source, sales_id, status, notes.</p>
+              <p className="mt-1 leading-5 text-muted-foreground">Company, products, industry, address, city, province, phone, email, PIC, source, sales_id, status, notes.</p>
             </div>
             <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-3 text-blue-900">
               <p className="font-semibold">Duplikat</p>
