@@ -36,12 +36,15 @@ try {
   $subject = ([string]$package.subject).Replace("'", "''")
   $to = ([string]$package.to).Replace("'", "''")
   $cc = ([string]$package.cc).Replace("'", "''")
-  $compose = "to='$to',subject='$subject',body='$body',attachment='$pdfPath'"
+  # Thunderbird expects local attachments as file:// URIs. Keep the compose payload
+  # as one quoted command-line argument so fields are parsed correctly on Windows.
+  $pdfUri = ([System.Uri]$pdfPath).AbsoluteUri
+  $compose = "to='$to',subject='$subject',body='$body',attachment='$pdfUri'"
   if (-not [string]::IsNullOrWhiteSpace($cc)) {
-    $compose = "to='$to',cc='$cc',subject='$subject',body='$body',attachment='$pdfPath'"
+    $compose = "to='$to',cc='$cc',subject='$subject',body='$body',attachment='$pdfUri'"
   }
 
-  Start-Process -FilePath $thunderbird -ArgumentList @("-compose", $compose)
+  Start-Process -FilePath $thunderbird -ArgumentList @("-compose", "`"$compose`"")
 }
 catch {
   Add-Type -AssemblyName PresentationFramework
