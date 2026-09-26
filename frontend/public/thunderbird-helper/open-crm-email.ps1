@@ -46,9 +46,11 @@ try {
   # Thunderbird's -compose parser accepts a normal Windows file path for attachment.
   # Pass the complete compose payload as ONE argument to avoid Windows argument splitting.
   $attachmentPath = $pdfPath.Replace("'", "''")
-  $compose = "to='$to',subject='$subject',body='$body',attachment='$attachmentPath'"
+  # Thunderbird expects a file URI for reliable attachment handling on current Windows builds.
+  $attachmentUri = ([System.Uri]::new($pdfPath)).AbsoluteUri
+  $compose = "to='$to',subject='$subject',body='$body',attachment='$attachmentUri'"
   if (-not [string]::IsNullOrWhiteSpace($cc)) {
-    $compose = "to='$to',cc='$cc',subject='$subject',body='$body',attachment='$attachmentPath'"
+    $compose = "to='$to',cc='$cc',subject='$subject',body='$body',attachment='$attachmentUri'"
   }
 
   & $thunderbird "-compose" $compose
