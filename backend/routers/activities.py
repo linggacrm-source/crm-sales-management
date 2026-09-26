@@ -21,6 +21,7 @@ LIST_PROJECTION = {
     "customer_id": 1,
     "customer_name": 1,
     "opportunity_id": 1,
+    "opportunity_name": 1,
     "activity_type": 1,
     "activity_date": 1,
     "subject": 1,
@@ -49,6 +50,7 @@ class ActivityRow(BaseModel):
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
     opportunity_id: Optional[str] = None
+    opportunity_name: Optional[str] = None
     activity_type: str
     activity_date: Optional[str] = None
     subject: str
@@ -145,6 +147,9 @@ async def create_activity(payload: ActivityIn, user: dict = Depends(current_user
         )
         if not opportunity:
             raise HTTPException(status_code=400, detail="Opportunity tidak terkait dengan customer tersebut")
+        opportunity_name_doc = await db.opportunities.find_one({"opportunity_id": payload.opportunity_id}, {"_id": 0, "opportunity_name": 1})
+    else:
+        opportunity_name_doc = None
     now = datetime.now(timezone.utc)
     doc = payload.model_dump()
     doc.update(
@@ -153,6 +158,7 @@ async def create_activity(payload: ActivityIn, user: dict = Depends(current_user
             "sales_id": sales_id,
             "sales_name": sales["name"] if sales else None,
             "customer_name": customer_name,
+            "opportunity_name": opportunity_name_doc.get("opportunity_name") if opportunity_name_doc else None,
             "created_date": now,
             "updated_date": now,
         }
@@ -188,6 +194,10 @@ async def update_activity(activity_id: str, payload: ActivityIn, user: dict = De
         )
         if not opportunity:
             raise HTTPException(status_code=400, detail="Opportunity tidak terkait dengan customer tersebut")
+        opportunity_doc = await db.opportunities.find_one({"opportunity_id": opportunity_id}, {"_id": 0, "opportunity_name": 1})
+        updates["opportunity_name"] = opportunity_doc.get("opportunity_name") if opportunity_doc else None
+    elif "opportunity_id" in updates:
+        updates["opportunity_name"] = None
     updates["updated_date"] = datetime.now(timezone.utc)
     await db.activities.update_one({"activity_id": activity_id}, {"$set": updates})
     await write_audit(user, "UPDATE", "Activity", activity_id, existing.get("status"), updates.get("status"))
