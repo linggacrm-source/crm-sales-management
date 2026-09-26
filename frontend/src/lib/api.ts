@@ -42,7 +42,7 @@ async function request<T>(method: string, path: string, body?: JsonBody): Promis
           await new Promise((resolve) => window.setTimeout(resolve, 250 * attempt));
           continue;
         }
-        throw new ApiError(res.status, errBody);
+        const apiError = new ApiError(res.status, errBody);\n        if (errBody && typeof errBody === "object" && "detail" in errBody) {\n          apiError.message = String(errBody.detail || apiError.message);\n        }\n        throw apiError;
       }
 
       if (res.status === 204) return undefined as T;
