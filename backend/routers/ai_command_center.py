@@ -67,10 +67,6 @@ async def _build_context(user: dict) -> dict:
         stale_cutoff,
     )
 
-    open_value = round(sum(float(stage_map.get(stage, {}).get("value", 0)) for stage in OPEN_STAGES), 2)
-    weighted_value = round(sum(float(stage_map.get(stage, {}).get("weighted_value", 0)) for stage in OPEN_STAGES), 2)
-    won_value = round(float(stage_map.get("Won", {}).get("value", 0)), 2)
-
     stage_map = {}
     for row in stage_rows:
         stage_map[row.get("_id") or "Unknown"] = {
@@ -78,6 +74,10 @@ async def _build_context(user: dict) -> dict:
             "value": round(float(row.get("value") or 0), 2),
             "weighted_value": round(float(row.get("weighted_value") or 0), 2),
         }
+
+    open_value = round(sum(float(stage_map.get(stage, {}).get("value", 0)) for stage in OPEN_STAGES), 2)
+    weighted_value = round(sum(float(stage_map.get(stage, {}).get("weighted_value", 0)) for stage in OPEN_STAGES), 2)
+    won_value = round(float(stage_map.get("Won", {}).get("value", 0)), 2)
 
     latest_by_customer = {}
     for activity in recent_activities:
