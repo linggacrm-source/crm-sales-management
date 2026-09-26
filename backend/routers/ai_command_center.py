@@ -451,12 +451,19 @@ PERTANYAAN USER:
         parser = _response_text
 
     try:
-        response = requests.post(
-            endpoint,
-            headers=headers,
-            json=payload,
-            timeout=35,
-        )
+        response = None
+        retryable_statuses = {408, 429, 500, 502, 503, 504}
+        for attempt in range(3):
+            response = requests.post(
+                endpoint,
+                headers=headers,
+                json=payload,
+                timeout=35,
+            )
+            if response.status_code not in retryable_statuses or attempt == 2:
+                break
+            time.sleep((2 ** attempt) + random.uniform(0, 0.75))
+
         if response.status_code >= 400:
             detail = ""
             try:
