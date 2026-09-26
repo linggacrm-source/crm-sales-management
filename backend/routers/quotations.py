@@ -438,7 +438,7 @@ async def download_quotation_pdf(quotation_id: str, request: Request, user: dict
         discount_input = float(doc.get("discount_input") or discount_value)
         discount_label = f"DISCOUNT {discount_input:g}%" if discount_type == "percent" else "DISCOUNT"
         totals_rows.append([Paragraph(discount_label, right), Paragraph(money(discount_value), right)])
-    totals_rows.extend([[Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right), Paragraph(money(tax_value), right)], [Paragraph("<b>GRAND TOTAL</b>", right), Paragraph(f"<b>{money(grand_total)}</b>", right)]])
+    totals_rows.extend([[Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right), Paragraph(money(tax_value), right)], [Paragraph("<font color=\"#FFFFFF\"><b>GRAND TOTAL</b></font>", right), Paragraph(f"<font color=\"#FFFFFF\"><b>{money(grand_total)}</b></font>", right)]])
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm]); totals_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 1), ("RIGHTPADDING", (0, 0), (-1, -1), 1), ("TOPPADDING", (0, 0), (-1, -1), 1.2), ("BOTTOMPADDING", (0, 0), (-1, -1), 1.2), ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#111827")), ("TEXTCOLOR", (0, -1), (-1, -1), colors.white)]))
     totals_wrapper = Table([["", totals_table]], colWidths=[110 * mm, 70 * mm]); totals_wrapper.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0), ("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)])); story.append(totals_wrapper); story.append(Spacer(1, 4 * mm))
     payment_term = doc.get("payment_term") or "-"
