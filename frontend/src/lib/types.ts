@@ -156,6 +156,8 @@ export interface QuotationRow {
   quotation_date?: string | null;
   customer_id: string;
   customer_name?: string | null;
+  customer_company?: string | null;
+  product_names?: string | null;
   sales_id?: string | null;
   sales_name?: string | null;
   grand_total: number;
