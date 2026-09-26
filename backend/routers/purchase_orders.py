@@ -118,6 +118,59 @@ class MonitoringCreated(BaseModel):
     monitoring_ids: list[str]
 
 
+def _monitoring_initial_status(po_status: str | None) -> str:
+    return {"Processing": "Processing", "Completed": "Completed", "Cancelled": "Cancelled"}.get(po_status or "Received", "Waiting Order")
+
+
+async def _create_monitoring_for_po(po: dict, user: dict | None = None, audit: bool = False) -> int:
+    if await db.order_monitoring.count_documents({"po_id": po["po_id"]}):
+        return 0
+    items = po.get("items") or []
+    if not items:
+        return 0
+    now = datetime.now(timezone.utc)
+    status = _monitoring_initial_status(po.get("status"))
+    docs = []
+    for it in items:
+        product_name = it.get("description")
+        supplier = None
+        distributor = None
+        if it.get("product_id"):
+            prod = await db.products.find_one(
+                {"product_id": it["product_id"]},
+                {"_id": 0, "product_name": 1, "supplier": 1, "distributor": 1},
+            )
+            if prod:
+                product_name = prod.get("product_name") or product_name
+                supplier = prod.get("supplier")
+                distributor = prod.get("distributor")
+        docs.append({
+            "monitoring_id": await next_code("MON"),
+            "po_id": po["po_id"],
+            "po_number": po["po_number"],
+            "customer_id": po["customer_id"],
+            "customer_name": po.get("customer_name"),
+            "sales_id": po.get("sales_id"),
+            "sales_name": po.get("sales_name"),
+            "product_id": it.get("product_id"),
+            "product_name": product_name,
+            "qty": it.get("qty", 0),
+            "status": status,
+            "supplier": supplier,
+            "distributor": distributor,
+            "eta": None,
+            "actual_delivery_date": today_iso() if status == "Completed" else None,
+            "notes": None,
+            "last_update": now,
+            "created_date": now,
+            "updated_date": now,
+        })
+    await db.order_monitoring.insert_many(docs)
+    if audit and user:
+        await write_audit(user, "CREATE", "Order Monitoring", po["po_number"], None, f"{len(docs)} item otomatis")
+    return len(docs)
+
+
 def _build_items(items: list[POItemIn]) -> tuple[list[dict], float]:
     built: list[dict] = []
     total = 0.0
@@ -209,6 +262,7 @@ async def create_po(payload: POIn, user: dict = Depends(current_user)):
         }
     )
     await db.purchase_orders.insert_one(dict(doc))
+    await _create_monitoring_for_po(doc, user=user, audit=True)
     await write_audit(user, "CREATE", "PO", doc["po_number"], None, total)
     return PODetail(**doc)
 
@@ -257,62 +311,15 @@ async def change_po_status(po_id: str, payload: StatusChange, user: dict = Depen
 
 @router.post("/{po_id}/create-monitoring", response_model=MonitoringCreated)
 async def create_monitoring(po_id: str, user: dict = Depends(current_user)):
-    """One monitoring row per PO item, reusing the PO's customer_id / sales_id / product_id."""
+    """Backward-compatible endpoint. Monitoring is now created automatically when a PO is saved."""
     scope = await scope_filter(user)
     po = await db.purchase_orders.find_one({"po_id": po_id, **scope}, {"_id": 0})
     if not po:
         raise HTTPException(status_code=404, detail="Purchase Order tidak ditemukan")
-    existing = await db.order_monitoring.count_documents({"po_id": po_id})
-    if existing:
-        raise HTTPException(status_code=400, detail="Order monitoring untuk PO ini sudah dibuat")
-    if not po.get("items"):
-        raise HTTPException(status_code=400, detail="PO tidak memiliki item")
-    now = datetime.now(timezone.utc)
-    docs = []
-    ids = []
-    for it in po["items"]:
-        product_name = it.get("description")
-        supplier = None
-        distributor = None
-        if it.get("product_id"):
-            prod = await db.products.find_one(
-                {"product_id": it["product_id"]},
-                {"_id": 0, "product_name": 1, "supplier": 1, "distributor": 1},
-            )
-            if prod:
-                product_name = prod.get("product_name") or product_name
-                supplier = prod.get("supplier")
-                distributor = prod.get("distributor")
-        mid = await next_code("MON")
-        ids.append(mid)
-        docs.append(
-            {
-                "monitoring_id": mid,
-                "po_id": po["po_id"],
-                "po_number": po["po_number"],
-                "customer_id": po["customer_id"],
-                "customer_name": po.get("customer_name"),
-                "sales_id": po.get("sales_id"),
-                "sales_name": po.get("sales_name"),
-                "product_id": it.get("product_id"),
-                "product_name": product_name,
-                "qty": it.get("qty", 0),
-                "status": "Waiting Order",
-                "supplier": supplier,
-                "distributor": distributor,
-                "eta": None,
-                "actual_delivery_date": None,
-                "notes": None,
-                "last_update": now,
-                "created_date": now,
-                "updated_date": now,
-            }
-        )
-    await db.order_monitoring.insert_many(docs)
-    await db.purchase_orders.update_one({"po_id": po_id}, {"$set": {"status": "Processing", "updated_date": now}})
-    await write_audit(user, "CREATE", "Order Monitoring", po["po_number"], None, f"{len(docs)} item")
-    return MonitoringCreated(created=len(docs), monitoring_ids=ids)
-
+    if await db.order_monitoring.count_documents({"po_id": po_id}):
+        raise HTTPException(status_code=400, detail="Order monitoring untuk PO ini sudah dibuat otomatis")
+    created = await _create_monitoring_for_po(po, user=user, audit=True)
+    return MonitoringCreated(created=created, monitoring_ids=[])
 
 @router.post("/{po_id}/document")
 async def upload_po_document(
