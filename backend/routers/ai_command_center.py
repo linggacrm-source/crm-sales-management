@@ -218,7 +218,7 @@ async def _load_context(open_query: dict, scope: dict, stale_cutoff: datetime):
         {**scope, "stage": "Won"},
         {"_id": 0, "value": 1},
     )
-    stage_cursor = db.opportunities.aggregate([
+    stage_cursor = await db.opportunities.aggregate([
         {"$match": scope},
         {"$group": {"_id": "$stage", "count": {"$sum": 1}, "value": {"$sum": "$value"}, "weighted_value": {"$sum": "$weighted_value"}}},
     ])
