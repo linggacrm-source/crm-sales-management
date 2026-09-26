@@ -82,7 +82,7 @@ function RelatedTable({ customerId, tab }: { customerId: string; tab: (typeof TA
   };
 
   return (
-    {tab.key === "activities" ? (
+    tab.key === "activities" ? (
       <div className="p-5">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
