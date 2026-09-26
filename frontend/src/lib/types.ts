@@ -68,7 +68,6 @@ export interface CustomerRow {
   customer_id: string;
   customer_name: string;
   company?: string | null;
-  products?: string | null;
   industry?: string | null;
   city?: string | null;
   phone?: string | null;
