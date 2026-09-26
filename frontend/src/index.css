@@ -122,7 +122,8 @@ select:focus, input:focus, textarea:focus { outline: none; }
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
 *::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-thead tr { background: #f8fbff; }
+table thead tr { background: #eaf3ff; }
+table thead th { color: #163b73; font-weight: 600; border-bottom: 1px solid #d6e6fa; }
 tbody tr { border-color: #edf2f7; }
 tbody tr:hover { background: #f8fbff; }
 
