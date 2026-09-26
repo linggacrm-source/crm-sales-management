@@ -20,56 +20,29 @@ try {
   $safeNumber = ($package.quotation_number -replace '[^a-zA-Z0-9_-]', '_')
   $stamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
   $pdfPath = Join-Path $tempDir ("Quotation_" + $safeNumber + "_" + $stamp + ".pdf")
-  # Prevent any client/proxy cache from returning an older PDF with the same filename.
-  $pdfUrl = "$BaseUrl$($package.pdf_url)"
-  if ($pdfUrl.Contains("?")) { $pdfUrl += "&_ts=$stamp" } else { $pdfUrl += "?_ts=$stamp" }
-  # Download the PDF through a raw HTTP response stream. This is compatible
-  # with Windows PowerShell 5.1 and avoids buffering/encoding transformations.
-  $request = [System.Net.WebRequest]::Create($pdfUrl)
-  $request.Method = "GET"
-  $request.Headers["Cache-Control"] = "no-cache"
-  $request.Headers["Pragma"] = "no-cache"
-  $response = $null
-  $inputStream = $null
-  $outputStream = $null
-  try {
-    $response = $request.GetResponse()
-    if ([int]$response.StatusCode -lt 200 -or [int]$response.StatusCode -ge 300) {
-      throw "HTTP $([int]$response.StatusCode)"
-    }
+  # The CRM package now contains the exact quotation PDF as base64.
+  # This avoids a second HTTP request and prevents proxy/PowerShell PDF corruption.
+  $pdfBase64 = [string]$package.pdf_base64
+  if ([string]::IsNullOrWhiteSpace($pdfBase64)) {
+    throw "Data PDF quotation tidak tersedia dari CRM. Pastikan deployment terbaru sudah aktif."
+  }
 
-    $inputStream = $response.GetResponseStream()
-    $outputStream = [System.IO.File]::Open($pdfPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
-    $inputStream.CopyTo($outputStream)
+  try {
+    $pdfBytes = [System.Convert]::FromBase64String($pdfBase64)
   }
   catch {
-    throw "PDF quotation gagal diunduh: $($_.Exception.Message)"
-  }
-  finally {
-    if ($outputStream) { $outputStream.Dispose() }
-    if ($inputStream) { $inputStream.Dispose() }
-    if ($response) { $response.Dispose() }
+    throw "Data PDF quotation dari CRM tidak valid."
   }
 
-  if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal disimpan." }
-  $pdfFile = Get-Item $pdfPath
-  if ($pdfFile.Length -lt 20) { throw "Server mengirim PDF kosong/terpotong (ukuran $($pdfFile.Length) byte)." }
+  if ($pdfBytes.Length -lt 20) { throw "PDF quotation terlalu kecil/kosong ($($pdfBytes.Length) byte)." }
+  $header = [System.Text.Encoding]::ASCII.GetString($pdfBytes, 0, 4)
+  if ($header -ne "%PDF") { throw "Data attachment dari CRM bukan PDF yang valid." }
+  $tailStart = [Math]::Max(0, $pdfBytes.Length - 1024)
+  $tail = [System.Text.Encoding]::ASCII.GetString($pdfBytes, $tailStart, $pdfBytes.Length - $tailStart)
+  if ($tail -notmatch "%%EOF") { throw "PDF quotation dari CRM terpotong: trailer EOF tidak ditemukan." }
 
-  $headerBytes = New-Object byte[] 4
-  $fileStream = [System.IO.File]::OpenRead($pdfPath)
-  try {
-    [void]$fileStream.Read($headerBytes, 0, 4)
-  }
-  finally {
-    $fileStream.Dispose()
-  }
-  $header = [System.Text.Encoding]::ASCII.GetString($headerBytes)
-  if ($header -ne "%PDF") { throw "Server tidak mengirim file PDF yang valid." }
-
-  $tailStart = [Math]::Max(0, $pdfFile.Length - 1024)
-  $fileBytes = [System.IO.File]::ReadAllBytes($pdfPath)
-  $tail = [System.Text.Encoding]::ASCII.GetString($fileBytes, $tailStart, $fileBytes.Length - $tailStart)
-  if ($tail -notmatch "%%EOF") { throw "PDF quotation terpotong: trailer EOF tidak ditemukan." }
+  [System.IO.File]::WriteAllBytes($pdfPath, $pdfBytes)
+  if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal disimpan ke komputer." }
 
   $programFilesX86 = [Environment]::GetEnvironmentVariable("ProgramFiles(x86)")
   $candidates = @(
