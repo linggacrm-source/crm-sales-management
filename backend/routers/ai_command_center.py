@@ -6,6 +6,8 @@ done locally; the external model is called only when a user explicitly asks AI.
 
 import copy
 import os
+import random
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -574,6 +576,12 @@ async def command_center_chat(payload: ChatRequest, user: dict = Depends(current
     message = payload.message.strip()
     if not message:
         raise HTTPException(status_code=400, detail="Pertanyaan AI tidak boleh kosong")
-    context = await _build_context(user)
-    answer = _call_model(message, payload.history, context)
-    return ChatResponse(answer=answer, configured=True, model=_provider_model(), provider=_provider_name())
+    try:
+        context = await _build_context(user)
+        answer = _call_model(message, payload.history, context)
+        return ChatResponse(answer=answer, configured=True, model=_provider_model(), provider=_provider_name())
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("AI Command Center chat failed for user %s", user.get("user_id"))
+        raise HTTPException(status_code=502, detail="AI Command Center gagal memproses pertanyaan saat ini. Silakan coba lagi.")
