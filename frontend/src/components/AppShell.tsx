@@ -1,5 +1,5 @@
 import {
-  Bell, CalendarCheck, FileText, Kanban, LayoutDashboard, LogOut, Menu, Package, Search, Settings,
+  Bell, Bot, CalendarCheck, FileText, Kanban, LayoutDashboard, LogOut, Menu, Package, Search, Settings,
   ShieldCheck, ShoppingBag, Target, Truck, UserCog, Users, X,
 } from "lucide-react";
 import { useState } from "react";
@@ -14,6 +14,7 @@ type NavItem = { label: string; path: string; icon: typeof Users; testId: string
 const GROUPS: { group: string; items: NavItem[] }[] = [
   { group: "CRM Database", items: [
     { label: "Dashboard", path: "/", icon: LayoutDashboard, testId: "nav-dashboard" },
+    { label: "AI Command Center", path: "/ai-command-center", icon: Bot, testId: "nav-ai-command-center" },
     { label: "Customers", path: "/customers", icon: Users, testId: "nav-customers" },
     { label: "Sales Pipeline", path: "/pipeline", icon: Kanban, testId: "nav-pipeline" },
     { label: "Aktivitas", path: "/activities", icon: CalendarCheck, testId: "nav-activities" },
