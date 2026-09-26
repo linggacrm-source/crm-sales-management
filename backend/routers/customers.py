@@ -182,7 +182,7 @@ async def export_customers_csv(
     output = StringIO()
     writer = csv.writer(output, delimiter=";", lineterminator="\n")
     headers = [
-        "Customer ID", "Nama Perusahaan", "Nama Customer", "Industri", "Kota", "Provinsi",
+        "Customer ID", "Nama Perusahaan", "Produk / Solusi", "Nama Customer", "Industri", "Kota", "Provinsi",
         "Alamat", "PIC", "Jabatan PIC", "Telepon", "Email", "Sumber",
         "Sales ID", "Sales", "Status", "Catatan", "Tanggal Dibuat", "Tanggal Update",
     ]
@@ -191,6 +191,7 @@ async def export_customers_csv(
         writer.writerow([
             customer.get("customer_id", ""),
             customer.get("company", ""),
+            customer.get("products", ""),
             customer.get("customer_name", ""),
             customer.get("industry", ""),
             customer.get("city", ""),
