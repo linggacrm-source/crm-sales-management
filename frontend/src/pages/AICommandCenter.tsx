@@ -218,7 +218,7 @@ export default function AICommandCenter() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-950 md:text-[34px]">AI Command Center</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Tanya kondisi sales pipeline, cari customer yang lama belum di-follow-up, temukan risiko opportunity, dan siapkan bahan presentasi untuk manajemen.
+              Tanya tentang CRM, pipeline, customer, follow-up, atau gunakan AI untuk pertanyaan umum, drafting, terjemahan, dan kebutuhan sales.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function AICommandCenter() {
               <div className="mb-5 flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><Bot className="h-4 w-4" /></div><h2 className="text-sm font-bold text-slate-900">Ask Sales AI</h2></div>
-                  <p className="mt-2 text-xs text-slate-500">AI hanya menggunakan data CRM yang dapat dilihat oleh user yang sedang login.</p>
+                  <p className="mt-2 text-xs text-slate-500">AI otomatis menggunakan data CRM untuk pertanyaan terkait CRM, dan dapat menjawab pertanyaan umum di luar CRM.</p>
                 </div>
               </div>
               <div className="mb-4 min-h-[270px] max-h-[440px] space-y-3 overflow-y-auto rounded-2xl bg-slate-50/80 p-3">
