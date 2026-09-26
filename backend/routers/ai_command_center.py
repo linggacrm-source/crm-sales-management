@@ -445,7 +445,7 @@ Jika membuat rekomendasi, jelaskan apakah itu berbasis data CRM atau pengetahuan
         if m.role in {"user", "assistant"}
     )
     safe_context, restore_map, replacements = _anonymize_context(context)
-    safe_history = _scrub_text(history_text, replacements)
+    safe_history = _scrub_text(history_text, replacements) if use_crm_context else ""
     safe_message = _scrub_text(message[:4000], replacements)
     if use_crm_context:
         prompt = f"""MODE: CRM + GENERAL AI
