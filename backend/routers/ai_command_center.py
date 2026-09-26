@@ -82,6 +82,7 @@ def _anonymize_context(context: dict) -> tuple[dict, dict[str, str], dict[str, s
     replacements: dict[str, str] = {}
     reverse: dict[str, str] = {}
     counter = 0
+    amount_counter = 0
 
     def register(value: object) -> None:
         nonlocal counter
@@ -106,17 +107,37 @@ def _anonymize_context(context: dict) -> tuple[dict, dict[str, str], dict[str, s
     safe["scope"] = "CURRENT_SALES_USER"
 
     ordered = sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True)
+    amount_keys = {"value", "weighted_value", "open_pipeline", "weighted_pipeline", "won_pipeline"}
 
-    def scrub(value):
+    def amount_band(value: float) -> str:
+        if value < 10_000_000:
+            return "< Rp 10 jt"
+        if value < 50_000_000:
+            return "Rp 10–50 jt"
+        if value < 100_000_000:
+            return "Rp 50–100 jt"
+        if value < 500_000_000:
+            return "Rp 100–500 jt"
+        if value < 1_000_000_000:
+            return "Rp 500 jt–1 M"
+        return ">= Rp 1 M"
+
+    def scrub(value, key=None):
+        nonlocal amount_counter
+        if key in amount_keys and isinstance(value, (int, float)) and not isinstance(value, bool):
+            amount_counter += 1
+            token = f"AMOUNT-{amount_counter:03d}"
+            reverse[token] = _money(float(value))
+            return f"{token} ({amount_band(float(value))})"
         if isinstance(value, str):
             result = value
             for raw, token in ordered:
                 result = result.replace(raw, token)
             return result
         if isinstance(value, list):
-            return [scrub(item) for item in value]
+            return [scrub(item, key) for item in value]
         if isinstance(value, dict):
-            return {key: scrub(item) for key, item in value.items()}
+            return {key: scrub(item, key) for key, item in value.items()}
         return value
 
     return scrub(safe), reverse, replacements
