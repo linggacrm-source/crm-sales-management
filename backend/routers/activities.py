@@ -135,7 +135,16 @@ async def create_activity(payload: ActivityIn, user: dict = Depends(current_user
     customer_name = None
     if payload.customer_id:
         cust = await db.customers.find_one({"customer_id": payload.customer_id}, {"_id": 0, "customer_name": 1})
-        customer_name = cust["customer_name"] if cust else None
+        if not cust:
+            raise HTTPException(status_code=400, detail="Customer tidak ditemukan")
+        customer_name = cust["customer_name"]
+    if payload.opportunity_id:
+        opportunity = await db.opportunities.find_one(
+            {"opportunity_id": payload.opportunity_id, "customer_id": payload.customer_id},
+            {"_id": 0, "opportunity_id": 1},
+        )
+        if not opportunity:
+            raise HTTPException(status_code=400, detail="Opportunity tidak terkait dengan customer tersebut")
     now = datetime.now(timezone.utc)
     doc = payload.model_dump()
     doc.update(
@@ -162,9 +171,23 @@ async def update_activity(activity_id: str, payload: ActivityIn, user: dict = De
     updates = payload.model_dump(exclude_unset=True)
     if user["role"] == SALES:
         updates.pop("sales_id", None)
-    if updates.get("customer_id"):
-        cust = await db.customers.find_one({"customer_id": updates["customer_id"]}, {"_id": 0, "customer_name": 1})
-        updates["customer_name"] = cust["customer_name"] if cust else None
+    if "customer_id" in updates:
+        if updates["customer_id"]:
+            cust = await db.customers.find_one({"customer_id": updates["customer_id"]}, {"_id": 0, "customer_name": 1})
+            if not cust:
+                raise HTTPException(status_code=400, detail="Customer tidak ditemukan")
+            updates["customer_name"] = cust["customer_name"]
+        else:
+            updates["customer_name"] = None
+    opportunity_id = updates.get("opportunity_id", existing.get("opportunity_id"))
+    customer_id = updates.get("customer_id", existing.get("customer_id"))
+    if opportunity_id:
+        opportunity = await db.opportunities.find_one(
+            {"opportunity_id": opportunity_id, "customer_id": customer_id},
+            {"_id": 0, "opportunity_id": 1},
+        )
+        if not opportunity:
+            raise HTTPException(status_code=400, detail="Opportunity tidak terkait dengan customer tersebut")
     updates["updated_date"] = datetime.now(timezone.utc)
     await db.activities.update_one({"activity_id": activity_id}, {"$set": updates})
     await write_audit(user, "UPDATE", "Activity", activity_id, existing.get("status"), updates.get("status"))
