@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, LayoutGrid, List, Plus, Trash2 } from "lucide-react";
+import { Download, History, LayoutGrid, List, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import type {
   Paginated,
   SalesOption,
   StageSummary,
+  AuditRow,
 } from "@/lib/types";
 
 const STAGES = ["Lead", "Qualification", "Proposal", "Negotiation", "Won", "Lost"];
@@ -71,6 +72,8 @@ export default function Pipeline() {
   const [salesId, setSalesId] = useState("");
   const [customerId, setCustomerId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyOpportunity, setHistoryOpportunity] = useState<OpportunityRow | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY);
 
   const debounced = useDebounced(search);
@@ -114,6 +117,12 @@ export default function Pipeline() {
     queryKey: ["customer-options"],
     queryFn: () => apiGet<CustomerOption[]>("/customers/options"),
     staleTime: 10 * 60_000,
+  });
+
+  const history = useQuery<AuditRow[]>({
+    queryKey: ["pipeline-history", historyOpportunity?.opportunity_id],
+    queryFn: () => apiGet<AuditRow[]>(`/pipeline/${historyOpportunity?.opportunity_id}/history`),
+    enabled: historyOpen && !!historyOpportunity?.opportunity_id,
   });
 
   const invalidate = () => {
@@ -345,6 +354,17 @@ export default function Pipeline() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => {
+                            setHistoryOpportunity(o);
+                            setHistoryOpen(true);
+                          }}
+                          data-testid={`btn-history-opportunity-${o.opportunity_id}`}
+                        >
+                          <History className="mr-1.5 h-3.5 w-3.5" /> History
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => openEdit(o)}
                           data-testid={`btn-edit-opportunity-${o.opportunity_id}`}
                         >
@@ -439,6 +459,64 @@ export default function Pipeline() {
           </div>
         )}
       </Card>
+
+      <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>History Opportunity</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              {historyOpportunity?.opportunity_name} · {historyOpportunity?.customer_name ?? "-"}
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            {history.isLoading ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">Memuat history...</div>
+            ) : history.isError ? (
+              <div className="py-8 text-center text-sm text-destructive">History tidak dapat dimuat.</div>
+            ) : (history.data ?? []).length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">Belum ada history.</div>
+            ) : (
+              (history.data ?? []).map((item, index) => {
+                let parsed: Record<string, { old?: unknown; new?: unknown }> | null = null;
+                try {
+                  if (item.new_value === "Perubahan field" && item.old_value) {
+                    parsed = JSON.parse(item.old_value);
+                  }
+                } catch {
+                  parsed = null;
+                }
+                return (
+                  <div key={`${item.timestamp ?? "history"}-${index}`} className="relative border-l-2 border-primary/20 pl-4">
+                    <div className="absolute -left-[5px] top-1.5 h-2 w-2 rounded-full bg-primary" />
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold">{item.action === "CREATE" ? "Opportunity dibuat" : "Opportunity diperbarui"}</p>
+                      <span className="text-xs text-muted-foreground">{formatDate(item.timestamp)}</span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Oleh: {item.user_name ?? "-"}</p>
+                    {parsed ? (
+                      <div className="mt-2 space-y-1.5">
+                        {Object.entries(parsed).map(([label, change]) => (
+                          <div key={label} className="rounded-md bg-muted/50 px-3 py-2 text-xs">
+                            <span className="font-semibold">{label}:</span>{" "}
+                            <span className="text-muted-foreground">{String(change.old ?? "-")}</span>
+                            <span className="mx-1">→</span>
+                            <span className="font-medium">{String(change.new ?? "-")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="mt-2 rounded-md bg-muted/50 px-3 py-2 text-xs">
+                        {item.old_value ? <span>{item.old_value} → </span> : null}
+                        <span>{item.new_value ?? "-"}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
