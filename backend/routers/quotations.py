@@ -1,8 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from io import BytesIO
 import base64
 import re
+import secrets
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -132,6 +133,18 @@ class QuotationEmailRequest(BaseModel):
     body: str
 
 
+class QuotationDesktopEmailRequest(BaseModel):
+    to: str
+    cc: Optional[str] = None
+    subject: str
+    body: str
+
+
+class QuotationDesktopEmailStart(BaseModel):
+    protocol_url: str
+    expires_in_seconds: int
+
+
 class QuotationEmailDraft(BaseModel):
     to: str
     subject: str
@@ -195,6 +208,73 @@ async def _decorate(doc: dict) -> dict:
         "signature_name": (signer or {}).get("name"),
         "signature_title": (signer or {}).get("signature_title") or (signer or {}).get("role"),
     }
+
+
+@router.post("/{quotation_id}/desktop-email", response_model=QuotationDesktopEmailStart)
+async def start_desktop_email(
+    quotation_id: str,
+    payload: QuotationDesktopEmailRequest,
+    user: dict = Depends(current_user),
+):
+    if not payload.to.strip():
+        raise HTTPException(status_code=400, detail="Alamat email tujuan wajib diisi")
+    scope = await scope_filter(user)
+    doc = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0, "quotation_number": 1})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
+
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+    await db.quotation_email_tokens.insert_one(
+        {
+            "token": token,
+            "quotation_id": quotation_id,
+            "user_id": user["user_id"],
+            "to": payload.to.strip(),
+            "cc": payload.cc.strip() if payload.cc else "",
+            "subject": payload.subject.strip(),
+            "body": payload.body or "",
+            "expires_at": expires_at,
+            "created_date": datetime.now(timezone.utc),
+        }
+    )
+    return QuotationDesktopEmailStart(
+        protocol_url=f"wellracomcrm://quotation-email?token={token}",
+        expires_in_seconds=600,
+    )
+
+
+@router.get("/desktop-email/{token}")
+async def desktop_email_package(token: str):
+    record = await db.quotation_email_tokens.find_one({"token": token}, {"_id": 0})
+    if not record or record.get("expires_at") < datetime.now(timezone.utc):
+        raise HTTPException(status_code=404, detail="Link email sudah tidak berlaku")
+    quotation_id = record["quotation_id"]
+    user = await db.users.find_one({"user_id": record["user_id"], "status": "Active"}, {"_id": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User tidak ditemukan")
+    doc = await db.quotations.find_one({"quotation_id": quotation_id}, {"_id": 0, "quotation_number": 1})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
+    return {
+        "to": record["to"],
+        "cc": record.get("cc", ""),
+        "subject": record.get("subject", ""),
+        "body": record.get("body", ""),
+        "quotation_number": doc.get("quotation_number") or quotation_id,
+        "pdf_url": f"/api/quotations/desktop-email/{token}/pdf",
+    }
+
+
+@router.get("/desktop-email/{token}/pdf")
+async def desktop_email_pdf(token: str, request: Request):
+    record = await db.quotation_email_tokens.find_one({"token": token}, {"_id": 0})
+    if not record or record.get("expires_at") < datetime.now(timezone.utc):
+        raise HTTPException(status_code=404, detail="Link email sudah tidak berlaku")
+    user = await db.users.find_one({"user_id": record["user_id"], "status": "Active"}, {"_id": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User tidak ditemukan")
+    return await download_quotation_pdf(record["quotation_id"], request, user)
 
 
 @router.get("/{quotation_id}/email-draft", response_model=QuotationEmailDraft)
