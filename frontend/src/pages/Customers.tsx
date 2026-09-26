@@ -14,7 +14,6 @@ import { EmptyRow, ErrorRow, FilterSelect, Pagination, PageHeader, SearchBox, St
 import { useAuth } from "@/hooks/useAuth";
 import { useDebounced } from "@/hooks/useDebounced";
 import { ApiError, apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
-import { exportCsv } from "@/lib/format";
 import type { CustomerRow, Paginated, SalesOption } from "@/lib/types";
 
 const INDUSTRIES = ["Manufaktur", "Oil & Gas", "Pertambangan", "Otomotif", "FMCG", "Telekomunikasi", "Konstruksi"];
