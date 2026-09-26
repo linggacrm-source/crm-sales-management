@@ -13,10 +13,7 @@
 <path d="M575 0h425v530H575z" fill="#B9D7FF" opacity=".11"/>
 <path d="M720 0v530M865 0v530M575 170h425M575 345h425" stroke="#DCEBFF" stroke-opacity=".13" stroke-width="4"/>
 <path d="M600 160c100-75 210-65 355 0v350H600z" fill="#8EC2FF" opacity=".07"/>
-<!-- brand -->
-<rect x="48" y="42" width="46" height="46" rx="14" fill="#2478FF"/>
-<text x="71" y="73" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="700" fill="white">C</text>
-<text x="108" y="73" font-family="Arial,sans-serif" font-size="20" font-weight="700" fill="white">CRM Sales Management</text>
+
 <!-- floating cards -->
 <g filter="url(#shadow)">
  <rect x="610" y="105" width="112" height="112" rx="25" fill="url(#glass)" stroke="#7DB4FF" stroke-opacity=".55"/>
