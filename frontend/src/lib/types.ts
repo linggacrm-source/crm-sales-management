@@ -203,6 +203,9 @@ export interface PORow {
   sales_name?: string | null;
   po_value: number;
   status: string;
+  document_name?: string | null;
+  document_file_id?: string | null;
+  document_content_type?: string | null;
 }
 
 export interface PODetail extends PORow {
