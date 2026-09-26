@@ -151,7 +151,10 @@ export default function AICommandCenter() {
       </section>
 
       {isError ? (
-        <Card className="rounded-2xl border-red-200 bg-red-50 p-5 text-sm text-red-700">Data AI Command Center gagal dimuat. Silakan refresh.</Card>
+        <Card className="rounded-2xl border-red-200 bg-red-50 p-5 text-sm text-red-700">
+          <p className="font-semibold">Data AI Command Center gagal dimuat.</p>
+          <p className="mt-1 text-xs text-red-600">{error instanceof Error ? error.message : "Silakan refresh."}</p>
+        </Card>
       ) : (
         <>
           <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
