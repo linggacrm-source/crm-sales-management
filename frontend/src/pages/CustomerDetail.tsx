@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CalendarDays, CircleCheck, Clock3, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -82,6 +82,51 @@ function RelatedTable({ customerId, tab }: { customerId: string; tab: (typeof TA
   };
 
   return (
+    {tab.key === "activities" ? (
+      <div className="p-5">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold">Customer Activity Timeline</h3>
+            <p className="mt-1 text-xs text-muted-foreground">Setiap komunikasi dicatat sebagai activity baru dan tetap terhubung ke customer serta project.</p>
+          </div>
+          <Link to={"/activities?customer_id=" + encodeURIComponent(customerId)} className={buttonVariants({ size: "sm" })} data-testid="btn-add-customer-activity">
+            <Plus className="mr-2 h-4 w-4" /> Tambah Aktivitas
+          </Link>
+        </div>
+        {isLoading ? <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="h-24 animate-pulse rounded-lg bg-muted/50" />)}</div>
+        : isError ? <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">Gagal memuat aktivitas customer.</div>
+        : rows.length === 0 ? <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">Belum ada aktivitas untuk customer ini.</div>
+        : <div className="relative ml-2 border-l border-border pl-6">
+            {rows.map((r, i) => {
+              const status = r.status == null ? "-" : String(r.status);
+              const val = (k: string) => (r[k] == null ? "—" : String(r[k]));
+              return <div key={i} className="relative pb-5 last:pb-0">
+                <div className="absolute -left-[34px] top-1 flex h-7 w-7 items-center justify-center rounded-full border bg-background shadow-sm">
+                  {status === "Completed" ? <CircleCheck className="h-4 w-4 text-emerald-600" /> : <Clock3 className="h-4 w-4 text-blue-600" />}
+                </div>
+                <div className="rounded-xl border bg-card p-4 shadow-sm">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">{val("activity_type")}</span>
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" /> {formatDate(val("activity_date"))}</span>
+                      </div>
+                      <h4 className="mt-2 font-semibold">{val("subject")}</h4>
+                    </div>
+                    <StatusBadge value={status} />
+                  </div>
+                  <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+                    <div><span className="font-medium text-foreground">Project:</span> {val("opportunity_name")}</div>
+                    <div><span className="font-medium text-foreground">Sales:</span> {val("sales_name")}</div>
+                    <div><span className="font-medium text-foreground">Follow-up:</span> {formatDate(val("next_followup"))}</div>
+                  </div>
+                  {r.description ? <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">{String(r.description)}</p> : null}
+                </div>
+              </div>;
+            })}
+          </div>}
+      </div>
+    ) : (
     <Table>
       <TableHeader>
         <TableRow>
@@ -110,6 +155,7 @@ function RelatedTable({ customerId, tab }: { customerId: string; tab: (typeof TA
         )}
       </TableBody>
     </Table>
+    )}
   );
 }
 
