@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Mail, Paperclip, Sparkles } from "lucide-react";
+import { Mail, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
