@@ -86,6 +86,22 @@ class KanbanColumn(BaseModel):
     items: list[OpportunityRow]
 
 
+async def _enrich_customer_company(rows: list[dict]) -> list[dict]:
+    customer_ids = list({r.get("customer_id") for r in rows if r.get("customer_id")})
+    if not customer_ids:
+        return rows
+    customers = await db.customers.find(
+        {"customer_id": {"$in": customer_ids}},
+        {"_id": 0, "customer_id": 1, "company": 1},
+    ).to_list(len(customer_ids))
+    company_by_id = {c["customer_id"]: c.get("company") for c in customers}
+    for row in rows:
+        company = company_by_id.get(row.get("customer_id"))
+        if company:
+            row["customer_name"] = company
+    return rows
+
+
 async def _names(customer_id: str, sales_id: Optional[str]) -> tuple[Optional[str], Optional[str]]:
     cust = await db.customers.find_one({"customer_id": customer_id}, {"_id": 0, "customer_name": 1})
     sales = await db.users.find_one({"user_id": sales_id}, {"_id": 0, "name": 1}) if sales_id else None
@@ -121,6 +137,7 @@ async def list_pipeline(
         db.opportunities, query, page, page_size, LIST_PROJECTION,
         sort_spec(sort_by, sort_dir, SORTABLE, "created_date"),
     )
+    result["data"] = await _enrich_customer_company(result["data"])
     return OpportunityListResponse(**result)
 
 
@@ -177,11 +194,12 @@ async def pipeline_kanban(
             aggregate_value(query),
             db.opportunities.find(query, LIST_PROJECTION).sort([("value", -1)]).limit(per_stage).to_list(per_stage),
         )
+        enriched = await _enrich_customer_company(items)
         return KanbanColumn(
             stage=stage,
             count=count,
             value=agg[0]["value"] if agg else 0,
-            items=[OpportunityRow(**i) for i in items],
+            items=[OpportunityRow(**i) for i in enriched],
         )
 
     return list(await asyncio.gather(*(column(s) for s in STAGES)))
@@ -193,7 +211,8 @@ async def get_opportunity(opportunity_id: str, user: dict = Depends(current_user
     doc = await db.opportunities.find_one({"opportunity_id": opportunity_id, **scope}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Opportunity tidak ditemukan")
-    return OpportunityRow(**doc)
+    enriched = await _enrich_customer_company([doc])
+    return OpportunityRow(**enriched[0])
 
 
 @router.post("", response_model=OpportunityRow)
@@ -219,7 +238,8 @@ async def create_opportunity(payload: OpportunityIn, user: dict = Depends(curren
     )
     await db.opportunities.insert_one(dict(doc))
     await write_audit(user, "CREATE", "Opportunity", doc["opportunity_id"], None, payload.opportunity_name)
-    return OpportunityRow(**doc)
+    enriched = await _enrich_customer_company([doc])
+    return OpportunityRow(**enriched[0])
 
 
 @router.put("/{opportunity_id}", response_model=OpportunityRow)
@@ -243,7 +263,9 @@ async def update_opportunity(opportunity_id: str, payload: OpportunityIn, user: 
     updates["updated_date"] = datetime.now(timezone.utc)
     await db.opportunities.update_one({"opportunity_id": opportunity_id}, {"$set": updates})
     await write_audit(user, "UPDATE", "Opportunity", opportunity_id, existing.get("stage"), updates.get("stage"))
-    return OpportunityRow(**{**existing, **updates})
+    result = {**existing, **updates}
+    enriched = await _enrich_customer_company([result])
+    return OpportunityRow(**enriched[0])
 
 
 @router.patch("/{opportunity_id}/stage", response_model=OpportunityRow)
@@ -265,7 +287,9 @@ async def change_stage(opportunity_id: str, payload: StageChange, user: dict = D
     await db.opportunities.update_one({"opportunity_id": opportunity_id}, {"$set": updates})
     await write_audit(user, "UPDATE", "Opportunity", opportunity_id,
                       f"Stage: {existing.get('stage')}", f"Stage: {payload.stage}")
-    return OpportunityRow(**{**existing, **updates})
+    result = {**existing, **updates}
+    enriched = await _enrich_customer_company([result])
+    return OpportunityRow(**enriched[0])
 
 
 @router.delete("/{opportunity_id}")
