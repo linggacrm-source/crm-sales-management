@@ -205,6 +205,21 @@ async def pipeline_kanban(
     return list(await asyncio.gather(*(column(s) for s in STAGES)))
 
 
+@router.get("/{opportunity_id}/history", response_model=list[dict])
+async def opportunity_history(opportunity_id: str, user: dict = Depends(current_user)):
+    """Return the change timeline for one opportunity."""
+    scope = await scope_filter(user)
+    existing = await db.opportunities.find_one({"opportunity_id": opportunity_id, **scope}, {"_id": 0, "opportunity_name": 1})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Opportunity tidak ditemukan")
+    rows = await db.audit_logs.find(
+        {"module": "Opportunity", "record_id": opportunity_id},
+        {"_id": 0, "user_id": 1, "user_name": 1, "action": 1, "module": 1, "record_id": 1,
+         "old_value": 1, "new_value": 1, "timestamp": 1},
+    ).sort("timestamp", -1).to_list(200)
+    return rows
+
+
 @router.get("/{opportunity_id}", response_model=OpportunityRow)
 async def get_opportunity(opportunity_id: str, user: dict = Depends(current_user)):
     scope = await scope_filter(user)
@@ -237,7 +252,11 @@ async def create_opportunity(payload: OpportunityIn, user: dict = Depends(curren
         }
     )
     await db.opportunities.insert_one(dict(doc))
-    await write_audit(user, "CREATE", "Opportunity", doc["opportunity_id"], None, payload.opportunity_name)
+    import json
+    await write_audit(
+        user, "CREATE", "Opportunity", doc["opportunity_id"], None,
+        json.dumps({"Nama Opportunity": payload.opportunity_name, "Stage": payload.stage, "Value": payload.value, "Catatan": payload.notes or ""}, ensure_ascii=False, default=str),
+    )
     enriched = await _enrich_customer_company([doc])
     return OpportunityRow(**enriched[0])
 
@@ -262,7 +281,26 @@ async def update_opportunity(opportunity_id: str, payload: OpportunityIn, user: 
         updates["sales_name"] = sales["name"] if sales else None
     updates["updated_date"] = datetime.now(timezone.utc)
     await db.opportunities.update_one({"opportunity_id": opportunity_id}, {"$set": updates})
-    await write_audit(user, "UPDATE", "Opportunity", opportunity_id, existing.get("stage"), updates.get("stage"))
+    tracked_fields = {
+        "opportunity_name": "Nama Opportunity",
+        "customer_id": "Customer",
+        "sales_id": "Sales",
+        "value": "Value",
+        "probability": "Probability",
+        "stage": "Stage",
+        "expected_close_date": "Target Close",
+        "source": "Source",
+        "notes": "Catatan",
+    }
+    changes = {}
+    for field, label in tracked_fields.items():
+        old_val = existing.get(field)
+        new_val = updates.get(field, old_val)
+        if old_val != new_val:
+            changes[label] = {"old": old_val, "new": new_val}
+    if changes:
+        import json
+        await write_audit(user, "UPDATE", "Opportunity", opportunity_id, json.dumps(changes, ensure_ascii=False, default=str), "Perubahan field")
     result = {**existing, **updates}
     enriched = await _enrich_customer_company([result])
     return OpportunityRow(**enriched[0])
