@@ -23,9 +23,20 @@ try {
   # Prevent any client/proxy cache from returning an older PDF with the same filename.
   $pdfUrl = "$BaseUrl$($package.pdf_url)"
   if ($pdfUrl.Contains("?")) { $pdfUrl += "&_ts=$stamp" } else { $pdfUrl += "?_ts=$stamp" }
-  Invoke-WebRequest -UseBasicParsing -Uri $pdfUrl -Headers @{ "Cache-Control" = "no-cache"; "Pragma" = "no-cache" } -OutFile $pdfPath
+  # Download the PDF as raw binary with curl.exe for maximum compatibility on Windows.
+  $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+  if (-not $curl) { throw "curl.exe tidak ditemukan di Windows." }
+  & $curl.Source --fail --silent --show-error --location --header "Cache-Control: no-cache" --header "Pragma: no-cache" --output $pdfPath $pdfUrl
+  if ($LASTEXITCODE -ne 0) { throw "PDF quotation gagal diunduh (HTTP/curl error $LASTEXITCODE)." }
   if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal diunduh." }
-  if ((Get-Item $pdfPath).Length -le 0) { throw "PDF quotation kosong." }
+
+  $pdfBytes = [System.IO.File]::ReadAllBytes($pdfPath)
+  if ($pdfBytes.Length -lt 20) { throw "PDF quotation terlalu kecil/kosong." }
+  $header = [System.Text.Encoding]::ASCII.GetString($pdfBytes, 0, 4)
+  if ($header -ne "%PDF") { throw "File attachment yang diterima bukan PDF yang valid." }
+  $tailStart = [Math]::Max(0, $pdfBytes.Length - 1024)
+  $tail = [System.Text.Encoding]::ASCII.GetString($pdfBytes, $tailStart, $pdfBytes.Length - $tailStart)
+  if ($tail -notmatch "%%EOF") { throw "PDF quotation tidak memiliki trailer EOF yang valid." }
 
   $programFilesX86 = [Environment]::GetEnvironmentVariable("ProgramFiles(x86)")
   $candidates = @(
