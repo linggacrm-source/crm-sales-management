@@ -100,7 +100,7 @@ export function QuotationEmailDialog({ quotationId, quotationNumber, customerEma
         <div className="space-y-4">
           <div className="rounded-lg border bg-muted/30 p-3 text-sm">
             <div className="flex items-center gap-2 font-medium"><Paperclip className="h-4 w-4" /> Attachment</div>
-            <p className="mt-1 text-xs text-muted-foreground">Quotation PDF akan otomatis disertakan pada file .EML.</p>
+            <p className="mt-1 text-xs text-muted-foreground">File .EML akan berisi quotation PDF sebagai attachment dan dapat dibuka langsung dengan Thunderbird. Browser tidak dapat menjalankan aplikasi Thunderbird secara langsung.</p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><Label htmlFor="quotation-email-to">To</Label><Input id="quotation-email-to" value={to} onChange={(e) => setTo(e.target.value)} placeholder="customer@email.com" className="mt-1.5" /></div>
@@ -112,10 +112,10 @@ export function QuotationEmailDialog({ quotationId, quotationNumber, customerEma
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
           <Button variant="outline" disabled={loading || emlLoading || !to.trim()} onClick={openThunderbird}>
-            <Mail className="mr-2 h-4 w-4" /> Buka Thunderbird
+            <Mail className="mr-2 h-4 w-4" /> Buka Email
           </Button>
           <Button disabled={loading || emlLoading || !to.trim()} onClick={downloadEml}>
-            <Sparkles className="mr-2 h-4 w-4" /> {emlLoading ? "Menyiapkan..." : "Email + PDF"}
+            <Paperclip className="mr-2 h-4 w-4" /> {emlLoading ? "Menyiapkan..." : "Siapkan Thunderbird + PDF"}
           </Button>
         </DialogFooter>
       </DialogContent>
