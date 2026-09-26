@@ -9,13 +9,14 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import requests
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from lib.auth import current_user, scope_filter
 from lib.db import db
 
-router = APIRouter(prefix="/ai-command-center", tags=["ai-command-center"])
+router = APIRouter(prefix="/ai-command-center", tags=["ai-command-center"])\nlogger = logging.getLogger(__name__)
 
 OPEN_STAGES = ["Lead", "Qualification", "Proposal", "Negotiation"]
 STALE_DAYS = 14
@@ -421,7 +422,11 @@ PERTANYAAN USER:
 
 @router.get("/overview")
 async def command_center_overview(user: dict = Depends(current_user)):
-    context = await _build_context(user)
+    try:
+        context = await _build_context(user)
+    except Exception as exc:
+        logger.exception("AI Command Center overview failed for user %s", user.get("user_id"))
+        raise HTTPException(status_code=500, detail="AI Command Center gagal membaca data CRM. Silakan coba refresh. Error: " + str(exc)[:240])
     stale = context["stale_customers"]
     risks = context["pipeline_risks"]
 
