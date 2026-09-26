@@ -3,6 +3,7 @@ import AppShell from "@/components/AppShell";
 import "@/brand-overrides.css";
 import { Toaster } from "@/components/ui/sonner";
 import Activities from "@/pages/Activities";
+import AICommandCenter from "@/pages/AICommandCenter";
 import AuditLog from "@/pages/AuditLog";
 import CustomerDetail from "@/pages/CustomerDetail";
 import CustomerImport from "@/pages/CustomerImport";
@@ -23,5 +24,5 @@ import Targets from "@/pages/Targets";
 import Users from "@/pages/Users";
 
 export default function App() {
-  return <><Routes><Route path="/login" element={<Login />} /><Route element={<AppShell />}><Route path="/" element={<Dashboard />} /><Route path="/customers" element={<Customers />} /><Route path="/customers/import" element={<CustomerImport />} /><Route path="/customers/:customerId" element={<CustomerDetail />} /><Route path="/pipeline" element={<Pipeline />} /><Route path="/activities" element={<Activities />} /><Route path="/quotations" element={<Quotations />} /><Route path="/quotations/:quotationId" element={<QuotationView />} /><Route path="/purchase-orders" element={<PurchaseOrders />} /><Route path="/purchase-orders/:poId" element={<PurchaseOrderView />} /><Route path="/order-monitoring" element={<OrderMonitoring />} /><Route path="/sales-team" element={<SalesTeam />} /><Route path="/targets" element={<Targets />} /><Route path="/audit-log" element={<AuditLog />} /><Route path="/users" element={<Users />} /><Route path="/products" element={<Products />} /><Route path="/products/import" element={<ProductImport />} /><Route path="/settings" element={<Settings />} /></Route></Routes><Toaster position="bottom-right" richColors /></>;
+  return <><Routes><Route path="/login" element={<Login />} /><Route element={<AppShell />}><Route path="/" element={<Dashboard />} /><Route path="/ai-command-center" element={<AICommandCenter />} /><Route path="/customers" element={<Customers />} /><Route path="/customers/import" element={<CustomerImport />} /><Route path="/customers/:customerId" element={<CustomerDetail />} /><Route path="/pipeline" element={<Pipeline />} /><Route path="/activities" element={<Activities />} /><Route path="/quotations" element={<Quotations />} /><Route path="/quotations/:quotationId" element={<QuotationView />} /><Route path="/purchase-orders" element={<PurchaseOrders />} /><Route path="/purchase-orders/:poId" element={<PurchaseOrderView />} /><Route path="/order-monitoring" element={<OrderMonitoring />} /><Route path="/sales-team" element={<SalesTeam />} /><Route path="/targets" element={<Targets />} /><Route path="/audit-log" element={<AuditLog />} /><Route path="/users" element={<Users />} /><Route path="/products" element={<Products />} /><Route path="/products/import" element={<ProductImport />} /><Route path="/settings" element={<Settings />} /></Route></Routes><Toaster position="bottom-right" richColors /></>;
 }
