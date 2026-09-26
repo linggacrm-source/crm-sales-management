@@ -76,7 +76,7 @@ def _money(value: float) -> str:
 
 
 
-def _anonymize_context(context: dict) -> tuple[dict, dict[str, str]]:
+def _anonymize_context(context: dict) -> tuple[dict, dict[str, str], dict[str, str]]:
     """Remove CRM identities before the context is sent to an external model."""
     safe = copy.deepcopy(context)
     replacements: dict[str, str] = {}
@@ -119,7 +119,14 @@ def _anonymize_context(context: dict) -> tuple[dict, dict[str, str]]:
             return {key: scrub(item) for key, item in value.items()}
         return value
 
-    return scrub(safe), reverse
+    return scrub(safe), reverse, replacements
+
+
+def _scrub_text(text: str, replacements: dict[str, str]) -> str:
+    result = text
+    for raw, token in sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True):
+        result = result.replace(raw, token)
+    return result
 
 
 def _restore_model_answer(answer: str, reverse: dict[str, str]) -> str:
@@ -403,15 +410,17 @@ Jika membuat rekomendasi, jelaskan bahwa itu rekomendasi berbasis data CRM, buka
         for m in history[-8:]
         if m.role in {"user", "assistant"}
     )
-    safe_context, restore_map = _anonymize_context(context)
+    safe_context, restore_map, replacements = _anonymize_context(context)
+    safe_history = _scrub_text(history_text, replacements)
+    safe_message = _scrub_text(message[:4000], replacements)
     prompt = f"""KONTEKS CRM (identitas sudah dianonimkan di server sebelum dikirim ke model):
 {safe_context}
 
 RIWAYAT CHAT:
-{history_text or "(belum ada)"}
+{safe_history or "(belum ada)"}
 
 PERTANYAAN USER:
-{message[:4000]}
+{safe_message}
 """
 
     if provider == "gemini":
