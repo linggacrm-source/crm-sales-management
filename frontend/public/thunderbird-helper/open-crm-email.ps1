@@ -23,20 +23,31 @@ try {
   # Prevent any client/proxy cache from returning an older PDF with the same filename.
   $pdfUrl = "$BaseUrl$($package.pdf_url)"
   if ($pdfUrl.Contains("?")) { $pdfUrl += "&_ts=$stamp" } else { $pdfUrl += "?_ts=$stamp" }
-  # Download the PDF as raw binary with curl.exe for maximum compatibility on Windows.
-  $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
-  if (-not $curl) { throw "curl.exe tidak ditemukan di Windows." }
-  & $curl.Source --fail --silent --show-error --location --header "Cache-Control: no-cache" --header "Pragma: no-cache" --output $pdfPath $pdfUrl
-  if ($LASTEXITCODE -ne 0) { throw "PDF quotation gagal diunduh (HTTP/curl error $LASTEXITCODE)." }
-  if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal diunduh." }
+  # Download the PDF directly as bytes. HttpClient avoids PowerShell/curl
+  # content handling differences and preserves the PDF byte-for-byte.
+  $http = [System.Net.Http.HttpClient]::new()
+  try {
+    $http.DefaultRequestHeaders.TryAddWithoutValidation("Cache-Control", "no-cache") | Out-Null
+    $http.DefaultRequestHeaders.TryAddWithoutValidation("Pragma", "no-cache") | Out-Null
+    $response = $http.GetAsync($pdfUrl).GetAwaiter().GetResult()
+    $pdfBytes = $response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult()
+    if (-not $response.IsSuccessStatusCode) {
+      throw "PDF quotation gagal diunduh (HTTP $([int]$response.StatusCode))."
+    }
+  }
+  finally {
+    $http.Dispose()
+  }
 
-  $pdfBytes = [System.IO.File]::ReadAllBytes($pdfPath)
   if ($pdfBytes.Length -lt 20) { throw "PDF quotation terlalu kecil/kosong." }
   $header = [System.Text.Encoding]::ASCII.GetString($pdfBytes, 0, 4)
   if ($header -ne "%PDF") { throw "File attachment yang diterima bukan PDF yang valid." }
   $tailStart = [Math]::Max(0, $pdfBytes.Length - 1024)
   $tail = [System.Text.Encoding]::ASCII.GetString($pdfBytes, $tailStart, $pdfBytes.Length - $tailStart)
   if ($tail -notmatch "%%EOF") { throw "PDF quotation tidak memiliki trailer EOF yang valid." }
+
+  [System.IO.File]::WriteAllBytes($pdfPath, $pdfBytes)
+  if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal disimpan." }
 
   $programFilesX86 = [Environment]::GetEnvironmentVariable("ProgramFiles(x86)")
   $candidates = @(
