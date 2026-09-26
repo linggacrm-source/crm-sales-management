@@ -29,6 +29,7 @@ import type {
   ActivityRow,
   ActivitySummary,
   CustomerOption,
+  OpportunityRow,
   Paginated,
   SalesOption,
 } from "@/lib/types";
@@ -47,6 +48,7 @@ type FormState = {
   activity_id?: string;
   customer_id: string;
   sales_id: string;
+  opportunity_id: string;
   activity_type: string;
   activity_date: string;
   subject: string;
@@ -58,6 +60,7 @@ type FormState = {
 const EMPTY: FormState = {
   customer_id: "",
   sales_id: "",
+  opportunity_id: "",
   activity_type: "Call",
   activity_date: new Date().toISOString().slice(0, 10),
   subject: "",
@@ -77,6 +80,7 @@ export default function Activities() {
   const [status, setStatus] = useState("");
   const [salesId, setSalesId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [activityCustomerId, setActivityCustomerId] = useState("");
   const [form, setForm] = useState<FormState>(EMPTY);
 
   const debounced = useDebounced(search);
@@ -105,6 +109,12 @@ export default function Activities() {
     queryFn: () => apiGet<CustomerOption[]>("/customers/options"),
     staleTime: 10 * 60_000,
   });
+  const { data: opportunityOptions } = useQuery<OpportunityRow[]>({
+    queryKey: ["activity-opportunities", activityCustomerId],
+    queryFn: () => apiGet<Paginated<OpportunityRow>>(`/pipeline?customer_id=${encodeURIComponent(activityCustomerId)}&page_size=100`).then((r) => r.data),
+    enabled: Boolean(activityCustomerId),
+    staleTime: 60_000,
+  });
   const { data: salesOptions } = useQuery<SalesOption[]>({
     queryKey: ["user-options"],
     queryFn: () => apiGet<SalesOption[]>("/users/options"),
@@ -122,6 +132,7 @@ export default function Activities() {
       const body = {
         customer_id: f.customer_id || undefined,
         sales_id: f.sales_id || undefined,
+        opportunity_id: f.opportunity_id || undefined,
         activity_type: f.activity_type,
         activity_date: f.activity_date,
         subject: f.subject,
@@ -294,6 +305,7 @@ export default function Activities() {
                           activity_id: a.activity_id,
                           customer_id: a.customer_id ?? "",
                           sales_id: a.sales_id ?? "",
+                          opportunity_id: a.opportunity_id ?? "",
                           activity_type: a.activity_type,
                           activity_date: a.activity_date ?? "",
                           subject: a.subject,
@@ -376,10 +388,28 @@ export default function Activities() {
               <Label htmlFor="act-cust">Customer</Label>
               <SearchableCustomerSelect
                 value={form.customer_id}
-                onChange={(customer_id) => setForm({ ...form, customer_id })}
+                onChange={(customer_id) => setForm({ ...form, customer_id, opportunity_id: "" })}
                 options={customerOptions ?? []}
                 testId="input-activity-customer"
               />
+            </div>
+            <div>
+              <Label htmlFor="act-opportunity">Opportunity / Project</Label>
+              <select
+                id="act-opportunity"
+                value={form.opportunity_id}
+                onChange={(e) => setForm({ ...form, opportunity_id: e.target.value })}
+                disabled={!form.customer_id}
+                className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm disabled:opacity-60"
+                data-testid="input-activity-opportunity"
+              >
+                <option value="">— Umum / tidak terkait opportunity —</option>
+                {(opportunityOptions ?? []).map((x) => (
+                  <option key={x.opportunity_id} value={x.opportunity_id}>
+                    {x.opportunity_name} · {x.stage}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <Label htmlFor="act-follow">Next Follow-up</Label>
@@ -444,7 +474,7 @@ export default function Activities() {
             </Button>
             <Button
               onClick={() => save.mutate(form)}
-              disabled={!form.subject || !form.activity_date || save.isPending}
+              disabled={!form.subject || !form.activity_date || !form.customer_id || save.isPending}
               data-testid="btn-save-activity"
             >
               {save.isPending ? "Menyimpan..." : "Simpan"}
