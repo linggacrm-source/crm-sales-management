@@ -4,6 +4,7 @@ from io import StringIO
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from lib.auth import SALES, current_user, scope_filter, visible_sales_ids, write_audit
