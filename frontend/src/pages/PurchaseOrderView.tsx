@@ -1,19 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Download, Eye, Printer, Truck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Download, Eye, Printer } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader, StatusBadge } from "@/components/Shared";
-import { ApiError, apiGet, apiPost } from "@/lib/api";
+import { apiGet } from "@/lib/api";
 import { formatDate, formatIDR } from "@/lib/format";
 import type { MonitoringRow, PODetail, Paginated } from "@/lib/types";
 
 export default function PurchaseOrderView() {
   const { poId = "" } = useParams();
-  const qc = useQueryClient();
-
   const { data, isLoading, isError } = useQuery<PODetail>({
     queryKey: ["purchase-order", poId],
     queryFn: () => apiGet<PODetail>(`/purchase-orders/${poId}`),
@@ -25,19 +22,7 @@ export default function PurchaseOrderView() {
     enabled: false,
   });
 
-  const createMonitoring = useMutation({
-    mutationFn: () => apiPost<{ created: number }>(`/purchase-orders/${poId}/create-monitoring`),
-    onSuccess: (res) => {
-      toast.success(`${res.created} baris order monitoring dibuat`);
-      qc.invalidateQueries({ queryKey: ["purchase-order", poId] });
-      qc.invalidateQueries({ queryKey: ["order-monitoring"] });
-      monitoring.refetch();
-    },
-    onError: (e) =>
-      toast.error(
-        (e instanceof ApiError ? (e.body as { detail?: string })?.detail : null) ?? "Gagal membuat order monitoring",
-      ),
-  });
+
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -94,13 +79,6 @@ export default function PurchaseOrderView() {
         {data?.document_name && !data?.document_file_id && (
           <span className="text-xs text-muted-foreground">Dokumen: {data.document_name} (file belum tersedia)</span>
         )}
-        <Button
-          onClick={() => createMonitoring.mutate()}
-          disabled={createMonitoring.isPending}
-          data-testid="btn-create-monitoring"
-        >
-          <Truck className="mr-2 h-4 w-4" /> Buat Order Monitoring
-        </Button>
       </PageHeader>
 
       <Card className="print-area p-6" data-testid="po-document">
