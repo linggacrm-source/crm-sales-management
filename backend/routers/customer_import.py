@@ -20,6 +20,7 @@ FIELD_ALIASES = {
     "customer_id": ["customer_id", "customer id", "id customer", "id_customer"],
     "customer_name": ["customer_name", "customer name", "nama customer", "nama_customer", "customer"],
     "company": ["company", "perusahaan", "nama perusahaan", "nama_perusahaan"],
+    "products": ["products", "product", "produk", "produk / solusi", "produk/solusi"],
     "industry": ["industry", "industri"],
     "address": ["address", "alamat"],
     "city": ["city", "kota"],
@@ -35,7 +36,7 @@ FIELD_ALIASES = {
 }
 
 IMPORT_FIELDS = [
-    "customer_id", "customer_name", "company", "industry", "address", "city", "province",
+    "customer_id", "customer_name", "company", "products", "industry", "address", "city", "province",
     "phone", "email", "pic_name", "pic_position", "source", "sales_id", "status", "notes",
 ]
 
