@@ -41,6 +41,9 @@ LIST_PROJECTION = {
     "sales_name": 1,
     "po_value": 1,
     "status": 1,
+    "document_name": 1,
+    "document_file_id": 1,
+    "document_content_type": 1,
 }
 SORTABLE = ["po_number", "po_date", "po_value", "status", "created_date"]
 
@@ -89,6 +92,9 @@ class PORow(BaseModel):
     sales_name: Optional[str] = None
     po_value: float = 0
     status: str
+    document_name: Optional[str] = None
+    document_file_id: Optional[str] = None
+    document_content_type: Optional[str] = None
 
 
 class PODetail(PORow):
