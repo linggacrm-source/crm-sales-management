@@ -67,9 +67,9 @@ async def _build_context(user: dict) -> dict:
         stale_cutoff,
     )
 
-    open_value = round(sum(float(r.get("value") or 0) for r in open_pipeline_rows), 2)
-    weighted_value = round(sum(float(r.get("weighted_value") or 0) for r in open_pipeline_rows), 2)
-    won_value = round(sum(float(r.get("value") or 0) for r in won_rows), 2)
+    open_value = round(sum(float(stage_map.get(stage, {}).get("value", 0)) for stage in OPEN_STAGES), 2)
+    weighted_value = round(sum(float(stage_map.get(stage, {}).get("weighted_value", 0)) for stage in OPEN_STAGES), 2)
+    won_value = round(float(stage_map.get("Won", {}).get("value", 0)), 2)
 
     stage_map = {}
     for row in stage_rows:
@@ -217,7 +217,7 @@ async def _gather_context(open_cursor, won_cursor, stage_cursor, customers_curso
         db.quotations.count_documents(scope),
         db.purchase_orders.count_documents(scope),
         db.customers.count_documents({**scope, "status": {"$ne": "Archived"}}),
-        db.opportunities.find(open_cursor._CommandCursor__spec if False else {**scope, "stage": {"$in": OPEN_STAGES}},
+        db.opportunities.find({**scope, "stage": {"$in": OPEN_STAGES}},
                               {"_id": 0, "opportunity_id": 1, "opportunity_name": 1, "customer_name": 1, "sales_name": 1,
                                "stage": 1, "value": 1, "expected_close_date": 1, "updated_date": 1}).sort([("value", -1)]).limit(100).to_list(100),
         customers_cursor.to_list(1000),
