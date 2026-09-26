@@ -292,16 +292,25 @@ async def quotation_email_draft(quotation_id: str, user: dict = Depends(current_
     doc = await _decorate(doc)
     quotation_number = str(doc.get("quotation_number") or quotation_id)
     customer_name = str(doc.get("customer_company") or doc.get("customer_name") or "Customer")
+    customer_pic = str(doc.get("customer_pic_name") or "").strip()
     customer_email = str(doc.get("customer_email") or "")
     subject = f"Quotation {quotation_number} - {customer_name}"
+
+    # Use the quotation item descriptions as the requested product names in the email.
+    item_names = []
+    for item in (doc.get("items") or []):
+        item_name = str(item.get("description") or "").strip()
+        if item_name and item_name not in item_names:
+            item_names.append(item_name)
+    product_names = ", ".join(item_names) if item_names else "kebutuhan yang diminta"
+
+    salutation = f"Bapak/Ibu {customer_pic}" if customer_pic else customer_name
     body = (
-        f"Yth. Bapak/Ibu {doc.get('customer_pic_name') or customer_name},\\n\\n"
-        f"Berikut kami sampaikan quotation {quotation_number} dari PT. Wellracom Industri Komputindo.\\n\\n"
-        "Quotation terlampir dalam email ini.\\n\\n"
-        "Mohon dapat diperiksa. Apabila ada pertanyaan atau kebutuhan penyesuaian, "
-        "silakan menghubungi kami.\\n\\n"
-        "Terima kasih atas perhatian dan kerja samanya.\\n\\n"
-        f"Hormat kami,\\n{doc.get('sales_name') or 'Sales'}\\nPT. Wellracom Industri Komputindo"
+        f"Dear {salutation},\n\n"
+        f"Menindaklanjuti permintaan dari pihak {customer_name} untuk permintaan {product_names}. "
+        "Berikut saya kirimkan penawaran harga dan datasheet yang dibutuhkan.\n\n"
+        "Kiranya ada yang ingin ditanyakan, jangan sungkan untuk menghubungi kami.\n\n"
+        "Atas kesempatan dan kerja samanya kami ucapkan terima kasih."
     )
     return QuotationEmailDraft(to=customer_email, subject=subject, body=body, quotation_number=quotation_number)
 
