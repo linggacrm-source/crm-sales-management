@@ -18,8 +18,12 @@ try {
   New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
 
   $safeNumber = ($package.quotation_number -replace '[^a-zA-Z0-9_-]', '_')
-  $pdfPath = Join-Path $tempDir ("Quotation_" + $safeNumber + ".pdf")
-  Invoke-WebRequest -UseBasicParsing -Uri "$BaseUrl$($package.pdf_url)" -OutFile $pdfPath
+  $stamp = Get-Date -Format "yyyyMMdd_HHmmss_fff"
+  $pdfPath = Join-Path $tempDir ("Quotation_" + $safeNumber + "_" + $stamp + ".pdf")
+  # Prevent any client/proxy cache from returning an older PDF with the same filename.
+  $pdfUrl = "$BaseUrl$($package.pdf_url)"
+  if ($pdfUrl.Contains("?")) { $pdfUrl += "&_ts=$stamp" } else { $pdfUrl += "?_ts=$stamp" }
+  Invoke-WebRequest -UseBasicParsing -Uri $pdfUrl -Headers @{ "Cache-Control" = "no-cache"; "Pragma" = "no-cache" } -OutFile $pdfPath
   if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal diunduh." }
   if ((Get-Item $pdfPath).Length -le 0) { throw "PDF quotation kosong." }
 
