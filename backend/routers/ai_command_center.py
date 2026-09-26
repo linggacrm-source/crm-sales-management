@@ -464,6 +464,22 @@ PERTANYAAN USER:
                 break
             time.sleep((2 ** attempt) + random.uniform(0, 0.75))
 
+        if provider == "gemini" and response.status_code == 503:
+            fallback_model = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite").strip()
+            if fallback_model and fallback_model != model:
+                fallback_endpoint = os.environ.get(
+                    "GEMINI_API_URL_FALLBACK",
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{fallback_model}:generateContent",
+                ).strip()
+                fallback_response = requests.post(
+                    fallback_endpoint,
+                    headers=headers,
+                    json=payload,
+                    timeout=35,
+                )
+                if fallback_response.status_code < 400:
+                    response = fallback_response
+
         if response.status_code >= 400:
             detail = ""
             try:
