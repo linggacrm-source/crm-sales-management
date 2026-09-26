@@ -295,7 +295,7 @@ export default function Pipeline() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Opportunity</TableHead>
-                  <TableHead>Customer</TableHead>
+                  <TableHead>Perusahaan</TableHead>
                   <TableHead>Sales</TableHead>
                   <TableHead className="text-right">Value</TableHead>
                   <TableHead className="text-right">Prob.</TableHead>
