@@ -108,11 +108,14 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
 
     subtotal_value = float(doc.get("subtotal") or 0)
     discount_value = float(doc.get("discount") or 0)
+    discount_type = str(doc.get("discount_type") or "amount")
+    discount_input = float(doc.get("discount_input") or discount_value)
     tax_value = float(doc.get("tax") or 0)
     grand_total = float(doc.get("grand_total") or 0)
     totals_rows = [[Paragraph("SUBTOTAL", right), Paragraph(money(subtotal_value), right)]]
     if discount_value > 0:
-        totals_rows.append([Paragraph("DISCOUNT", right), Paragraph(money(discount_value), right)])
+        discount_label = f"DISCOUNT {discount_input:g}%" if discount_type == "percent" else "DISCOUNT"
+        totals_rows.append([Paragraph(discount_label, right), Paragraph(money(discount_value), right)])
     totals_rows.extend([
         [Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right), Paragraph(money(tax_value), right)],
         [Paragraph("<b>GRAND TOTAL</b>", white_right), Paragraph(f"<b>{money(grand_total)}</b>", white_right)],
