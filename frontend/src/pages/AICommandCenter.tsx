@@ -91,6 +91,88 @@ function Metric({ label, value, icon, tone = "blue" }: { label: string; value: s
   );
 }
 
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|__[^_]+__|`[^`]+`|\*[^*]+\*|_[^_]+_)/g).filter(Boolean);
+  return parts.map((part, index) => {
+    if ((part.startsWith("**") && part.endsWith("**")) || (part.startsWith("__") && part.endsWith("__"))) {
+      return <strong key={index} className="font-semibold text-inherit">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={index} className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.9em]">{part.slice(1, -1)}</code>;
+    }
+    if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+      return <em key={index}>{part.slice(1, -1)}</em>;
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
+function MarkdownMessage({ content }: { content: string }) {
+  const lines = content.replace(/\r\n?/g, "\n").split("\n");
+  const blocks: React.ReactNode[] = [];
+  let listItems: { ordered: boolean; text: string }[] = [];
+  let inCode = false;
+  let codeLines: string[] = [];
+
+  const flushList = () => {
+    if (!listItems.length) return;
+    const ordered = listItems[0].ordered;
+    const ListTag = ordered ? "ol" : "ul";
+    blocks.push(
+      <ListTag key={"list-" + blocks.length} className={"my-2 space-y-1.5 pl-5 " + (ordered ? "list-decimal" : "list-disc")}>
+        {listItems.map((item, index) => <li key={"item-" + index}>{renderInlineMarkdown(item.text)}</li>)}
+      </ListTag>,
+    );
+    listItems = [];
+  };
+
+  const flushCode = () => {
+    if (!codeLines.length) return;
+    blocks.push(
+      <pre key={"code-" + blocks.length} className="my-2 overflow-x-auto rounded-xl bg-slate-950 p-3 text-xs text-slate-100">
+        <code>{codeLines.join("\n")}</code>
+      </pre>,
+    );
+    codeLines = [];
+  };
+
+  lines.forEach((line, index) => {
+    if (line.trim().startsWith("```")) {
+      if (inCode) { flushCode(); inCode = false; }
+      else { flushList(); inCode = true; }
+      return;
+    }
+    if (inCode) { codeLines.push(line); return; }
+
+    const heading = line.match(/^#{1,3}\s+(.+)$/);
+    const ordered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+    const unordered = line.match(/^\s*[-*•]\s+(.+)$/);
+
+    if (heading) {
+      flushList();
+      const level = line.match(/^#+/)?.[0].length ?? 1;
+      const className = level === 1 ? "mt-3 text-base font-bold text-slate-900" : level === 2 ? "mt-3 text-sm font-bold text-slate-900" : "mt-2 text-sm font-semibold text-slate-800";
+      blocks.push(<div key={"heading-" + index} className={className}>{renderInlineMarkdown(heading[1])}</div>);
+    } else if (ordered) {
+      if (listItems.length && !listItems[0].ordered) flushList();
+      listItems.push({ ordered: true, text: ordered[1] });
+    } else if (unordered) {
+      if (listItems.length && listItems[0].ordered) flushList();
+      listItems.push({ ordered: false, text: unordered[1] });
+    } else if (!line.trim()) {
+      flushList();
+      blocks.push(<div key={"space-" + index} className="h-2" />);
+    } else {
+      flushList();
+      blocks.push(<p key={"paragraph-" + index} className="my-1.5">{renderInlineMarkdown(line)}</p>);
+    }
+  });
+
+  if (inCode) flushCode();
+  flushList();
+  return <div className="space-y-0.5">{blocks}</div>;
+}
+
 export default function AICommandCenter() {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState<ChatItem[]>([]);
@@ -184,7 +266,7 @@ export default function AICommandCenter() {
                   <div key={`${item.role}-${index}`} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-6 ${item.role === "user" ? "bg-blue-600 text-white" : "border border-slate-200 bg-white text-slate-700 shadow-sm"}`}>
                       <div className="mb-1 text-[10px] font-bold uppercase tracking-wider opacity-60">{item.role === "user" ? "Anda" : "AI Sales Assistant"}</div>
-                      <div className="whitespace-pre-wrap">{item.content}</div>
+                      <div><MarkdownMessage content={item.content} /></div>
                     </div>
                   </div>
                 ))}
