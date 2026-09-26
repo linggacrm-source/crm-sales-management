@@ -52,7 +52,6 @@ class CustomerRow(BaseModel):
     customer_id: str
     customer_name: str
     company: Optional[str] = None
-    products: Optional[str] = None
     industry: Optional[str] = None
     city: Optional[str] = None
     phone: Optional[str] = None
