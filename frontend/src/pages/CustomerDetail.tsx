@@ -180,7 +180,6 @@ export default function CustomerDetailPage() {
   const info: [string, string][] = [
     ["Customer ID", data?.customer_id ?? "-"],
     ["Perusahaan", data?.company ?? "-"],
-    ["Produk / Solusi", data?.products ?? "-"],
     ["Industri", data?.industry ?? "-"],
     ["Kota / Provinsi", `${data?.city ?? "-"} / ${data?.province ?? "-"}`],
     ["Alamat", data?.address ?? "-"],
