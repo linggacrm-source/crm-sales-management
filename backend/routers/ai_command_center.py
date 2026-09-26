@@ -4,6 +4,7 @@ The router keeps CRM access scoped to the logged-in user. Database aggregation i
 done locally; the external model is called only when a user explicitly asks AI.
 """
 
+import copy
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -72,6 +73,60 @@ def _configured() -> bool:
 
 def _money(value: float) -> str:
     return f"Rp {value:,.0f}".replace(",", ".")
+
+
+
+def _anonymize_context(context: dict) -> tuple[dict, dict[str, str]]:
+    """Remove CRM identities before the context is sent to an external model."""
+    safe = copy.deepcopy(context)
+    replacements: dict[str, str] = {}
+    reverse: dict[str, str] = {}
+    counter = 0
+
+    def register(value: object) -> None:
+        nonlocal counter
+        if not isinstance(value, str) or not value.strip():
+            return
+        raw = value.strip()
+        if raw in replacements:
+            return
+        counter += 1
+        token = f"ENTITY-{counter:03d}"
+        replacements[raw] = token
+        reverse[token] = raw
+
+    def collect(rows: list[dict]) -> None:
+        for row in rows:
+            for key in ("id", "customer_id", "opportunity_id", "sales_id", "customer", "customer_name", "company", "sales", "sales_name", "opportunity", "opportunity_name", "pic", "pic_name"):
+                register(row.get(key))
+
+    collect(safe.get("top_open_opportunities", []))
+    collect(safe.get("pipeline_risks", []))
+    collect(safe.get("stale_customers", []))
+    safe["scope"] = "CURRENT_SALES_USER"
+
+    ordered = sorted(replacements.items(), key=lambda item: len(item[0]), reverse=True)
+
+    def scrub(value):
+        if isinstance(value, str):
+            result = value
+            for raw, token in ordered:
+                result = result.replace(raw, token)
+            return result
+        if isinstance(value, list):
+            return [scrub(item) for item in value]
+        if isinstance(value, dict):
+            return {key: scrub(item) for key, item in value.items()}
+        return value
+
+    return scrub(safe), reverse
+
+
+def _restore_model_answer(answer: str, reverse: dict[str, str]) -> str:
+    restored = answer
+    for token, raw in sorted(reverse.items(), key=lambda item: len(item[0]), reverse=True):
+        restored = restored.replace(token, raw)
+    return restored
 
 
 async def _build_context(user: dict) -> dict:
@@ -348,8 +403,9 @@ Jika membuat rekomendasi, jelaskan bahwa itu rekomendasi berbasis data CRM, buka
         for m in history[-8:]
         if m.role in {"user", "assistant"}
     )
-    prompt = f"""KONTEKS CRM:
-{context}
+    safe_context, restore_map = _anonymize_context(context)
+    prompt = f"""KONTEKS CRM (identitas sudah dianonimkan di server sebelum dikirim ke model):
+{safe_context}
 
 RIWAYAT CHAT:
 {history_text or "(belum ada)"}
@@ -416,7 +472,7 @@ PERTANYAAN USER:
         answer = parser(response.json())
         if not answer:
             raise HTTPException(status_code=502, detail="AI tidak mengembalikan jawaban")
-        return answer
+        return _restore_model_answer(answer, restore_map)
     except requests.RequestException:
         raise HTTPException(status_code=502, detail="AI tidak dapat dihubungi saat ini")
 
