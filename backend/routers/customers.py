@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+import csv
+from io import StringIO
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -127,6 +129,87 @@ async def list_customers(
         sort_spec(sort_by, sort_dir, SORTABLE, "created_date"),
     )
     return CustomerListResponse(**result)
+
+
+@router.get("/export-csv")
+async def export_customers_csv(
+    search: Optional[str] = None,
+    status: Optional[str] = None,
+    industry: Optional[str] = None,
+    sales_id: Optional[str] = None,
+    user: dict = Depends(current_user),
+):
+    """Export all customers matching the current filters; intentionally not paginated."""
+    query = await scope_filter(user)
+    query.update(search_clause(search, ["customer_name", "company", "pic_name", "email", "customer_id"]))
+    if status:
+        query["status"] = status
+    if industry:
+        query["industry"] = industry
+    if sales_id:
+        allowed = await visible_sales_ids(user)
+        if allowed is not None and sales_id not in allowed:
+            raise HTTPException(status_code=403, detail="Tidak memiliki akses ke data sales tersebut")
+        query["sales_id"] = sales_id
+
+    projection = {
+        "_id": 0,
+        "customer_id": 1,
+        "company": 1,
+        "customer_name": 1,
+        "industry": 1,
+        "city": 1,
+        "province": 1,
+        "address": 1,
+        "pic_name": 1,
+        "pic_position": 1,
+        "phone": 1,
+        "email": 1,
+        "source": 1,
+        "sales_id": 1,
+        "sales_name": 1,
+        "status": 1,
+        "notes": 1,
+        "created_date": 1,
+        "updated_date": 1,
+    }
+    cursor = db.customers.find(query, projection).sort([("created_date", -1)])
+    output = StringIO()
+    writer = csv.writer(output, delimiter=";", lineterminator="\n")
+    headers = [
+        "Customer ID", "Nama Perusahaan", "Nama Customer", "Industri", "Kota", "Provinsi",
+        "Alamat", "PIC", "Jabatan PIC", "Telepon", "Email", "Sumber",
+        "Sales ID", "Sales", "Status", "Catatan", "Tanggal Dibuat", "Tanggal Update",
+    ]
+    writer.writerow(headers)
+    async for customer in cursor:
+        writer.writerow([
+            customer.get("customer_id", ""),
+            customer.get("company", ""),
+            customer.get("customer_name", ""),
+            customer.get("industry", ""),
+            customer.get("city", ""),
+            customer.get("province", ""),
+            customer.get("address", ""),
+            customer.get("pic_name", ""),
+            customer.get("pic_position", ""),
+            customer.get("phone", ""),
+            customer.get("email", ""),
+            customer.get("source", ""),
+            customer.get("sales_id", ""),
+            customer.get("sales_name", ""),
+            customer.get("status", ""),
+            customer.get("notes", ""),
+            customer.get("created_date", ""),
+            customer.get("updated_date", ""),
+        ])
+
+    csv_content = "\ufeff" + output.getvalue()
+    return StreamingResponse(
+        iter([csv_content]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="customers.csv"'},
+    )
 
 
 @router.get("/{customer_id}", response_model=CustomerDetail)
