@@ -246,11 +246,12 @@ async def quotation_email_eml(quotation_id: str, payload: QuotationEmailRequest,
     msg["From"] = "PT. Wellracom Industri Komputindo"
     msg.set_content(payload.body or "")
     quotation_number = str(doc.get("quotation_number") or quotation_id)
-    filename = f"Quotation_{quotation_number.replace('/', '_').replace('\\\\', '_').replace(' ', '_')}.pdf"
+    safe_quotation_number = quotation_number.replace("/", "_").replace("\\", "_").replace(" ", "_")
+    filename = f"Quotation_{safe_quotation_number}.pdf"
     msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=filename)
 
     eml_bytes = msg.as_bytes()
-    eml_filename = f"Quotation_{quotation_number.replace('/', '_').replace('\\\\', '_').replace(' ', '_')}.eml"
+    eml_filename = f"Quotation_{safe_quotation_number}.eml"
     return StreamingResponse(
         BytesIO(eml_bytes),
         media_type="message/rfc822",
