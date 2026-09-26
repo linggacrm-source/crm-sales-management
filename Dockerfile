@@ -23,6 +23,9 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./backend/
+# The quotation PDF generator reads the company logo from frontend/public.
+# Keep public assets in the runtime image as Railway did.
+COPY frontend/public/ ./frontend/public/
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist/
 
 EXPOSE 8080
