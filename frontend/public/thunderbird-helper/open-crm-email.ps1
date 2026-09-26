@@ -23,20 +23,19 @@ try {
   # Prevent any client/proxy cache from returning an older PDF with the same filename.
   $pdfUrl = "$BaseUrl$($package.pdf_url)"
   if ($pdfUrl.Contains("?")) { $pdfUrl += "&_ts=$stamp" } else { $pdfUrl += "?_ts=$stamp" }
-  # Download the PDF directly as bytes. HttpClient avoids PowerShell/curl
-  # content handling differences and preserves the PDF byte-for-byte.
-  $http = [System.Net.Http.HttpClient]::new()
+  # Download the PDF as raw bytes using WebClient, which is available in
+  # Windows PowerShell 5.1 without requiring System.Net.Http.HttpClient.
+  $webClient = New-Object System.Net.WebClient
   try {
-    $http.DefaultRequestHeaders.TryAddWithoutValidation("Cache-Control", "no-cache") | Out-Null
-    $http.DefaultRequestHeaders.TryAddWithoutValidation("Pragma", "no-cache") | Out-Null
-    $response = $http.GetAsync($pdfUrl).GetAwaiter().GetResult()
-    $pdfBytes = $response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult()
-    if (-not $response.IsSuccessStatusCode) {
-      throw "PDF quotation gagal diunduh (HTTP $([int]$response.StatusCode))."
-    }
+    $webClient.Headers["Cache-Control"] = "no-cache"
+    $webClient.Headers["Pragma"] = "no-cache"
+    $pdfBytes = $webClient.DownloadData($pdfUrl)
+  }
+  catch {
+    throw "PDF quotation gagal diunduh: $($_.Exception.Message)"
   }
   finally {
-    $http.Dispose()
+    $webClient.Dispose()
   }
 
   if ($pdfBytes.Length -lt 20) { throw "PDF quotation terlalu kecil/kosong." }
