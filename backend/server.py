@@ -15,6 +15,7 @@ from lib.db import client, db, mongo_url  # noqa: E402
 from pymongo import AsyncMongoClient
 from routers import (  # noqa: E402
     activities,
+    ai_command_center,
     audit,
     auth,
     customers,
@@ -106,6 +107,7 @@ app.include_router(quotation_email.router, prefix="/api")
 app.include_router(purchase_orders.router, prefix="/api")
 app.include_router(order_monitoring.router, prefix="/api")
 app.include_router(activities.router, prefix="/api")
+app.include_router(ai_command_center.router, prefix="/api")
 app.include_router(audit.router, prefix="/api")
 app.include_router(dashboard.router, prefix="/api")
 app.include_router(targets.router, prefix="/api")
