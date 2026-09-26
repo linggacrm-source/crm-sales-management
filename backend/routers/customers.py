@@ -19,6 +19,7 @@ LIST_PROJECTION = {
     "customer_id": 1,
     "customer_name": 1,
     "company": 1,
+    "products": 1,
     "industry": 1,
     "city": 1,
     "phone": 1,
@@ -34,6 +35,7 @@ SORTABLE = ["customer_name", "company", "city", "status", "created_date"]
 class CustomerIn(BaseModel):
     customer_name: str
     company: Optional[str] = None
+    products: Optional[str] = None
     industry: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
@@ -52,6 +54,7 @@ class CustomerRow(BaseModel):
     customer_id: str
     customer_name: str
     company: Optional[str] = None
+    products: Optional[str] = None
     industry: Optional[str] = None
     city: Optional[str] = None
     phone: Optional[str] = None
@@ -157,6 +160,7 @@ async def export_customers_csv(
         "_id": 0,
         "customer_id": 1,
         "company": 1,
+        "products": 1,
         "customer_name": 1,
         "industry": 1,
         "city": 1,
