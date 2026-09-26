@@ -96,7 +96,7 @@ export default function AICommandCenter() {
   const [chat, setChat] = useState<ChatItem[]>([]);
   const [sending, setSending] = useState(false);
 
-  const { data, isLoading, isError, refetch, isFetching } = useQuery<Overview>({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery<Overview>({
     queryKey: ["ai-command-center-overview"],
     queryFn: () => apiGet<Overview>("/ai-command-center/overview"),
     staleTime: 60_000,
