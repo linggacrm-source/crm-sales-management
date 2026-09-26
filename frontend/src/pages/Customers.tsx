@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Plus, Trash2, Upload } from "lucide-react";
+import { Download, MessageCircle, Plus, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -19,6 +19,13 @@ import type { CustomerRow, Paginated, SalesOption } from "@/lib/types";
 const INDUSTRIES = ["Manufaktur", "Oil & Gas", "Pertambangan", "Otomotif", "FMCG", "Telekomunikasi", "Konstruksi"];
 const SOURCES = ["Referral", "Website", "Pameran", "Cold Call", "Partner"];
 const OTHER_INDUSTRY = "Lainnya";
+
+function whatsappUrl(phone?: string | null) {
+  const digits = String(phone ?? "").replace(/\\D/g, "");
+  if (!digits) return null;
+  const normalized = digits.startsWith("0") ? `62${digits.slice(1)}` : digits.startsWith("62") ? digits : `62${digits}`;
+  return `https://wa.me/${normalized}`;
+}
 
 type FormState = {
   customer_id?: string;
@@ -181,6 +188,19 @@ export default function Customers() {
                 <TableCell className="text-muted-foreground">{c.industry ?? "-"}</TableCell><TableCell>{c.city ?? "-"}</TableCell><TableCell>{c.pic_name ?? "-"}</TableCell><TableCell className="text-muted-foreground">{c.sales_name ?? "-"}</TableCell>
                 <TableCell><StatusBadge value={c.status} testId={`status-customer-${c.customer_id}`} /></TableCell>
                 <TableCell className="text-right">
+                  {whatsappUrl(c.phone) ? (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      asChild
+                      title="Chat WhatsApp"
+                      data-testid={`btn-whatsapp-customer-${c.customer_id}`}
+                    >
+                      <a href={whatsappUrl(c.phone) ?? "#"} target="_blank" rel="noopener noreferrer" aria-label={`Chat WhatsApp ${c.customer_name}`}>
+                        <MessageCircle className="h-4 w-4 text-green-600" />
+                      </a>
+                    </Button>
+                  ) : null}
                   <Button variant="ghost" size="sm" data-testid={`btn-edit-customer-${c.customer_id}`} onClick={async () => { const detail = await apiGet<FormState>(`/customers/${c.customer_id}`); setForm({ ...EMPTY, ...detail }); setDialogOpen(true); }}>Edit</Button>
                   <Button variant="ghost" size="icon-sm" data-testid={`btn-archive-customer-${c.customer_id}`} onClick={() => archive.mutate(c.customer_id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </TableCell>
