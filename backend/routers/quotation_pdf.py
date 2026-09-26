@@ -2,7 +2,7 @@ from io import BytesIO
 import base64
 import re
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import StreamingResponse, Response
+from fastapi.responses import StreamingResponse
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from reportlab.lib.pagesizes import A4
@@ -258,14 +258,15 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     pdf_doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=15 * mm, leftMargin=15 * mm, topMargin=12 * mm, bottomMargin=12 * mm, title=f"Quotation {doc.get('quotation_number') or '-'}", author=company_name)
     pdf_doc.build(story, onFirstPage=draw_page_footer, onLaterPages=draw_page_footer)
     pdf_bytes = buffer.getvalue()
+    buffer.seek(0)
     filename = f"Quotation_{quotation_number}.pdf"
-    return Response(
-        content=pdf_bytes,
+    return StreamingResponse(
+        buffer,
         media_type="application/pdf",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
             "Content-Length": str(len(pdf_bytes)),
-            "Cache-Control": "no-store, no-cache, must-revalidate',
+            "Cache-Control": "no-store, no-cache, must-revalidate",
             "Pragma": "no-cache",
         },
     )
