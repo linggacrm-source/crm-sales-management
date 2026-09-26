@@ -42,6 +42,7 @@ LIST_PROJECTION = {
     "quotation_date": 1,
     "customer_id": 1,
     "customer_name": 1,
+    "items": 1,
     "sales_id": 1,
     "sales_name": 1,
     "grand_total": 1,
@@ -91,6 +92,8 @@ class QuotationRow(BaseModel):
     quotation_date: Optional[str] = None
     customer_id: str
     customer_name: Optional[str] = None
+    customer_company: Optional[str] = None
+    product_names: Optional[str] = None
     sales_id: Optional[str] = None
     sales_name: Optional[str] = None
     grand_total: float = 0
@@ -183,6 +186,29 @@ async def list_quotations(page: int = 1, page_size: int = 25, search: Optional[s
     if sales_id: query["sales_id"] = sales_id
     if customer_id: query["customer_id"] = customer_id
     result = await paginate(db.quotations, query, page, page_size, LIST_PROJECTION, sort_spec(sort_by, sort_dir, SORTABLE, "created_date"))
+
+    # Enrich the list with the customer's company and the quoted item names.
+    # Keep the source-of-truth quotation items unchanged; this is display-only data.
+    rows = result.get("data", [])
+    customer_ids = list({str(row.get("customer_id")) for row in rows if row.get("customer_id")})
+    customer_map = {}
+    if customer_ids:
+        customers = await db.customers.find(
+            {"customer_id": {"$in": customer_ids}, **(await scope_filter(user))},
+            {"_id": 0, "customer_id": 1, "company": 1},
+        ).to_list(len(customer_ids))
+        customer_map = {c["customer_id"]: c.get("company") for c in customers}
+
+    for row in rows:
+        row["customer_company"] = customer_map.get(row.get("customer_id"))
+        item_names = []
+        for item in row.get("items") or []:
+            name = str(item.get("description") or "").strip()
+            if name and name not in item_names:
+                item_names.append(name)
+        row["product_names"] = ", ".join(item_names) if item_names else None
+        row.pop("items", None)
+
     return QuotationListResponse(**result)
 
 
