@@ -52,12 +52,28 @@ export function QuotationEmailDialog({ quotationId, quotationNumber, customerEma
       .finally(() => setLoading(false));
   }, [open, quotationId, quotationNumber, customerEmail]);
 
-  const openThunderbird = () => {
+  const openThunderbird = async () => {
     if (!to.trim()) { toast.error("Email customer belum tersedia"); return; }
-    const params = new URLSearchParams({ subject, body });
-    if (cc.trim()) params.set("cc", cc.trim());
-    window.location.href = `mailto:${to.trim()}?${params.toString()}`;
-    toast.success("Membuka aplikasi email default / Thunderbird");
+    try {
+      setEmlLoading(true);
+      const response = await fetch(`/api/quotations/${encodeURIComponent(quotationId)}/desktop-email`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: to.trim(), cc: cc.trim() || undefined, subject, body }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || "Gagal menyiapkan Thunderbird");
+      }
+      const data = await response.json() as { protocol_url: string; expires_in_seconds: number };
+      window.location.href = data.protocol_url;
+      toast.success("Membuka Thunderbird dengan quotation PDF terlampir.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal membuka Thunderbird");
+    } finally {
+      setEmlLoading(false);
+    }
   };
 
   const downloadEml = async () => {
@@ -100,7 +116,10 @@ export function QuotationEmailDialog({ quotationId, quotationNumber, customerEma
         <div className="space-y-4">
           <div className="rounded-lg border bg-muted/30 p-3 text-sm">
             <div className="flex items-center gap-2 font-medium"><Paperclip className="h-4 w-4" /> Attachment</div>
-            <p className="mt-1 text-xs text-muted-foreground">File .EML akan berisi quotation PDF sebagai attachment dan dapat dibuka langsung dengan Thunderbird. Browser tidak dapat menjalankan aplikasi Thunderbird secara langsung.</p>
+            <p className="mt-1 text-xs text-muted-foreground">File .EML akan berisi quotation PDF sebagai attachment dan dapat dibuka langsung dengan Thunderbird. Klik "Buka Thunderbird + PDF" setelah helper Thunderbird terpasang di Windows. EML tetap tersedia sebagai alternatif.</p>
+          </div>
+          <div className="rounded-lg border border-dashed bg-background p-3 text-xs text-muted-foreground">
+            Belum memasang helper? <a className="font-medium text-primary underline" href="/thunderbird-helper/Install-WellracomThunderbirdHelper.ps1" download>Download installer Thunderbird Helper</a>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div><Label htmlFor="quotation-email-to">To</Label><Input id="quotation-email-to" value={to} onChange={(e) => setTo(e.target.value)} placeholder="customer@email.com" className="mt-1.5" /></div>
@@ -112,10 +131,10 @@ export function QuotationEmailDialog({ quotationId, quotationNumber, customerEma
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
           <Button variant="outline" disabled={loading || emlLoading || !to.trim()} onClick={openThunderbird}>
-            <Mail className="mr-2 h-4 w-4" /> Buka Email
+            <Mail className="mr-2 h-4 w-4" /> Buka Thunderbird + PDF
           </Button>
           <Button disabled={loading || emlLoading || !to.trim()} onClick={downloadEml}>
-            <Paperclip className="mr-2 h-4 w-4" /> {emlLoading ? "Menyiapkan..." : "Siapkan Thunderbird + PDF"}
+            <Paperclip className="mr-2 h-4 w-4" /> {emlLoading ? "Menyiapkan..." : "Download EML + PDF"}
           </Button>
         </DialogFooter>
       </DialogContent>
