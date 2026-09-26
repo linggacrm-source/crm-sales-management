@@ -80,7 +80,6 @@ export default function Activities() {
   const [status, setStatus] = useState("");
   const [salesId, setSalesId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [activityCustomerId, setActivityCustomerId] = useState("");
   const [form, setForm] = useState<FormState>(EMPTY);
 
   const debounced = useDebounced(search);
@@ -110,9 +109,9 @@ export default function Activities() {
     staleTime: 10 * 60_000,
   });
   const { data: opportunityOptions } = useQuery<OpportunityRow[]>({
-    queryKey: ["activity-opportunities", activityCustomerId],
-    queryFn: () => apiGet<Paginated<OpportunityRow>>(`/pipeline?customer_id=${encodeURIComponent(activityCustomerId)}&page_size=100`).then((r) => r.data),
-    enabled: Boolean(activityCustomerId),
+    queryKey: ["activity-opportunities", form.customer_id],
+    queryFn: () => apiGet<Paginated<OpportunityRow>>(`/pipeline?customer_id=${encodeURIComponent(form.customer_id)}&page_size=100`).then((r) => r.data),
+    enabled: Boolean(form.customer_id),
     staleTime: 60_000,
   });
   const { data: salesOptions } = useQuery<SalesOption[]>({
@@ -270,6 +269,7 @@ export default function Activities() {
               <TableHead>Tanggal</TableHead>
               <TableHead>Subjek</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Opportunity</TableHead>
               <TableHead>Sales</TableHead>
               <TableHead>Follow-up</TableHead>
               <TableHead>Status</TableHead>
@@ -278,11 +278,11 @@ export default function Activities() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableSkeleton cols={8} />
+              <TableSkeleton cols={9} />
             ) : isError ? (
-              <ErrorRow colSpan={8} />
+              <ErrorRow colSpan={9} />
             ) : rows.length === 0 ? (
-              <EmptyRow colSpan={8} message="Belum ada aktivitas pada filter ini." />
+              <EmptyRow colSpan={9} message="Belum ada aktivitas pada filter ini." />
             ) : (
               rows.map((a) => (
                 <TableRow key={a.activity_id} data-testid={`row-activity-${a.activity_id}`}>
@@ -290,6 +290,7 @@ export default function Activities() {
                   <TableCell className="text-xs">{formatDate(a.activity_date)}</TableCell>
                   <TableCell className="max-w-[18rem] truncate">{a.subject}</TableCell>
                   <TableCell className="text-muted-foreground">{a.customer_name ?? "-"}</TableCell>
+                  <TableCell className="max-w-[15rem] truncate text-muted-foreground">{a.opportunity_name ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{a.sales_name ?? "-"}</TableCell>
                   <TableCell className="text-xs">{formatDate(a.next_followup)}</TableCell>
                   <TableCell>
