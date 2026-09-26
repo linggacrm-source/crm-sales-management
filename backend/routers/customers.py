@@ -241,7 +241,7 @@ RELATED = {
     "activities": (
         "activities",
         {"_id": 0, "activity_id": 1, "activity_type": 1, "activity_date": 1, "subject": 1,
-         "status": 1, "next_followup": 1, "sales_name": 1},
+         "status": 1, "next_followup": 1, "sales_name": 1, "opportunity_id": 1, "opportunity_name": 1},
     ),
     "order-monitoring": (
         "order_monitoring",
@@ -271,8 +271,19 @@ async def customer_related(
     coll_name, projection = RELATED[resource]
     scope = await scope_filter(user)
     query = {"customer_id": customer_id, **scope}
+    sort = [("activity_date", -1), ("created_date", -1)] if resource == "activities" else [("created_date", -1)]
+    if resource == "activities":
+        pipeline_ids = [r.get("opportunity_id") for r in await db.activities.find(query, {"_id": 0, "opportunity_id": 1}).to_list(500) if r.get("opportunity_id")]
+        if pipeline_ids:
+            opportunities = await db.opportunities.find({"opportunity_id": {"$in": pipeline_ids}}, {"_id": 0, "opportunity_id": 1, "opportunity_name": 1}).to_list(len(pipeline_ids))
+            names = {o["opportunity_id"]: o.get("opportunity_name") for o in opportunities}
+            projection = {**projection, "opportunity_name": 1}
+            result = await paginate(db[coll_name], query, page, page_size, projection, sort)
+            for row in result["data"]:
+                row["opportunity_name"] = names.get(row.get("opportunity_id"))
+            return RelatedResponse(**result)
     result = await paginate(
-        db[coll_name], query, page, page_size, projection, [("created_date", -1)]
+        db[coll_name], query, page, page_size, projection, sort
     )
     return RelatedResponse(**result)
 
