@@ -483,14 +483,14 @@ PERTANYAAN USER:
     try:
         response = None
         retryable_statuses = {408, 429, 500, 502, 503, 504}
-        for attempt in range(3):
+        for attempt in range(2):
             response = requests.post(
                 endpoint,
                 headers=headers,
                 json=payload,
                 timeout=35,
             )
-            if response.status_code not in retryable_statuses or attempt == 2:
+            if response.status_code not in retryable_statuses or attempt == 1:
                 break
             time.sleep((2 ** attempt) + random.uniform(0, 0.75))
 
