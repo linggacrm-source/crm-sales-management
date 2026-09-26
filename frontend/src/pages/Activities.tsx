@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -81,6 +82,8 @@ export default function Activities() {
   const [salesId, setSalesId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [searchParams] = useSearchParams();
+  const [prefillHandled, setPrefillHandled] = useState(false);
 
   const debounced = useDebounced(search);
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
@@ -120,6 +123,14 @@ export default function Activities() {
     staleTime: 10 * 60_000,
   });
 
+  useEffect(() => {
+    const customerId = searchParams.get("customer_id");
+    if (!customerId || prefillHandled || !customerOptions) return;
+    if (!customerOptions.some((x) => x.customer_id === customerId)) return;
+    setForm({ ...EMPTY, customer_id: customerId });
+    setDialogOpen(true);
+    setPrefillHandled(true);
+  }, [searchParams, customerOptions, prefillHandled]);
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["activities"] });
     qc.invalidateQueries({ queryKey: ["activity-summary"] });
