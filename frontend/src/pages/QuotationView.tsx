@@ -28,6 +28,11 @@ export default function QuotationView() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(true);
 
+  const { data, isLoading, isError } = useQuery<QuotationDetail>({
+    queryKey: ["quotation", quotationId],
+    queryFn: () => apiGet<QuotationDetail>(`/quotations/${quotationId}`),
+  });
+
   useEffect(() => {
     let active = true;
     let objectUrl: string | null = null;
@@ -70,11 +75,6 @@ export default function QuotationView() {
       if (objectUrl) window.URL.revokeObjectURL(objectUrl);
     };
   }, [data?.quotation_id, quotationId]);
-
-  const { data, isLoading, isError } = useQuery<QuotationDetail>({
-    queryKey: ["quotation", quotationId],
-    queryFn: () => apiGet<QuotationDetail>(`/quotations/${quotationId}`),
-  });
 
   const convert = useMutation({
     mutationFn: () => apiPost<{ po_id: string; po_number: string }>(`/quotations/${quotationId}/convert-to-po`, {
