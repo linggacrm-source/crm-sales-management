@@ -19,7 +19,6 @@ LIST_PROJECTION = {
     "customer_id": 1,
     "customer_name": 1,
     "company": 1,
-    "products": 1,
     "industry": 1,
     "city": 1,
     "phone": 1,
@@ -35,7 +34,6 @@ SORTABLE = ["customer_name", "company", "city", "status", "created_date"]
 class CustomerIn(BaseModel):
     customer_name: str
     company: Optional[str] = None
-    products: Optional[str] = None
     industry: Optional[str] = None
     address: Optional[str] = None
     city: Optional[str] = None
@@ -160,7 +158,6 @@ async def export_customers_csv(
         "_id": 0,
         "customer_id": 1,
         "company": 1,
-        "products": 1,
         "customer_name": 1,
         "industry": 1,
         "city": 1,
@@ -182,7 +179,7 @@ async def export_customers_csv(
     output = StringIO()
     writer = csv.writer(output, delimiter=";", lineterminator="\n")
     headers = [
-        "Customer ID", "Nama Perusahaan", "Produk / Solusi", "Nama Customer", "Industri", "Kota", "Provinsi",
+        "Customer ID", "Nama Perusahaan", "Nama Customer", "Industri", "Kota", "Provinsi",
         "Alamat", "PIC", "Jabatan PIC", "Telepon", "Email", "Sumber",
         "Sales ID", "Sales", "Status", "Catatan", "Tanggal Dibuat", "Tanggal Update",
     ]
@@ -191,7 +188,6 @@ async def export_customers_csv(
         writer.writerow([
             customer.get("customer_id", ""),
             customer.get("company", ""),
-            customer.get("products", ""),
             customer.get("customer_name", ""),
             customer.get("industry", ""),
             customer.get("city", ""),
