@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Eye, Plus, Trash2 } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -323,6 +323,17 @@ export default function PurchaseOrders() {
                     >
                       <Eye className="h-4 w-4" />
                     </Link>
+                    {p.document_file_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        title={`Lihat dokumen ${p.document_name ?? "PO Customer"}`}
+                        onClick={() => window.open(`/api/purchase-orders/${p.po_id}/document`, "_blank", "noopener,noreferrer")}
+                        data-testid={`btn-view-po-document-${p.po_id}`}
+                      >
+                        <FileText className="h-4 w-4 text-primary" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => openEdit(p.po_id)} data-testid={`btn-edit-po-${p.po_id}`}>
                       Edit
                     </Button>
