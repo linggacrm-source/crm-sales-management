@@ -23,30 +23,53 @@ try {
   # Prevent any client/proxy cache from returning an older PDF with the same filename.
   $pdfUrl = "$BaseUrl$($package.pdf_url)"
   if ($pdfUrl.Contains("?")) { $pdfUrl += "&_ts=$stamp" } else { $pdfUrl += "?_ts=$stamp" }
-  # Download the PDF as raw bytes using WebClient, which is available in
-  # Windows PowerShell 5.1 without requiring System.Net.Http.HttpClient.
-  $webClient = New-Object System.Net.WebClient
+  # Download the PDF through a raw HTTP response stream. This is compatible
+  # with Windows PowerShell 5.1 and avoids buffering/encoding transformations.
+  $request = [System.Net.WebRequest]::Create($pdfUrl)
+  $request.Method = "GET"
+  $request.Headers["Cache-Control"] = "no-cache"
+  $request.Headers["Pragma"] = "no-cache"
+  $response = $null
+  $inputStream = $null
+  $outputStream = $null
   try {
-    $webClient.Headers["Cache-Control"] = "no-cache"
-    $webClient.Headers["Pragma"] = "no-cache"
-    $pdfBytes = $webClient.DownloadData($pdfUrl)
+    $response = $request.GetResponse()
+    if ([int]$response.StatusCode -lt 200 -or [int]$response.StatusCode -ge 300) {
+      throw "HTTP $([int]$response.StatusCode)"
+    }
+
+    $inputStream = $response.GetResponseStream()
+    $outputStream = [System.IO.File]::Open($pdfPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+    $inputStream.CopyTo($outputStream)
   }
   catch {
     throw "PDF quotation gagal diunduh: $($_.Exception.Message)"
   }
   finally {
-    $webClient.Dispose()
+    if ($outputStream) { $outputStream.Dispose() }
+    if ($inputStream) { $inputStream.Dispose() }
+    if ($response) { $response.Dispose() }
   }
 
-  if ($pdfBytes.Length -lt 20) { throw "PDF quotation terlalu kecil/kosong." }
-  $header = [System.Text.Encoding]::ASCII.GetString($pdfBytes, 0, 4)
-  if ($header -ne "%PDF") { throw "File attachment yang diterima bukan PDF yang valid." }
-  $tailStart = [Math]::Max(0, $pdfBytes.Length - 1024)
-  $tail = [System.Text.Encoding]::ASCII.GetString($pdfBytes, $tailStart, $pdfBytes.Length - $tailStart)
-  if ($tail -notmatch "%%EOF") { throw "PDF quotation tidak memiliki trailer EOF yang valid." }
-
-  [System.IO.File]::WriteAllBytes($pdfPath, $pdfBytes)
   if (-not (Test-Path $pdfPath)) { throw "PDF quotation gagal disimpan." }
+  $pdfFile = Get-Item $pdfPath
+  if ($pdfFile.Length -lt 20) { throw "Server mengirim PDF kosong/terpotong (ukuran $($pdfFile.Length) byte)." }
+
+  $headerBytes = New-Object byte[] 4
+  $fileStream = [System.IO.File]::OpenRead($pdfPath)
+  try {
+    [void]$fileStream.Read($headerBytes, 0, 4)
+  }
+  finally {
+    $fileStream.Dispose()
+  }
+  $header = [System.Text.Encoding]::ASCII.GetString($headerBytes)
+  if ($header -ne "%PDF") { throw "Server tidak mengirim file PDF yang valid." }
+
+  $tailStart = [Math]::Max(0, $pdfFile.Length - 1024)
+  $fileBytes = [System.IO.File]::ReadAllBytes($pdfPath)
+  $tail = [System.Text.Encoding]::ASCII.GetString($fileBytes, $tailStart, $fileBytes.Length - $tailStart)
+  if ($tail -notmatch "%%EOF") { throw "PDF quotation terpotong: trailer EOF tidak ditemukan." }
 
   $programFilesX86 = [Environment]::GetEnvironmentVariable("ProgramFiles(x86)")
   $candidates = @(
