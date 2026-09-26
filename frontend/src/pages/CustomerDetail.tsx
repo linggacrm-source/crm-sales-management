@@ -17,7 +17,7 @@ const TABS: { key: TabKey; label: string; columns: string[] }[] = [
   { key: "pipeline", label: "Sales Pipeline", columns: ["Opportunity", "Stage", "Value", "Weighted", "Target Close"] },
   { key: "quotations", label: "Quotations", columns: ["Nomor", "Tanggal", "Grand Total", "Status", "Sales"] },
   { key: "purchase-orders", label: "Purchase Orders", columns: ["Nomor PO", "Tanggal", "Nilai PO", "Status", "Sales"] },
-  { key: "activities", label: "Aktivitas", columns: ["Tipe", "Tanggal", "Subjek", "Follow Up", "Status"] },
+  { key: "activities", label: "Aktivitas", columns: ["Tipe", "Tanggal", "Subjek", "Opportunity", "Follow Up", "Status"] },
   { key: "order-monitoring", label: "Order Monitoring", columns: ["Monitoring", "PO", "Produk", "Qty", "Status", "ETA"] },
 ];
 
@@ -65,6 +65,7 @@ function RelatedTable({ customerId, tab }: { customerId: string; tab: (typeof TA
           s("activity_type"),
           formatDate(s("activity_date")),
           s("subject"),
+          s("opportunity_name"),
           formatDate(s("next_followup")),
           <StatusBadge key="st" value={s("status")} />,
         ];
