@@ -57,6 +57,7 @@ export default function Customers() {
   const [sortDir, setSortDir] = useState("desc");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
+  const [exporting, setExporting] = useState(false);
 
   const debounced = useDebounced(search);
   const params = new URLSearchParams({ page: String(page), page_size: String(pageSize), sort_by: sortBy, sort_dir: sortDir });
@@ -130,8 +131,31 @@ export default function Customers() {
         <Link to="/customers/import" data-testid="btn-import-customers" className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-4 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground">
           <Upload className="h-4 w-4" /> Import Customer
         </Link>
-        <Button variant="outline" onClick={() => exportCsv("customers.csv", rows as unknown as Record<string, unknown>[])} data-testid="btn-export-customers">
-          <Download className="mr-2 h-4 w-4" /> Export CSV
+        <Button variant="outline" disabled={exporting} onClick={async () => {
+          setExporting(true);
+          try {
+            const exportParams = new URLSearchParams();
+            if (debounced) exportParams.set("search", debounced);
+            if (status) exportParams.set("status", status);
+            if (industry) exportParams.set("industry", industry);
+            if (salesId) exportParams.set("sales_id", salesId);
+            const res = await fetch(`/api/customers/export-csv?${exportParams.toString()}`, { credentials: "include", cache: "no-store" });
+            if (!res.ok) throw new Error("Gagal export customer");
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "customers.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+            toast.success("Semua customer berhasil diexport");
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Gagal export customer");
+          } finally {
+            setExporting(false);
+          }
+        }} data-testid="btn-export-customers">
+          <Download className="mr-2 h-4 w-4" /> {exporting ? "Exporting..." : "Export CSV"}
         </Button>
         <Button onClick={() => { setForm(EMPTY); setDialogOpen(true); }} data-testid="btn-add-customer">
           <Plus className="mr-2 h-4 w-4" /> Tambah Customer
