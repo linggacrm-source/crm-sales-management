@@ -203,6 +203,7 @@ async def quotation_email_draft(quotation_id: str, user: dict = Depends(current_
     doc = await db.quotations.find_one({"quotation_id": quotation_id, **scope}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
+    doc = await _decorate(doc)
     quotation_number = str(doc.get("quotation_number") or quotation_id)
     customer_name = str(doc.get("customer_company") or doc.get("customer_name") or "Customer")
     customer_email = str(doc.get("customer_email") or "")
