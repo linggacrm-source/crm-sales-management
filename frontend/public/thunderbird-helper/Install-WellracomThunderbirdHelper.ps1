@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 $installDir = Join-Path $env:LOCALAPPDATA "WellracomCRM\ThunderbirdHelper"
 New-Item -ItemType Directory -Force -Path $installDir | Out-Null
 
-$handlerUrl = "https://crmsales.up.railway.app/thunderbird-helper/open-crm-email.ps1"
+$handlerUrl = "https://crmsales.my.id/thunderbird-helper/open-crm-email.ps1"
 $handlerPath = Join-Path $installDir "open-crm-email.ps1"
 Invoke-WebRequest -UseBasicParsing -Uri $handlerUrl -OutFile $handlerPath
 
