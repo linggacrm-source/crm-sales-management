@@ -21,7 +21,7 @@ const SOURCES = ["Referral", "Website", "Pameran", "Cold Call", "Partner"];
 const OTHER_INDUSTRY = "Lainnya";
 
 function whatsappUrl(phone?: string | null) {
-  const digits = String(phone ?? "").replace(/\\D/g, "");
+  const digits = String(phone ?? "").replace(/\D/g, "");
   if (!digits) return null;
   const normalized = digits.startsWith("0") ? `62${digits.slice(1)}` : digits.startsWith("62") ? digits : `62${digits}`;
   return `https://wa.me/${normalized}`;
@@ -192,13 +192,18 @@ export default function Customers() {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      asChild
                       title="Chat WhatsApp"
                       data-testid={`btn-whatsapp-customer-${c.customer_id}`}
+                      render={
+                        <a
+                          href={whatsappUrl(c.phone) ?? "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Chat WhatsApp ${c.customer_name}`}
+                        />
+                      }
                     >
-                      <a href={whatsappUrl(c.phone) ?? "#"} target="_blank" rel="noopener noreferrer" aria-label={`Chat WhatsApp ${c.customer_name}`}>
-                        <MessageCircle className="h-4 w-4 text-green-600" />
-                      </a>
+                      <MessageCircle className="h-4 w-4 text-green-600" />
                     </Button>
                   ) : null}
                   <Button variant="ghost" size="sm" data-testid={`btn-edit-customer-${c.customer_id}`} onClick={async () => { const detail = await apiGet<FormState>(`/customers/${c.customer_id}`); setForm({ ...EMPTY, ...detail }); setDialogOpen(true); }}>Edit</Button>
