@@ -32,35 +32,18 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      <div className="relative hidden flex-col justify-between bg-[#0B132B] p-12 text-white lg:flex">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 font-bold">C</span>
-          <span className="text-lg font-bold tracking-tight">CRM Sales Management</span>
+      <div className="relative hidden overflow-hidden bg-[#071126] lg:flex">
+        <img
+          src="/crm-login-illustration.svg"
+          alt="CRM Sales Management"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute left-10 top-10 flex items-center gap-2.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 font-bold text-white shadow-lg shadow-blue-600/30">
+            C
+          </span>
+          <span className="text-lg font-bold tracking-tight text-white">CRM Sales Management</span>
         </div>
-        <div className="max-w-lg">
-          <h1 className="text-4xl leading-tight font-bold tracking-tight">
-            Kelola seluruh proses penjualan lebih cepat, terstruktur, dan terukur.
-          </h1>
-          <p className="mt-4 text-slate-400">
-            CRM Sales Management membantu tim sales mengelola customer, peluang, quotation, hingga purchase order
-            dalam satu sistem terintegrasi — sehingga setiap aktivitas dan proses penjualan lebih mudah dipantau.
-          </p>
-          <div className="mt-10 grid grid-cols-3 gap-4">
-            {[
-              ["Customer", "Database"],
-              ["Sales", "Pipeline"],
-              ["Order", "Monitoring"],
-            ].map(([k, v]) => (
-              <div key={k} className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-                <p className="font-mono text-2xl font-bold text-blue-400">{v}</p>
-                <p className="mt-1 text-xs tracking-wider text-slate-400 uppercase">{k}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <p className="flex items-center gap-2 text-xs text-slate-500">
-          <ShieldCheck className="h-4 w-4" /> Sesi httpOnly cookie, password ter-hash, RBAC per modul.
-        </p>
       </div>
 
       <div className="flex items-center justify-center bg-background px-6 py-12">
