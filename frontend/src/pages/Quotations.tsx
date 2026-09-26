@@ -318,6 +318,8 @@ export default function Quotations() {
               <TableHead>Nomor</TableHead>
               <TableHead>Tanggal</TableHead>
               <TableHead>Customer</TableHead>
+              <TableHead>Perusahaan</TableHead>
+              <TableHead>Produk / Item</TableHead>
               <TableHead>Sales</TableHead>
               <TableHead className="text-right">Grand Total</TableHead>
               <TableHead>Status</TableHead>
@@ -326,11 +328,11 @@ export default function Quotations() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableSkeleton cols={7} />
+              <TableSkeleton cols={9} />
             ) : isError ? (
-              <ErrorRow colSpan={7} />
+              <ErrorRow colSpan={9} />
             ) : rows.length === 0 ? (
-              <EmptyRow colSpan={7} message="Belum ada quotation pada filter ini." />
+              <EmptyRow colSpan={9} message="Belum ada quotation pada filter ini." />
             ) : (
               rows.map((q) => (
                 <TableRow key={q.quotation_id} data-testid={`row-quotation-${q.quotation_id}`}>
@@ -345,6 +347,8 @@ export default function Quotations() {
                   </TableCell>
                   <TableCell className="text-xs">{formatDate(q.quotation_date)}</TableCell>
                   <TableCell>{q.customer_name ?? "-"}</TableCell>
+                  <TableCell className="max-w-[220px]"><span className="line-clamp-2">{q.customer_company ?? "-"}</span></TableCell>
+                  <TableCell className="max-w-[280px]"><span className="line-clamp-2 text-sm">{q.product_names ?? "-"}</span></TableCell>
                   <TableCell className="text-muted-foreground">{q.sales_name ?? "-"}</TableCell>
                   <TableCell className="text-right font-mono text-xs font-semibold">
                     {formatIDR(q.grand_total)}
