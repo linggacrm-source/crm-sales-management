@@ -16,7 +16,8 @@ from pydantic import BaseModel
 from lib.auth import current_user, scope_filter
 from lib.db import db
 
-router = APIRouter(prefix="/ai-command-center", tags=["ai-command-center"])\nlogger = logging.getLogger(__name__)
+router = APIRouter(prefix="/ai-command-center", tags=["ai-command-center"])
+logger = logging.getLogger(__name__)
 
 OPEN_STAGES = ["Lead", "Qualification", "Proposal", "Negotiation"]
 STALE_DAYS = 14
