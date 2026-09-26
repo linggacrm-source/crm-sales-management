@@ -41,6 +41,7 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     title = ParagraphStyle("QuotationTitleClean", parent=normal, fontName="Helvetica-Bold", fontSize=17, leading=20, alignment=TA_RIGHT)
     section = ParagraphStyle("QuotationSectionClean", parent=normal, fontName="Helvetica-Bold", fontSize=9, leading=11)
     right = ParagraphStyle("QuotationRightClean", parent=normal, alignment=TA_RIGHT)
+    left = ParagraphStyle("QuotationLeftClean", parent=normal, alignment=0)
     center = ParagraphStyle("QuotationCenterClean", parent=normal, alignment=TA_CENTER)
     white_right = ParagraphStyle("QuotationWhiteRightClean", parent=right, textColor=colors.white)
     item_header = ParagraphStyle("QuotationItemHeaderClean", parent=normal, fontName="Helvetica-Bold", fontSize=7.5, leading=9, alignment=TA_CENTER, textColor=colors.HexColor("#111827"))
@@ -112,12 +113,12 @@ async def download_quotation_pdf_clean(quotation_id: str, request: Request, user
     discount_input = float(doc.get("discount_input") or discount_value)
     tax_value = float(doc.get("tax") or 0)
     grand_total = float(doc.get("grand_total") or 0)
-    totals_rows = [[Paragraph("SUBTOTAL", right), Paragraph(money(subtotal_value), right)]]
+    totals_rows = [[Paragraph("SUBTOTAL", left), Paragraph(money(subtotal_value), right)]]
     if discount_value > 0:
         discount_label = f"DISCOUNT {discount_input:g}%" if discount_type == "percent" else "DISCOUNT"
-        totals_rows.append([Paragraph(discount_label, right), Paragraph(money(discount_value), right)])
+        totals_rows.append([Paragraph(discount_label, left), Paragraph(money(discount_value), right)])
     totals_rows.extend([
-        [Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", right), Paragraph(money(tax_value), right)],
+        [Paragraph(f"PPN {float(doc.get('tax_percent') or 0):g}%", left), Paragraph(money(tax_value), right)],
         [Paragraph("<b>GRAND TOTAL</b>", white_right), Paragraph(f"<b>{money(grand_total)}</b>", white_right)],
     ])
     totals_table = Table(totals_rows, colWidths=[35 * mm, 35 * mm])
