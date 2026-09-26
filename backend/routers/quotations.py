@@ -271,7 +271,7 @@ async def start_desktop_email(
 
 
 @router.get("/desktop-email/{token}")
-async def desktop_email_package(token: str):
+async def desktop_email_package(token: str, request: Request):
     record = await db.quotation_email_tokens.find_one({"token": token}, {"_id": 0})
     expires_at = record.get("expires_at") if record else None
     if isinstance(expires_at, datetime) and expires_at.tzinfo is None:
@@ -285,6 +285,17 @@ async def desktop_email_package(token: str):
     doc = await db.quotations.find_one({"quotation_id": quotation_id}, {"_id": 0, "quotation_number": 1})
     if not doc:
         raise HTTPException(status_code=404, detail="Quotation tidak ditemukan")
+    # Include the exact PDF bytes in the package so the Windows helper
+    # does not need to download the PDF through a second HTTP request.
+    from routers.quotation_pdf import download_quotation_pdf_clean
+    pdf_response = await download_quotation_pdf_clean(quotation_id, request, user)
+    pdf_chunks = []
+    if getattr(pdf_response, "body_iterator", None) is not None:
+        async for chunk in pdf_response.body_iterator:
+            pdf_chunks.append(chunk)
+    pdf_bytes = b"".join(pdf_chunks)
+    if not pdf_bytes:
+        raise HTTPException(status_code=500, detail="PDF quotation gagal dibuat")
     return {
         "to": record["to"],
         "cc": record.get("cc", ""),
@@ -292,6 +303,7 @@ async def desktop_email_package(token: str):
         "body": record.get("body", ""),
         "quotation_number": doc.get("quotation_number") or quotation_id,
         "pdf_url": f"/api/quotations/desktop-email/{token}/pdf",
+        "pdf_base64": base64.b64encode(pdf_bytes).decode("ascii"),
     }
 
 
