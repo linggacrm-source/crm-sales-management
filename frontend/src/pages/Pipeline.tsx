@@ -36,6 +36,60 @@ import type {
 
 const STAGES = ["Lead", "Qualification", "Proposal", "Negotiation", "Won", "Lost"];
 
+const STAGE_STYLES: Record<
+  string,
+  {
+    column: string;
+    header: string;
+    accent: string;
+    badge: string;
+    card: string;
+  }
+> = {
+  Lead: {
+    column: "bg-slate-50/80 border-slate-200",
+    header: "bg-slate-100/80 text-slate-700",
+    accent: "bg-slate-500",
+    badge: "border-slate-200 bg-white text-slate-700",
+    card: "border-slate-200 hover:border-slate-400",
+  },
+  Qualification: {
+    column: "bg-blue-50/50 border-blue-200",
+    header: "bg-blue-100/70 text-blue-800",
+    accent: "bg-blue-500",
+    badge: "border-blue-200 bg-white text-blue-800",
+    card: "border-blue-200 hover:border-blue-400",
+  },
+  Proposal: {
+    column: "bg-amber-50/50 border-amber-200",
+    header: "bg-amber-100/70 text-amber-900",
+    accent: "bg-amber-500",
+    badge: "border-amber-200 bg-white text-amber-900",
+    card: "border-amber-200 hover:border-amber-400",
+  },
+  Negotiation: {
+    column: "bg-orange-50/50 border-orange-200",
+    header: "bg-orange-100/70 text-orange-900",
+    accent: "bg-orange-500",
+    badge: "border-orange-200 bg-white text-orange-900",
+    card: "border-orange-200 hover:border-orange-400",
+  },
+  Won: {
+    column: "bg-emerald-50/50 border-emerald-200",
+    header: "bg-emerald-100/70 text-emerald-900",
+    accent: "bg-emerald-500",
+    badge: "border-emerald-200 bg-white text-emerald-800",
+    card: "border-emerald-200 hover:border-emerald-400",
+  },
+  Lost: {
+    column: "bg-rose-50/50 border-rose-200",
+    header: "bg-rose-100/70 text-rose-900",
+    accent: "bg-rose-500",
+    badge: "border-rose-200 bg-white text-rose-800",
+    card: "border-rose-200 hover:border-rose-400",
+  },
+};
+
 type FormState = {
   opportunity_id?: string;
   opportunity_name: string;
@@ -407,16 +461,17 @@ export default function Pipeline() {
                   <div
                     key={col.stage}
                     data-testid={`kanban-stage-${col.stage.toLowerCase()}`}
-                    className="flex max-h-[calc(100vh-260px)] min-w-[290px] flex-1 flex-col rounded-xl border border-border bg-muted/40 p-3"
+                    className={`relative flex max-h-[calc(100vh-260px)] min-w-[290px] flex-1 flex-col overflow-hidden rounded-xl border p-3 ${STAGE_STYLES[col.stage]?.column ?? "border-border bg-muted/40"}`}
                   >
-                    <div className="mb-3 flex items-center justify-between border-b border-border pb-2.5">
+                    <div className={`absolute inset-x-0 top-0 h-1 ${STAGE_STYLES[col.stage]?.accent ?? "bg-primary"}`} />
+                    <div className={`mb-3 flex items-center justify-between rounded-lg px-3 py-2 ${STAGE_STYLES[col.stage]?.header ?? "bg-muted"}`}>
                       <div>
                         <p className="text-sm font-semibold">{col.stage}</p>
-                        <p className="font-mono text-[11px] text-muted-foreground">
+                        <p className="font-mono text-[11px] opacity-75">
                           {formatCompactIDR(col.value)}
                         </p>
                       </div>
-                      <span className="rounded-full border border-border bg-card px-2 py-0.5 font-mono text-xs font-bold">
+                      <span className={`rounded-full border px-2 py-0.5 font-mono text-xs font-bold ${STAGE_STYLES[col.stage]?.badge ?? "border-border bg-card"}`}>
                         {col.count}
                       </span>
                     </div>
@@ -428,7 +483,7 @@ export default function Pipeline() {
                           <div
                             key={o.opportunity_id}
                             data-testid={`kanban-card-${o.opportunity_id}`}
-                            className="rounded-lg border border-border bg-card p-3 transition-all duration-150 hover:border-primary hover:shadow-md"
+                            className={`rounded-lg border bg-card p-3 transition-all duration-150 hover:shadow-md ${STAGE_STYLES[col.stage]?.card ?? "border-border hover:border-primary"}`}
                           >
                             <p className="text-sm font-semibold">{o.opportunity_name}</p>
                             <p className="mt-0.5 truncate text-xs text-muted-foreground">{o.customer_name}</p>
