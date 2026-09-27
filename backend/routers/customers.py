@@ -92,6 +92,22 @@ async def _sales_name(sales_id: Optional[str]) -> Optional[str]:
     return doc["name"] if doc else None
 
 
+def _normalize_customer_dates(doc: dict) -> dict:
+    """Keep legacy/imported customer dates compatible with CustomerDetail."""
+    for key in ("created_date", "updated_date"):
+        value = doc.get(key)
+        if value is None or isinstance(value, datetime):
+            continue
+        if isinstance(value, str):
+            try:
+                doc[key] = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            except ValueError:
+                doc[key] = None
+        else:
+            doc[key] = None
+    return doc
+
+
 @router.get("/options", response_model=list[CustomerOption])
 async def customer_options(search: Optional[str] = None, user: dict = Depends(current_user)):
     query = await scope_filter(user)
@@ -219,7 +235,7 @@ async def get_customer(customer_id: str, user: dict = Depends(current_user)):
     doc = await db.customers.find_one({"customer_id": customer_id, **scope}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Customer tidak ditemukan")
-    return CustomerDetail(**doc)
+    return CustomerDetail(**_normalize_customer_dates(doc))
 
 
 # --- lazy-loaded related tabs: each fetched only when its tab is opened -------------
@@ -323,7 +339,7 @@ async def update_customer(customer_id: str, payload: CustomerIn, user: dict = De
     updates["updated_date"] = datetime.now(timezone.utc)
     await db.customers.update_one({"customer_id": customer_id}, {"$set": updates})
     await write_audit(user, "UPDATE", "Customer", customer_id, existing.get("customer_name"), updates.get("customer_name"))
-    return CustomerDetail(**{**existing, **updates})
+    return CustomerDetail(**_normalize_customer_dates({**existing, **updates}))
 
 
 @router.delete("/{customer_id}")
