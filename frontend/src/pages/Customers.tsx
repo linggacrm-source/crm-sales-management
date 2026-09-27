@@ -224,7 +224,24 @@ export default function Customers() {
                     setDialogOpen(true);
                     try {
                       const detail = await apiGet<FormState>(`/customers/${c.customer_id}`);
-                      setForm((current) => ({ ...current, ...detail }));
+                      setForm((current) => ({
+                        ...current,
+                        ...detail,
+                        customer_name: detail.customer_name ?? current.customer_name ?? "",
+                        company: detail.company ?? current.company ?? "",
+                        industry: detail.industry ?? current.industry ?? "",
+                        address: detail.address ?? current.address ?? "",
+                        city: detail.city ?? current.city ?? "",
+                        province: detail.province ?? current.province ?? "",
+                        phone: detail.phone ?? current.phone ?? "",
+                        email: detail.email ?? current.email ?? "",
+                        pic_name: detail.pic_name ?? current.pic_name ?? "",
+                        pic_position: detail.pic_position ?? current.pic_position ?? "",
+                        source: detail.source ?? current.source ?? "",
+                        sales_id: detail.sales_id ?? current.sales_id ?? "",
+                        status: detail.status ?? current.status ?? "Active",
+                        notes: detail.notes ?? current.notes ?? "",
+                      }));
                     } catch (e) {
                       toast.error(e instanceof ApiError ? e.message : "Detail customer tidak dapat dimuat, data daftar tetap dapat diedit");
                     }
@@ -269,7 +286,7 @@ export default function Customers() {
             </div>
             <div className="flex flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-customer">Batal</Button>
-              <Button onClick={() => save.mutate(form)} disabled={!form.customer_name || !form.industry.trim() || save.isPending} data-testid="btn-save-customer">
+              <Button onClick={() => save.mutate(form)} disabled={!String(form.customer_name ?? "").trim() || !String(form.industry ?? "").trim() || save.isPending} data-testid="btn-save-customer">
                 {save.isPending ? "Menyimpan..." : "Simpan"}
               </Button>
             </div>
