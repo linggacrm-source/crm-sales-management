@@ -206,7 +206,15 @@ export default function Customers() {
                       <MessageCircle className="h-4 w-4 text-green-600" />
                     </Button>
                   ) : null}
-                  <Button variant="ghost" size="sm" data-testid={`btn-edit-customer-${c.customer_id}`} onClick={async () => { const detail = await apiGet<FormState>(`/customers/${c.customer_id}`); setForm({ ...EMPTY, ...detail }); setDialogOpen(true); }}>Edit</Button>
+                  <Button variant="ghost" size="sm" data-testid={`btn-edit-customer-${c.customer_id}`} onClick={async () => {
+                    try {
+                      const detail = await apiGet<FormState>(`/customers/${c.customer_id}`);
+                      setForm({ ...EMPTY, ...detail });
+                      setDialogOpen(true);
+                    } catch (e) {
+                      toast.error(e instanceof ApiError ? e.message : "Gagal memuat data customer");
+                    }
+                  }}>Edit</Button>
                   <Button variant="ghost" size="icon-sm" data-testid={`btn-archive-customer-${c.customer_id}`} onClick={() => archive.mutate(c.customer_id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </TableCell>
               </TableRow>
