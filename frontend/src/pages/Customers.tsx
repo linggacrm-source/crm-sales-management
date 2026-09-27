@@ -207,12 +207,27 @@ export default function Customers() {
                     </Button>
                   ) : null}
                   <Button variant="ghost" size="sm" data-testid={`btn-edit-customer-${c.customer_id}`} onClick={async () => {
+                    // Open immediately with the row data so a problematic legacy detail
+                    // record cannot make the Edit button appear unresponsive.
+                    setForm({
+                      ...EMPTY,
+                      customer_id: c.customer_id,
+                      customer_name: c.customer_name ?? "",
+                      company: c.company ?? "",
+                      industry: c.industry ?? "",
+                      city: c.city ?? "",
+                      phone: c.phone ?? "",
+                      email: c.email ?? "",
+                      pic_name: c.pic_name ?? "",
+                      sales_id: c.sales_id ?? "",
+                      status: c.status ?? "Active",
+                    });
+                    setDialogOpen(true);
                     try {
                       const detail = await apiGet<FormState>(`/customers/${c.customer_id}`);
-                      setForm({ ...EMPTY, ...detail });
-                      setDialogOpen(true);
+                      setForm((current) => ({ ...current, ...detail }));
                     } catch (e) {
-                      toast.error(e instanceof ApiError ? e.message : "Gagal memuat data customer");
+                      toast.error(e instanceof ApiError ? e.message : "Detail customer tidak dapat dimuat, data daftar tetap dapat diedit");
                     }
                   }}>Edit</Button>
                   <Button variant="ghost" size="icon-sm" data-testid={`btn-archive-customer-${c.customer_id}`} onClick={() => archive.mutate(c.customer_id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
