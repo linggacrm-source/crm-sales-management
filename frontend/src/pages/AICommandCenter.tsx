@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   Bot,
   CircleDollarSign,
-  MessageCircle,
   RefreshCw,
   Send,
   Sparkles,
