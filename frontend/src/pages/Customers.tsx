@@ -5,7 +5,6 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -239,19 +238,43 @@ export default function Customers() {
         <Pagination page={page} pageSize={pageSize} total={total} onPage={setPage} onPageSize={setPageSize} />
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader><DialogTitle>{form.customer_id ? "Edit Customer" : "Tambah Customer"}</DialogTitle></DialogHeader>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {field("customer_name", "Nama Customer")}{field("company", "Perusahaan")}
-            <div><Label htmlFor="cust-industry">Industri</Label><select id="cust-industry" value={INDUSTRIES.includes(form.industry) ? form.industry : OTHER_INDUSTRY} onChange={(e) => { const value = e.target.value; setForm({ ...form, industry: value === OTHER_INDUSTRY ? "" : value }); }} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-customer-industry">{INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}<option value={OTHER_INDUSTRY}>{OTHER_INDUSTRY}</option></select>{!INDUSTRIES.includes(form.industry) && <Input id="cust-industry-other" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="Tulis industri lainnya..." className="mt-1.5" data-testid="input-customer-industry-other" />}</div>
-            {field("source", "Sumber", "select", SOURCES)}{field("city", "Kota")}{field("province", "Provinsi")}{field("phone", "Telepon")}{field("email", "Email", "email")}{field("pic_name", "Nama PIC")}{field("pic_position", "Jabatan PIC")}{field("status", "Status", "select", ["Active", "Inactive", "Archived"])}
-            {!isSales && <div><Label htmlFor="cust-sales">Sales Penanggung Jawab</Label><select id="cust-sales" value={form.sales_id} onChange={(e) => setForm({ ...form, sales_id: e.target.value })} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-customer-sales_id"><option value="">— Pilih sales —</option>{(salesOptions ?? []).map((s) => <option key={s.user_id} value={s.user_id}>{s.name}</option>)}</select></div>}
-<div className="sm:col-span-2">{field("address", "Alamat", "textarea")}</div><div className="sm:col-span-2">{field("notes", "Catatan", "textarea")}</div>
+      {dialogOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4 backdrop-blur-[1px]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="customer-edit-title"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setDialogOpen(false);
+          }}
+        >
+          <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-background shadow-2xl ring-1 ring-foreground/10">
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <h2 id="customer-edit-title" className="font-heading text-base font-medium">
+                {form.customer_id ? "Edit Customer" : "Tambah Customer"}
+              </h2>
+              <Button variant="ghost" size="icon-sm" onClick={() => setDialogOpen(false)} aria-label="Tutup">
+                ×
+              </Button>
+            </div>
+            <div className="overflow-y-auto p-5">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {field("customer_name", "Nama Customer")}{field("company", "Perusahaan")}
+                <div><Label htmlFor="cust-industry">Industri</Label><select id="cust-industry" value={INDUSTRIES.includes(form.industry) ? form.industry : OTHER_INDUSTRY} onChange={(e) => { const value = e.target.value; setForm({ ...form, industry: value === OTHER_INDUSTRY ? "" : value }); }} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-customer-industry">{INDUSTRIES.map((i) => <option key={i} value={i}>{i}</option>)}<option value={OTHER_INDUSTRY}>{OTHER_INDUSTRY}</option></select>{!INDUSTRIES.includes(form.industry) && <Input id="cust-industry-other" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} placeholder="Tulis industri lainnya..." className="mt-1.5" data-testid="input-customer-industry-other" />}</div>
+                {field("source", "Sumber", "select", SOURCES)}{field("city", "Kota")}{field("province", "Provinsi")}{field("phone", "Telepon")}{field("email", "Email", "email")}{field("pic_name", "Nama PIC")}{field("pic_position", "Jabatan PIC")}{field("status", "Status", "select", ["Active", "Inactive", "Archived"])}
+                {!isSales && <div><Label htmlFor="cust-sales">Sales Penanggung Jawab</Label><select id="cust-sales" value={form.sales_id} onChange={(e) => setForm({ ...form, sales_id: e.target.value })} className="mt-1.5 h-9 w-full rounded-md border border-input bg-background px-3 text-sm" data-testid="input-customer-sales_id"><option value="">— Pilih sales —</option>{(salesOptions ?? []).map((s) => <option key={s.user_id} value={s.user_id}>{s.name}</option>)}</select></div>}
+                <div className="sm:col-span-2">{field("address", "Alamat", "textarea")}</div>
+                <div className="sm:col-span-2">{field("notes", "Catatan", "textarea")}</div>
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-customer">Batal</Button>
+              <Button onClick={() => save.mutate(form)} disabled={!form.customer_name || !form.industry.trim() || save.isPending} data-testid="btn-save-customer">
+                {save.isPending ? "Menyimpan..." : "Simpan"}
+              </Button>
+            </div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setDialogOpen(false)} data-testid="btn-cancel-customer">Batal</Button><Button onClick={() => save.mutate(form)} disabled={!form.customer_name || !form.industry.trim() || save.isPending} data-testid="btn-save-customer">{save.isPending ? "Menyimpan..." : "Simpan"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </div>
+      )}    </div>
   );
 }
