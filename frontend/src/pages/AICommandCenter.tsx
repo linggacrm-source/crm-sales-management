@@ -1,18 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
-  ArrowRight,
   Bot,
   CircleDollarSign,
   MessageCircle,
-  Presentation,
   RefreshCw,
   Send,
   Sparkles,
   UserRound,
   UsersRound,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -185,7 +183,6 @@ export default function AICommandCenter() {
     refetchOnWindowFocus: false,
   });
 
-  const stageRows = useMemo(() => Object.entries(data?.pipeline_by_stage ?? {}).sort((a, b) => b[1].value - a[1].value), [data]);
   const ask = async (text?: string) => {
     const question = (text ?? message).trim();
     if (!question || sending) return;
@@ -247,20 +244,42 @@ export default function AICommandCenter() {
             <Metric label="Pipeline Risk" value={isLoading ? "-" : String(data?.pipeline_risks.length ?? 0)} icon={<AlertTriangle className="h-5 w-5" />} tone="green" />
           </section>
 
-          <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+          <section className="grid gap-5 xl:grid-cols-[1.45fr_0.75fr]">
             <Card className="rounded-2xl border-slate-200/80 bg-white p-5 shadow-sm md:p-6">
               <div className="mb-5 flex items-start justify-between">
                 <div>
-                  <div className="flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600"><Bot className="h-4 w-4" /></div><h2 className="text-sm font-bold text-slate-900">Ask Sales AI</h2></div>
-                  <p className="mt-2 text-xs text-slate-500">AI otomatis menggunakan data CRM untuk pertanyaan terkait CRM, dan dapat menjawab pertanyaan umum di luar CRM.</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><Bot className="h-4 w-4" /></div>
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">Ask Sales AI</h2>
+                      <p className="mt-0.5 text-xs text-slate-500">AI membantu menganalisis CRM, pipeline, customer, dan aktivitas penjualan.</p>
+                    </div>
+                  </div>
                 </div>
+                <span className="hidden rounded-lg border border-blue-100 bg-blue-50 px-3 py-1.5 text-[10px] font-semibold text-blue-700 sm:inline-flex">AI Sales Assistant</span>
               </div>
-              <div className="mb-4 min-h-[270px] max-h-[440px] space-y-3 overflow-y-auto rounded-2xl bg-slate-50/80 p-3">
+
+              <div className="mb-4 min-h-[500px] max-h-[620px] space-y-3 overflow-y-auto rounded-2xl bg-slate-50/80 p-4">
                 {chat.length === 0 ? (
-                  <div className="flex h-[245px] flex-col items-center justify-center px-6 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"><MessageCircle className="h-5 w-5" /></div>
-                    <p className="mt-3 text-sm font-semibold text-slate-700">Apa yang ingin Anda ketahui?</p>
-                    <p className="mt-1 max-w-md text-xs leading-5 text-slate-400">Contoh: “Mana customer yang belum saya follow-up?” atau “Buatkan summary pipeline untuk presentasi manajemen.”</p>
+                  <div className="flex min-h-[450px] flex-col justify-center px-4 md:px-8">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm ring-1 ring-slate-200"><Bot className="h-5 w-5" /></div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm">
+                        <p className="font-semibold text-slate-800">Halo! Saya Sales AI Assistant.</p>
+                        <p className="mt-1">Saya dapat membantu Anda menganalisis data CRM, pipeline, customer, follow-up, dan memberikan insight penjualan.</p>
+                        <p className="mt-1">Silakan ajukan pertanyaan Anda.</p>
+                      </div>
+                    </div>
+                    <div className="mt-8">
+                      <p className="mb-3 text-xs font-semibold text-slate-500">Contoh pertanyaan:</p>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        {(data?.suggested_questions ?? []).slice(0, 6).map((q) => (
+                          <button key={q} type="button" onClick={() => void ask(q)} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-xs font-medium text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">
+                            <span>{q}</span><span className="ml-3 text-blue-500">→</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 ) : chat.map((item, index) => (
                   <div key={`${item.role}-${index}`} className={`flex ${item.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -272,67 +291,40 @@ export default function AICommandCenter() {
                 ))}
                 {sending && <div className="flex justify-start"><div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-400 shadow-sm">AI sedang menganalisis pipeline...</div></div>}
               </div>
+
               <div className="flex items-end gap-2">
-                <Textarea value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void ask(); } }} placeholder="Tanyakan tentang pipeline, customer, follow-up, forecast..." rows={3} className="min-h-[82px] resize-none rounded-xl bg-white" />
+                <Textarea value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void ask(); } }} placeholder="Ketik pertanyaan Anda di sini..." rows={3} className="min-h-[82px] resize-none rounded-xl bg-white" />
                 <Button onClick={() => void ask()} disabled={!message.trim() || sending} className="h-[82px] w-12 shrink-0 rounded-xl bg-blue-600 hover:bg-blue-700" aria-label="Kirim pertanyaan">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {(data?.suggested_questions ?? []).slice(0, 4).map((q) => <button key={q} type="button" onClick={() => void ask(q)} className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700">{q}</button>)}
-              </div>
             </Card>
 
             <Card className="rounded-2xl border-slate-200/80 bg-white p-5 shadow-sm md:p-6">
-              <div className="mb-5 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600"><AlertTriangle className="h-4 w-4" /></div><div><h2 className="text-sm font-bold text-slate-900">Pipeline yang Perlu Perhatian</h2><p className="text-xs text-slate-500">Stagnan ≥ 14 hari atau target close sudah lewat.</p></div></div>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><AlertTriangle className="h-4 w-4" /></div>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">Pipeline yang Perlu Perhatian</h2>
+                    <p className="text-xs text-slate-500">Stagnan ≥ 14 hari atau target close sudah lewat.</p>
+                  </div>
+                </div>
+                <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">{data?.pipeline_risks.length ?? 0} risiko</span>
+              </div>
               <div className="space-y-2.5">
                 {(data?.pipeline_risks ?? []).length === 0 && <p className="py-10 text-center text-sm text-slate-400">Tidak ada risiko yang terdeteksi.</p>}
                 {(data?.pipeline_risks ?? []).map((risk) => (
-                  <div key={risk.opportunity_id} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{risk.opportunity}</p><p className="mt-0.5 truncate text-[11px] text-slate-500">{risk.customer || "-"} • {risk.sales || "-"}</p></div><span className="shrink-0 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-700">{risk.stage}</span></div>
-                    <div className="mt-2 flex items-center justify-between text-[11px]"><span className="font-semibold text-slate-600">{formatCompactIDR(risk.value)}</span><span className="text-slate-400">{risk.reason}</span></div>
+                  <div key={risk.opportunity_id} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-800">{risk.opportunity}</p><p className="mt-0.5 truncate text-[11px] text-slate-500">{risk.customer || "-"} • {risk.sales || "-"}</p></div>
+                      <span className="shrink-0 rounded-full bg-amber-100 px-2 py-1 text-[10px] font-bold text-amber-700">{risk.days_stale} hari</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2 text-[11px]"><span className="font-semibold text-slate-600">{formatCompactIDR(risk.value)}</span><span className="truncate text-right text-slate-400">{risk.reason}</span></div>
                   </div>
                 ))}
               </div>
             </Card>
           </section>
-
-          <section className="grid gap-5 xl:grid-cols-2">
-            <Card className="rounded-2xl border-slate-200/80 bg-white p-5 shadow-sm md:p-6">
-              <div className="mb-5 flex items-center justify-between"><div><div className="flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600"><UserRound className="h-4 w-4" /></div><h2 className="text-sm font-bold text-slate-900">Customer Lama Tidak Di-follow-up</h2></div><p className="mt-2 text-xs text-slate-500">Batas awal: 14 hari sejak aktivitas terakhir.</p></div><span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">{data?.stale_customers.length ?? 0} customer</span></div>
-              <div className="space-y-2">
-                {(data?.stale_customers ?? []).length === 0 && <p className="py-10 text-center text-sm text-slate-400">Semua customer terlihat masih ter-follow-up.</p>}
-                {(data?.stale_customers ?? []).map((customer) => (
-                  <div key={customer.customer_id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3.5 py-3">
-                    <div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-800">{customer.customer}</p><p className="mt-0.5 truncate text-[11px] text-slate-500">{customer.pic} • Sales: {customer.sales}</p></div>
-                    <div className="shrink-0 text-right"><p className="text-sm font-bold text-amber-600">{customer.days_since_contact} hari</p><p className="text-[10px] text-slate-400">tanpa activity</p></div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-
-            <Card className="rounded-2xl border-slate-200/80 bg-white p-5 shadow-sm md:p-6">
-              <div className="mb-5 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600"><Presentation className="h-4 w-4" /></div><div><h2 className="text-sm font-bold text-slate-900">Rekomendasi Presentasi Manajemen</h2><p className="text-xs text-slate-500">Struktur yang bisa langsung dipakai Sales Manager.</p></div></div>
-              <div className="space-y-2.5">
-                {(data?.presentation_recommendations ?? []).map((item, index) => (
-                  <div key={item} className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-violet-600 ring-1 ring-slate-200">{index + 1}</div>
-                    <p className="text-xs leading-5 text-slate-600">{item}</p>
-                  </div>
-                ))}
-              </div>
-              <Button variant="outline" className="mt-4 w-full rounded-xl" onClick={() => void ask("Buatkan draft presentasi sales pipeline untuk manajemen berdasarkan data CRM saat ini. Susun menjadi: Executive Summary, Pipeline Overview, Top Opportunities, Risk & Stagnant Deals, Customer Follow-up, Forecast, Gap terhadap target jika tersedia, dan Action Plan. Gunakan angka CRM dan jangan mengarang data.")}>
-                <Presentation className="mr-2 h-4 w-4" /> Generate Draft Presentasi dengan AI <ArrowRight className="ml-auto h-4 w-4" />
-              </Button>
-            </Card>
-          </section>
-
-          <Card className="rounded-2xl border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-sky-600"><Sparkles className="h-4 w-4" /></div><div><h2 className="text-sm font-bold text-slate-900">Pipeline by Stage</h2><p className="text-xs text-slate-500">Ringkasan cepat posisi opportunity saat ini.</p></div></div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {stageRows.map(([stage, row]) => <div key={stage} className="rounded-xl border border-slate-100 bg-slate-50/70 p-3.5"><div className="flex items-center justify-between"><span className="text-xs font-bold text-slate-700">{stage}</span><span className="text-[10px] text-slate-400">{row.count} deal</span></div><p className="mt-2 text-sm font-bold text-slate-900">{formatCompactIDR(row.value)}</p><p className="mt-0.5 text-[10px] text-slate-400">Weighted {formatCompactIDR(row.weighted_value)}</p></div>)}
-            </div>
-          </Card>
         </>
       )}
     </div>
