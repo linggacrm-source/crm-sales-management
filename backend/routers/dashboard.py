@@ -65,6 +65,19 @@ async def _aggregate_to_list(collection, pipeline: list[dict], limit: int) -> li
     return await cursor.to_list(limit)
 
 
+async def _distinct_customer_ids(collection, match: dict) -> set[str]:
+    """Return unique customer IDs represented by pipeline/PO records."""
+    rows = await _aggregate_to_list(
+        collection,
+        [
+            {"$match": {**match, "customer_id": {"$exists": True, "$nin": [None, ""]}}},
+            {"$group": {"_id": "$customer_id"}},
+        ],
+        100000,
+    )
+    return {str(row["_id"]) for row in rows if row.get("_id")}
+
+
 async def _sum(collection, match: dict, field: str) -> float:
     rows = await _aggregate_to_list(
         collection,
@@ -102,6 +115,10 @@ async def dashboard(
         base["customer_id"] = customer_id
 
     opp_open = {**base, "stage": stage} if stage else {**base, "stage": {"$in": OPEN_STAGES}}
+    # Dashboard customer KPI = unique customers represented in the sales pipeline
+    # or already having a PO. It must not count the full customer master.
+    opp_customer_match = {**base, "stage": stage} if stage else {**base, "stage": {"$in": OPEN_STAGES + ["Won"]}}
+    po_customer_match = {**base}
     today = today_iso()
     target_year = datetime.now(timezone.utc).year
     visible_ids = await visible_sales_ids(user)
@@ -123,7 +140,8 @@ async def dashboard(
         po_year_match["customer_id"] = customer_id
 
     (
-        total_customers,
+        pipeline_customer_ids,
+        po_customer_ids,
         open_pipeline,
         weighted_pipeline,
         won_value,
@@ -138,7 +156,8 @@ async def dashboard(
         overdue_orders,
         agg,
     ) = await asyncio.gather(
-        db.customers.count_documents(base),
+        _distinct_customer_ids(db.opportunities, opp_customer_match),
+        _distinct_customer_ids(db.purchase_orders, po_customer_match),
         _sum(db.opportunities, opp_open, "value"),
         _sum(db.opportunities, opp_open, "weighted_value"),
         _sum(db.opportunities, {**base, "stage": "Won"}, "value"),
@@ -159,7 +178,7 @@ async def dashboard(
             20,
         ),
     )
-    total_customers = int(total_customers)
+    total_customers = len(pipeline_customer_ids | po_customer_ids)
     target_value = round(sum(row.get("target_value", 0) or 0 for row in target_rows), 2)
     achievement_value = round(achievement_value, 2)
     achievement_pct = round((achievement_value / target_value) * 100, 1) if target_value > 0 else 0.0
